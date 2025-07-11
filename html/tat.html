@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL Dashboard - TAT</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
+
+    <link rel="stylesheet" href="/styles/general.css" />
+    <link rel="stylesheet" href="/styles/tat.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="/images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>NHL Laboratory Dashboard</h1>
+        </div>
+        <div class="page">
+          <span>TAT</span>
+          <button
+            id="showTrackerTableButton"
+            onclick="window.location.href='tracker-table.html'"
+          >
+            Show Table
+          </button>
+          <button id="menuToggle">Show Filters</button>
+        </div>
+      </div>
+      <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="revenue.html">Revenue</a>
+        <a href="numbers.html">Numbers</a>
+        <a href="tat.html" class="active">TAT</a>
+      </nav>
+
+      <div class="dashboard-filters" id="filters">
+        <div class="filter-group">
+          <label for="startDateFilter">Start Date:</label>
+          <input type="date" id="startDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="endDateFilter">End Date:</label>
+          <input type="date" id="endDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="periodSelect">Period:</label>
+          <select id="periodSelect">
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisQuarter">This Quarter</option>
+            <option value="lastQuarter">Last Quarter</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="shiftFilter">Shift:</label>
+          <select id="shiftFilter">
+            <option value="all">All</option>
+            <option value="day">Day Shift</option>
+            <option value="night">Night Shift</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="hospitalUnitFilter">Laboratory:</label>
+          <select id="hospitalUnitFilter">
+            <option value="all">All</option>
+            <option value="mainLab">Main Laboratory</option>
+            <option value="annex">Annex</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-layout">
+      <aside class="revenue-progress-card">
+        <div class="label">Total Delayed Requests</div>
+        <div class="percentage" id="delayedPercentageValue">0%</div>
+        <div class="amounts">
+          <span id="totalDelayedCount">0</span>
+          <span class="target"
+            >of <span id="totalRequestsCount">0</span> requests</span
+          >
+        </div>
+        <div class="chart-bar-wrapper">
+          <canvas id="tatSummaryChart" class="chart-bar"></canvas>
+        </div>
+
+        <div class="label" style="margin-top: 20px">Total On-Time Requests</div>
+        <div class="percentage" id="onTimeSummaryValue">0%</div>
+        <div class="amounts">
+          <span id="totalOnTimeCount">0</span>
+          <span class="target"
+            >of <span id="totalRequestsCount_2">0</span> requests</span
+          >
+        </div>
+        <div class="chart-bar-wrapper">
+          <canvas id="tatOnTimeSummaryChart" class="chart-bar"></canvas>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Average Daily On-Time</div>
+            <div class="kpi-value" id="onTimePercentage">0</div>
+            <div class="kpi-trend" id="onTimePercentageTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Average Daily Delays</div>
+            <div class="kpi-value" id="avgDailyDelayed">0</div>
+            <div class="kpi-trend" id="avgDailyDelayedTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Average Daily Not Uploaded</div>
+            <div class="kpi-value" id="avgDailyNotUploaded">0</div>
+            <div class="kpi-trend" id="avgDailyNotUploadedTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Most Delayed Hour</div>
+            <div class="kpi-value" id="mostDelayedHour">N/A</div>
+            <div class="kpi-trend" id="mostDelayedHourTrend"></div>
+          </div>
+
+          <div class="kpi-card kpi-card-full-width">
+            <div class="kpi-label">Most Delayed Day</div>
+            <div class="kpi-value" id="mostDelayedDay">N/A</div>
+            <div class="kpi-trend" id="mostDelayedDayTrend"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="charts-area">
+        <div class="dashboard-charts">
+          <div class="performance-chart">
+            <div class="chart-title">TAT Performance Distribution</div>
+            <div class="chart-container">
+              <canvas id="tatPieChart"></canvas>
+            </div>
+          </div>
+
+          <div class="daily-performance-chart">
+            <div class="chart-title">Daily TAT Performance Trend</div>
+            <div class="chart-container">
+              <canvas id="tatLineChart"></canvas>
+            </div>
+          </div>
+
+          <div class="hourly-performance-chart">
+            <div class="chart-title">Hourly TAT Performance Trend</div>
+            <div class="chart-container">
+              <canvas id="tatHourlyLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
+    </div>
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="/images/zyntel_no_background.png" alt="logo" />
+      </div>
+    </footer>
+
+    <script type="module" src="src/tat.js"></script>
+  </body>
+</html>

@@ -1,0 +1,82 @@
+/* Import common dashboard styles */
+@import url("general.css"); /* Assuming main.css (or header.css from previous context) contains common styles */
+
+/* TAT specific styles */
+
+/* Bar Wrapper Styling */
+.chart-bar-wrapper {
+  height: 20px; /* Force this height for the bar */
+  margin-top: 10px;
+  background-color: var(
+    --light-grey-background
+  ); /* Consistent background for the bar track */
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Important for Chart.js canvas within the wrapper */
+#tatSummaryChart,
+#tatOnTimeSummaryChart {
+  /* Apply this to both your canvas IDs */
+  width: 100% !important; /* Ensure canvas fills its wrapper width */
+  height: 100% !important; /* Ensure canvas fills its wrapper height */
+}
+
+/* MODIFIED: KPI Grid for "Most Delayed Day" full width */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* Default 2 columns */
+  gap: 10px; /* Spacing between KPI cards */
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Style for the full-width KPI card */
+.kpi-grid .kpi-card-full-width {
+  grid-column: 1 / -1; /* Spans across all columns */
+}
+
+/* KPI Trend Arrows Styling (green for positive, red for negative) */
+.kpi-trend .positive {
+  color: green; /* Green for good trends */
+  font-weight: bold;
+}
+
+.kpi-trend .negative {
+  color: red; /* Red for bad trends */
+  font-weight: bold;
+}
+
+/* No specific styles for .revenue-progress-card or .kpi-grid as they are revenue-specific unless defined in main.css */
+
+/* Chart container adjustments specific to TAT if needed, otherwise main.css applies */
+/* Example: If you wanted TAT charts to be slightly different height */
+/* .chart-container {
+  height: 400px;
+} */
+/* Ensure the unitSelect is styled correctly if it were present on TAT */
+.unitSelect-label {
+  font-weight: bold;
+  margin-right: 10px;
+  color: var(--main-color);
+}
+
+#unitSelect {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+/* Responsive Adjustments for TAT page */
+@media (max-width: 1198px) {
+  /* Common styles from main.css will handle column layout for main content area */
+}
+
+@media (max-width: 768px) {
+  /* Common styles from main.css will handle hiding charts area and showing notice */
+}

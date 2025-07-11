@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratory Dashboard - Home</title>
+
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<header class="header">
+  <img src="logo-nakasero.png" alt="Logo" class="logo">
+  <h1>Laboratory Performance Dashboard</h1>
+  <h2><i class="fa-solid fa-calendar-days"></i>April 2025</h2>
+  <button id="toggleButton" class="toggle-button"><i class="fas fa-bars"></i></button>
+</header>
+
+<div class="icons">
+    <!-- navbar -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html"><i class="fa-solid fa-table-columns"></i> Home</a>
+    <a href="numbers.html"><i class="fas fa-list-ol"></i> Numbers</a>
+    <a href="tat.html"><i class="fas fa-clock"></i> TAT</a>
+    <a href="tests.html"><i class="fas fa-vial"></i> Tests</a>
+    <a href="sections.html" class="active"><i class="fas fa-th-large"></i> Sections</a>
+    <a href="revenue.html"><i class="fas fa-dollar-sign"></i> Revenue</a>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <nav>
+        <a href="index.html"><i class="fa-solid fa-table-columns"></i> Home</a>
+        <a href="numbers.html"><i class="fas fa-list-ol"></i> Numbers</a>
+        <a href="tat.html"><i class="fas fa-clock"></i> TAT</a>
+        <a href="tests.html"><i class="fas fa-vial"></i> Tests</a>
+        <a href="sections.html" class="active"><i class="fas fa-th-large"></i> Sections</a>
+        <a href="revenue.html"><i class="fas fa-dollar-sign"></i> Revenue</a>
+      </nav>
+  </aside>  
+
+<!-- filters -->  
+<section class="filters">
+  <label>Department:
+    <select id="departmentFilter">
+      <option value="ALL">All</option>
+    </select>
+  </label>
+
+  <label>Shift:
+    <select id="shiftFilter">
+      <option value="ALL">All</option>
+      <option value="DAY">Day</option>
+      <option value="NIGHT">Night</option>
+    </select>
+  </label>
+
+  <label>Delay Status:
+    <select id="delayFilter">
+      <option value="ALL">All</option>
+      <option value="On Time">On Time</option>
+      <option value="Delayed">Less than 15 Minutes Delay</option>
+      <option value="Over Delayed">Over Delayed</option>
+      <option value="Swift">Swift</option>
+    </select>
+  </label>
+
+  <label>Start Date:
+    <input type="date" id="startDate">
+  </label>
+
+  <label>End Date:
+    <input type="date" id="endDate">
+  </label>
+</section>
+</div>
+
+  <!-- Main Content -->
+  <main class="main">
+      <section class="charts">
+        <canvas id="sections"></canvas>
+        <canvas id="numbersChart"></canvas>
+        <canvas id="workloadChart"></canvas>
+      </section>
+  </main>
+
+<!-- Footer -->
+<footer>
+  <strong>Zyntel </strong><small><i>Measured Managed</i></small><br>
+  <small>&copy; All rights reserved</small><br>
+  <small><a href="https://www.linkedin.com/in/nithamudiini" target="_blank">Ntale Nithamu Diini</a></small>
+</footer>
+
+<script src="script.js"></script>
+
+</body>
+</html>

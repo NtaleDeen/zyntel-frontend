@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL Dashboard - Numbers</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <link rel="stylesheet" href="/styles/general.css" />
+    <link rel="stylesheet" href="/styles/numbers.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="/images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>NHL Laboratory Dashboard</h1>
+        </div>
+        <div class="page">
+          <span>Numbers</span>
+          <button id="menuToggle">Show Filters</button>
+        </div>
+      </div>
+      <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="revenue.html">Revenue</a>
+        <a href="numbers.html" class="active">Numbers</a>
+        <a href="tat.html">TAT</a>
+      </nav>
+
+      <div class="dashboard-filters" id="filters">
+        <div class="filter-group">
+          <label for="startDateFilter">Start Date:</label>
+          <input type="date" id="startDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="endDateFilter">End Date:</label>
+          <input type="date" id="endDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="periodSelect">Period:</label>
+          <select id="periodSelect">
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisQuarter">This Quarter</option>
+            <option value="lastQuarter">Last Quarter</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="shiftFilter">Shift:</label>
+          <select id="shiftFilter">
+            <option value="all">All</option>
+            <option value="day">Day Shift</option>
+            <option value="night">Night Shift</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="hospitalUnitFilter">Laboratory:</label>
+          <select id="hospitalUnitFilter">
+            <option value="all">All</option>
+            <option value="mainLab">Main Laboratory</option>
+            <option value="annex">Annex</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-layout">
+      <!-- In your numbers.html file, update the numbers-summary-card section -->
+      <aside class="numbers-summary-card">
+        <div class="kpi-card kpi-card-full-width">
+          <div class="kpi-label">Total Requests</div>
+          <div class="kpi-value" id="totalRequestsValue">0</div>
+          <div class="kpi-trend" id="totalRequestsTrend"></div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Average Daily Requests</div>
+            <div class="kpi-value" id="avgDailyRequests">0</div>
+            <div class="kpi-trend" id="avgDailyRequestsTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Busiest Hour</div>
+            <div class="kpi-value" id="busiestHour">N/A</div>
+            <div class="kpi-trend" id="busiestHourTrend"></div>
+          </div>
+
+          <div class="kpi-card kpi-card-full-width">
+            <div class="kpi-label">Busiest Day</div>
+            <div class="kpi-value" id="busiestDay">N/A</div>
+            <div class="kpi-trend" id="busiestDayTrend"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="charts-area">
+        <div class="dashboard-charts">
+          <div class="daily-numbers-chart">
+            <div class="chart-title">Daily Request Volume</div>
+            <div class="chart-container">
+              <canvas id="dailyNumbersBarChart"></canvas>
+            </div>
+          </div>
+
+          <div class="hourly-numbers-chart">
+            <div class="chart-title">Hourly Request Volume</div>
+            <div class="chart-container">
+              <canvas id="hourlyNumbersLineChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
+    </div>
+
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="/images/zyntel_no_background.png" alt="logo" />
+      </div>
+    </footer>
+
+    <script type="module" src="/src/numbers.js"></script>
+  </body>
+</html>

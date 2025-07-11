@@ -1,0 +1,109 @@
+:root {
+  --primary-bg: var(--wp--preset--color--base, #ffffff);
+  --primary-border: var(--wp--preset--color--dark-400, #6e6e6e);
+  --primary-font: var(--font-light, sans-serif);
+  --font-size-base: var(--font-size-base, 18px);
+  --line-height-base: var(--line-height-base, 1.222);
+  --shadow: var(--wp--preset--shadow--natural, 6px 6px 9px rgba(0, 0, 0, 0.2));
+  --padding: 2.5rem;
+  --radius: 1rem;
+}
+
+.tile {
+  background-color: var(--primary-bg);
+  border: 1px solid var(--primary-border);
+  font-family: var(--primary-font);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: #000;
+  padding: 3.5rem var(--padding);
+  border-radius: var(--radius);
+  min-width: 424px;
+  box-shadow: var(--shadow);
+  text-align: center;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.tile-label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.tile-heading {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.tile-tools {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.tile-tool img {
+  width: 80px;
+  height: auto;
+}
+
+.tile-ratings {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.tile-button {
+  position: relative;
+}
+
+.button-main {
+  padding: 0.75rem 1.5rem;
+  font-weight: bold;
+  border: none;
+  background-color: var(--wp-admin-theme-color, #007cba);
+  color: #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.button-dropdown {
+  display: none;
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0.5rem 0 0;
+  background-color: #fff;
+  border: 1px solid var(--primary-border);
+  border-radius: 0.5rem;
+  box-shadow: var(--wp--preset--shadow--natural);
+}
+
+.tile-button.open .button-dropdown {
+  display: block;
+}
+
+.arrow {
+  margin-left: 0.5rem;
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.tile-button.open .arrow {
+  transform: rotate(180deg); /* ▲ up */
+}
+
+.button-dropdown li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+}
+
+.button-dropdown img {
+  width: 20px;
+  height: 20px;
+}

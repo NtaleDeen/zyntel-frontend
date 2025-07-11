@@ -1,0 +1,462 @@
+/* General styles from general.css */
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Roboto", sans-serif;
+  color: var(--main-color);
+}
+
+:root {
+  --main-color: #21336a;
+  --primary-color: #000;
+  --canvas-color: #fff;
+  --hover-color: #deab5f;
+  --background-color: rgba(250, 250, 250, 0.9);
+  --border-bottom: rgb(228, 228, 228);
+  --box-shadow: rgba(0, 0, 0, 0.05);
+}
+
+html {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background-color: var(--background-color);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: 90px;
+}
+
+body {
+  margin: 0;
+  padding-top: 150px; /* Adjusted padding-to... */
+}
+
+/* header h1,
+header nav,
+header .navbar {
+  margin: 0;
+} */
+
+.header-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: auto;
+  padding: 10px 20px 0 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  height: 40px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  word-spacing: 10px;
+  color: var(--main-color); /* Ensure h1 uses main-color */
+}
+
+.page {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  font-size: 1rem;
+  padding: 10px 20px;
+  font-weight: 500;
+  border-left: 2px solid var(--hover-color);
+  justify-content: space-between;
+}
+
+#menuToggle {
+  display: none;
+  color: var(--main-color);
+  border: none;
+  background-color: unset;
+  padding: 3px 5px;
+  margin-right: 10px;
+  cursor: pointer;
+  font-size: 0.7rem !important;
+  font-weight: normal !important;
+}
+
+#menuToggle:hover {
+  border-bottom: 2px solid var(--hover-color);
+}
+
+.navbar {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  background-color: #21336a;
+  padding: 10px 20px;
+  margin-top: 0;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #fff;
+  font-weight: 500;
+  margin: 0 40px;
+  padding: 5px;
+}
+
+.navbar a:hover {
+  border-bottom: 2px solid var(--hover-color);
+}
+
+.navbar a.active {
+  border-bottom: 2px solid var(--hover-color);
+}
+
+.dashboard-filters,
+.filtersContainer {
+  position: fixed; /* Keep fixed to stay at top with scrolling */
+  top: 102px; /* Below the header */
+  left: 0;
+  width: 100vw;
+  z-index: 999;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 17px 30px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-bottom);
+  box-shadow: 0 1px 2px var(--box-shadow);
+}
+
+.filter-group,
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+select,
+input {
+  padding: 5px 8px;
+  font-size: 10.5px;
+  color: var(--primary-color);
+  border: 1px solid var(--main-color);
+  border-radius: 4px;
+  width: auto;
+  margin-left: 5px;
+}
+
+input:hover,
+select:hover,
+input:active,
+select:active {
+  border-color: var(--hover-color);
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--main-color);
+}
+
+main.dashboard-layout {
+  display: flex;
+  gap: 2rem;
+  margin: 3rem;
+  justify-content: space-between;
+}
+
+.charts-area {
+  flex: 3;
+}
+
+.revenue-progress-card {
+  position: sticky;
+  top: 200px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  height: fit-content;
+  overflow-y: auto;
+  font-family: Roboto, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-bar {
+  height: 20px !important;
+  margin-top: 10px;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.percentage {
+  font-size: 28px;
+  font-weight: bold;
+  color: #deab5f;
+}
+
+.label {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.amounts {
+  display: flex;
+  justify-content: space-between;
+  color: var(--main-color);
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.amounts .target {
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.kpi-card {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.kpi-label {
+  font-size: 0.9rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--main-color);
+}
+
+.trend-positive {
+  color: green; /* Or a specific shade of green: #22c55e */
+}
+
+.trend-negative {
+  color: red; /* Or a specific shade of red: #ef4444 */
+}
+
+.trend-neutral {
+  color: blue; /* Or a specific shade of blue: #3b82f6 */
+}
+
+.dashboard-charts {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.chart-title {
+  color: var(--main-color);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0 0 5px 0;
+  text-align: center;
+  text-decoration: underline;
+}
+
+/* Styles specifically for the dashboard layout, merged from inline HTML styles */
+.container {
+  max-width: 1200px;
+  margin-left: auto; /* Center the container */
+  margin-right: auto;
+}
+
+.chart-container {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  position: relative; /* Added for chart-loading overlay */
+  height: 400px; /* Standard height for charts */
+  width: 100%; /* Ensure responsiveness */
+  max-width: 800px; /* Max width for single chart containers */
+  margin-left: auto; /* Center individual chart containers */
+  margin-right: auto;
+}
+
+.notice {
+  display: none;
+}
+
+footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 10px 20px;
+  margin-top: 100px;
+}
+
+.zyntel {
+  height: 50px;
+  width: 120px;
+  overflow: hidden;
+  position: relative;
+  display: block;
+  margin-left: 20px;
+  padding: 10px;
+}
+
+.zyntel img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.14);
+  transform-origin: center center;
+}
+
+footer p {
+  margin-left: 20px;
+  color: var(--main-color);
+  font-size: 13.5px;
+}
+
+/* Media Queries for responsiveness (from general.css) */
+@media (max-width: 1024px) {
+  .charts-area {
+    flex: 2;
+  }
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.2rem;
+    word-spacing: normal;
+  }
+
+  .page {
+    font-size: 0.85rem;
+    margin-top: 15px;
+    padding: 1px 10px;
+    justify-content: space-between;
+  }
+
+  .navbar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .navbar a {
+    margin: 50px 30px;
+  }
+
+  /* Adjustments for the new main dashboard structure */
+  .container {
+    padding: 1rem; /* Adjust container padding for smaller screens */
+  }
+  .grid.grid-cols-1.lg\:grid-cols-2 {
+    grid-template-columns: 1fr; /* Stack charts vertically on small screens */
+  }
+  .chart-container {
+    margin-bottom: 1rem; /* Adjust margin between stacked charts */
+  }
+
+  main {
+    /* This rule from general.css hides main on small screens, which might hide charts */
+    display: block; /* Override to ensure main content is visible */
+  }
+
+  .charts-area {
+    /* This rule from general.css hides charts-area on small screens, which might hide charts */
+    display: block; /* Override to ensure charts-area content is visible */
+    width: 100%;
+  }
+
+  .revenue-progress-card {
+    position: static; /* Remove sticky positioning on small screens */
+    max-width: 100%; /* Allow full width */
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr; /* Stack KPIs vertically on small screens */
+  }
+
+  main.dashboard-layout {
+    flex-direction: column;
+    margin: 1rem;
+    gap: 1rem;
+  }
+}
+
+/* Print styles (from general.css) */
+@media print {
+  body {
+    padding-top: 0;
+    overflow: visible;
+  }
+
+  header,
+  .filtersContainer,
+  footer,
+  #menuToggle {
+    display: none !important;
+  }
+
+  main.dashboard-layout {
+    display: block;
+    margin: 0;
+  }
+
+  .revenue-progress-card,
+  .chart-container,
+  .kpi-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+  }
+
+  .chart-title {
+    font-size: 1.2rem;
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
