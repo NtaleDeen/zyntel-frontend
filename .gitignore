@@ -6,3 +6,6 @@ __pycache__/
 
 # If you temporarily test with local data
 data/
+
+backend/
+
