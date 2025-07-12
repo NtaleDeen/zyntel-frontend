@@ -1,11 +1,1 @@
-# Ignore sensitive and unnecessary files
-.env
-__pycache__/
-*.pyc
-*.log
-
-# If you temporarily test with local data
-data/
-
 backend/
-
