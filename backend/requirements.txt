@@ -1,5 +1,0 @@
-psycopg2-binary
-pandas
-python-dotenv
-flask
-boto3
