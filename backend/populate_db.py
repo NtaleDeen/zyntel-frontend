@@ -36,6 +36,8 @@ def download_file_from_r2(file_key):
         return file_content
     except Exception as e:
         print(f"Error downloading {file_key} from R2: {e}")
+        # It's important to raise the exception so the script fails if a file isn't found
+        # This prevents the rest of the script from trying to process non-existent data
         raise
 
 # --- Data Import Functions (Updated to use R2) ---
@@ -51,7 +53,9 @@ def import_meta():
         meta_csv_content = download_file_from_r2('meta.csv')
         df = pd.read_csv(io.StringIO(meta_csv_content.decode('utf-8')))
 
-        # Assuming 'meta_data' is your table name
+        # Assuming 'meta_data' is your table name (from previous schema setup)
+        # Your previous import_meta used "LabTestsOverview", I'm sticking to the one I gave.
+        # Please ensure your DB schema matches the one in this script.
         for index, row in df.iterrows():
             cur.execute("""
                 INSERT INTO meta_data (id, description, value)
@@ -63,6 +67,7 @@ def import_meta():
 
     except Exception as e:
         print(f"Error importing meta data: {e}")
+        raise # Re-raise to make sure the deploy fails if import fails
     finally:
         if conn:
             cur.close()
@@ -106,6 +111,7 @@ def import_timeout():
 
     except Exception as e:
         print(f"Error importing timeout data: {e}")
+        raise
     finally:
         if conn:
             cur.close()
@@ -159,6 +165,7 @@ def import_patient_data():
 
     except Exception as e:
         print(f"Error importing patient data: {e}")
+        raise
     finally:
         if conn:
             cur.close()
