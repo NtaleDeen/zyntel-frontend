@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: zyntel-importer
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: python populate_db.py
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
