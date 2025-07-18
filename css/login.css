@@ -1,0 +1,198 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    background-color: #0a0a0a;
+
+    /* --- CSS Grid for side-by-side layout --- */
+    display: grid;
+    grid-template-columns: 50% 50%; /* Image takes 50%, login takes 50% */
+
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+    padding: 30px 50px;
+    box-sizing: border-box;
+
+    column-gap: 30px; /* Gap between columns */
+}
+
+/* Style for the column containing the image */
+.image-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Style for the image itself within the image-column */
+.full-height-image {
+    max-width: 100%;
+    width: 500px;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Style for the column containing the login box */
+.login-column {
+    display: flex;
+    align-items: flex-start; /* Align login-box to the top of its column */
+    justify-content: center;
+    height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Your existing login-box styles */
+.login-box {
+    background: #0a0a0a;
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 0 20px var(--glow-color, #00f0ffb3); /* Use variable for color */
+    border: 1px solid #00f0ff4d;
+    margin-bottom: 50px;
+
+    /* New: Smooth transition for box-shadow (including its color) */
+    transition: box-shadow 1s ease-in-out; /* Adjust time for desired smoothness */
+    /* Removed animation: glowPulse */
+}
+
+/* Your original .logo-container (commented out) */
+/* .logo-container {
+    margin-bottom: 20px;
+} */
+
+/* Your existing #pulsingIcon styles */
+#pulsingIcon {
+    width: 100px;
+    height: 100px;
+    /* Removed animation: pulseEffect */
+    /* Add transition for smoother visual change if possible (though src changes are instant) */
+    transition: transform 0.5s ease-out; /* Keep a subtle transform transition if desired */
+}
+
+/* Removed @keyframes pulseEffect */
+/* Removed @keyframes glowPulse */
+
+
+/* Your existing h1 styles */
+h1 {
+    color: #00f0ff;
+    margin-bottom: 10px;
+}
+
+/* Your existing p styles */
+p {
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+/* Your existing .input-group styles */
+.input-group {
+    margin-bottom: 15px;
+}
+
+/* Your existing input styles */
+input[type="text"], input[type="password"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #4CAF50;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px;
+    outline: none;
+}
+
+/* Your existing input placeholder styles */
+input[type="text"]::placeholder,
+input[type="password"]::placeholder {
+    color: #bbb;
+}
+
+/* Your existing .info-line styles */
+.info-line {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 20px;
+}
+
+/* Your existing general button styles */
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 15px;
+}
+
+/* Your existing .login-button styles */
+.login-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.login-button:hover {
+    background-color: rgba(76, 175, 80, 0.2);
+}
+
+/* Your existing .buy-package-button styles */
+.buy-package-button {
+    background: none;
+    border: 1px solid #4CAF50;
+    color: #4CAF50;
+}
+
+.buy-package-button:hover {
+    background-color: rgba(76, 175, 80, 0.2);
+}
+
+.help-info {
+    font-size: 13px;
+    color: #999;
+    margin-top: 20px;
+}
+
+.help-info p {
+    margin: 5px 0;
+}
+
+
+/* --- Responsive adjustments for smaller screens --- */
+@media (max-width: 768px) {
+    body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+        padding: 10px;
+        column-gap: 0;
+        row-gap: 20px;
+    }
+
+    .image-column {
+        height: auto;
+        padding: 20px 0;
+    }
+
+    .full-height-image {
+        max-height: 100px;
+        width: auto;
+    }
+
+    .login-column {
+        height: auto;
+        padding: 20px;
+        align-items: center;
+    }
+
+    .login-box {
+        margin-bottom: 0;
+    }
+}
