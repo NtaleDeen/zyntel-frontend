@@ -11,12 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
-    <link rel="stylesheet" href="/styles/general.css" />
+    <!-- Updated path for CSS assuming /public/css/main.css -->
+    <link rel="stylesheet" href="/css/main.css" />
   </head>
   <body>
     <header>
       <div class="header-container">
         <div class="header-left">
+          <!-- Updated path for images assuming /public/images/logo-nakasero.png -->
           <div class="logo">
             <img src="/images/logo-nakasero.png" alt="logo" />
           </div>
@@ -28,10 +30,11 @@
         </div>
       </div>
       <nav class="navbar">
-        <a href="index.html">Home</a>
-        <a href="revenue.html" class="active">Revenue</a>
-        <a href="numbers.html">Numbers</a>
-        <a href="tat.html">TAT</a>
+        <!-- Updated paths for HTML files assuming /public/html/index.html etc. -->
+        <a href="/html/index.html">Home</a>
+        <a href="/html/revenue.html" class="active">Revenue</a>
+        <a href="/html/numbers.html">Numbers</a>
+        <a href="/html/tat.html">TAT</a>
       </nav>
 
       <div class="dashboard-filters">
@@ -51,13 +54,27 @@
           <label for="labSectionFilter">Lab Section:</label>
           <select id="labSectionFilter">
             <option value="all">All Sections</option>
+            <!-- Options will be dynamically populated by JS -->
           </select>
         </div>
         <div class="filter-group">
           <label for="shiftFilter">Shift:</label>
           <select id="shiftFilter">
             <option value="all">All Shifts</option>
+            <option value="Day">Day</option>
+            <option value="Night">Night</option>
           </select>
+        </div>
+        <div class="filter-group">
+          <label for="hospitalUnitFilter">Hospital Unit:</label>
+          <select id="hospitalUnitFilter">
+            <option value="all">All Units</option>
+            <!-- Options will be dynamically populated by JS -->
+          </select>
+        </div>
+        <!-- NEW: Show Table Button -->
+        <div class="filter-group">
+            <button id="showTableBtn" class="action-button">Show Revenue Table</button>
         </div>
       </div>
     </header>
@@ -74,73 +91,51 @@
 
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-label">Avg. Daily Revenue</div>
-            <div class="kpi-value" id="avgDailyRevenue">UGX 0</div>
-            <div class="kpi-trend" id="avgDailyRevenueTrend"></div>
+            <div class="kpi-label">Total Revenue</div>
+            <div class="kpi-value" id="totalRevenueKPI">UGX 0</div>
+            <div class="kpi-trend" id="totalRevenueTrend"></div>
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-label">Revenue Growth Rate</div>
-            <div class="kpi-value" id="revenueGrowthRate">0%</div>
-            <div class="kpi-trend" id="revenueGrowthRateTrend"></div>
+            <div class="kpi-label">Total Tests</div>
+            <div class="kpi-value" id="totalTestsKPI">0</div>
+            <div class="kpi-trend" id="totalTestsTrend"></div>
           </div>
 
           <div class="kpi-card">
-            <div class="kpi-label">Avg. Daily Tests</div>
-            <div class="kpi-value" id="avgDailyTestsPerformed">0</div>
-            <div class="kpi-trend" id="avgDailyTestsPerformedTrend"></div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-label">Total Tests Performed</div>
-            <div class="kpi-value" id="totalTestsPerformed">0</div>
-            <div class="kpi-trend" id="totalTestsPerformedTrend"></div>
+            <div class="kpi-label">Avg. Revenue/Test</div>
+            <div class="kpi-value" id="avgRevenuePerTestKPI">UGX 0</div>
+            <div class="kpi-trend" id="avgRevenuePerTestTrend"></div>
           </div>
         </div>
       </aside>
 
       <div class="charts-area">
         <div class="dashboard-charts">
-          <div class="section-revenue">
+          <div class="chart-container section-revenue">
             <div class="chart-title">Revenue by Laboratory Section</div>
-            <div class="chart-container">
-              <canvas id="sectionRevenueChart"></canvas>
-            </div>
+            <canvas id="sectionRevenuePieChart"></canvas>
           </div>
-          <div class="revenue">
+          <div class="chart-container revenue">
             <div class="chart-title">Daily Revenue</div>
-            <div class="chart-container">
-              <canvas id="revenueChart"></canvas>
-            </div>
+            <canvas id="dailyRevenueBarChart"></canvas>
           </div>
-          <div class="hospital-unit">
+          <div class="chart-container hospital-unit">
             <div class="chart-title">Revenue by Hospital Unit</div>
-            <div class="chart-container">
-              <canvas id="hospitalUnitRevenueChart"></canvas>
-            </div>
+            <canvas id="hospitalUnitRevenueChart"></canvas>
           </div>
-          <div class="top-tests-container">
+          <div class="top-tests-container chart-container">
             <div class="chart-title">
               <label for="unitSelect" class="unitSelect-label"
-                >Select Hospital Unit:</label
+                >Top Tests by Revenue:</label
               >
-              <select id="unitSelect"></select>
+              <select id="unitSelect"></select> <!-- This is for filtering top tests by unit -->
             </div>
-            <div class="chart-container">
-              <canvas id="topTestsChart"></canvas>
-            </div>
+            <canvas id="topTestsRevenueChart"></canvas>
           </div>
-          <div class="test-revenue">
-            <div class="chart-title">Revenue by Test</div>
-            <div class="chart-container">
-              <canvas id="testRevenueChart"></canvas>
-            </div>
-          </div>
-          <div class="test-count">
+          <div class="test-count chart-container">
             <div class="chart-title">Test Volume</div>
-            <div class="chart-container">
-              <canvas id="testCountChart"></canvas>
-            </div>
+            <canvas id="topTestsCountChart"></canvas>
           </div>
         </div>
       </div>
@@ -154,10 +149,12 @@
     <footer>
       <p>&copy;2025 Zyntel</p>
       <div class="zyntel">
+        <!-- Updated path for images assuming /public/images/zyntel_no_background.png -->
         <img src="/images/zyntel_no_background.png" alt="logo" />
       </div>
     </footer>
 
-    <script type="module" src="/src/revenue.js"></script>
+    <!-- Updated path for JS assuming /public/js/revenue.js -->
+    <script type="module" src="/js/revenue.js"></script>
   </body>
 </html>
