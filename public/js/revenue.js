@@ -25,7 +25,12 @@ let aggregatedCountByTest = {};
 
 // Define your API endpoint for Revenue data
 // IMPORTANT: REPLACE WITH YOUR ACTUAL RENDER SERVICE URL for the backend API
-const API_REVENUE_ENDPOINT = "https://your-zyntel-api-url.onrender.com/api/revenue-data"; // e.g., "https://zyntel-api-abc1234.onrender.com/api/revenue-data"
+const API_REVENUE_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/revenue-data"; // Your Render API URL
+const API_TAT_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/tat-data"; // Example for TAT
+const API_NUMBERS_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/numbers-data"; // Example for Numbers
+
+// Client identifier for multi-tenancy - This should match the CLIENT_IDENTIFIER in your backend's .env
+const CLIENT_IDENTIFIER = "Nakasero";
 
 // DOM Content Loaded - Initialize and load data
 document.addEventListener("DOMContentLoaded", async () => {
@@ -47,6 +52,9 @@ function constructApiUrl(baseApiUrl) {
   const hospitalUnitFilter = document.getElementById("hospitalUnitFilter"); // This filter is for the API call
 
   const params = new URLSearchParams();
+
+  // Add client identifier for multi-tenancy
+  params.append("clientId", CLIENT_IDENTIFIER);
 
   // Prioritize specific dates over period selection
   if (startDateInput && startDateInput.value) {
@@ -136,8 +144,8 @@ function populateDynamicFilterOptions(data) {
   const hospitalUnits = new Set();
 
   data.forEach(d => {
-    if (d.Lab_Section) labSections.add(d.Lab_Section);
-    if (d.Unit) hospitalUnits.add(d.Unit);
+    if (d.Lab_Section) labSections.add(d.Lab_Section); // Use Lab_Section from DB
+    if (d.Unit) hospitalUnits.add(d.Unit); // Use Unit from DB
   });
 
   if (labSectionFilter) {
@@ -265,6 +273,9 @@ function getCurrentFilterParams() {
   if (labSectionFilter && labSectionFilter.value && labSectionFilter.value !== "all") params.labSection = labSectionFilter.value;
   if (shiftFilter && shiftFilter.value && shiftFilter.value !== "all") params.shift = shiftFilter.value;
   if (hospitalUnitFilter && hospitalUnitFilter.value && hospitalUnitFilter.value !== "all") params.hospitalUnit = hospitalUnitFilter.value;
+
+  // Always include client identifier in parameters for table view
+  params.clientId = CLIENT_IDENTIFIER;
 
   return params;
 }
