@@ -75,7 +75,9 @@ function capitalizeWords(str) {
  */
 async function loadDatabaseData() {
   try {
-    // IMPORTANT: Updated fetch URL to your Render backend
+    // Use this exact fetch URL
+    // Changed from "http://localhost:3000/api/revenue" to the provided backend URL
+    // Updated endpoint to match app.py's /api/revenue-data
     const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue-data", {
       headers: {
         Accept: "application/json",
@@ -99,7 +101,7 @@ async function loadDatabaseData() {
         processedRow.parsedEncounterDate = row.Date
           ? moment(row.Date, "YYYY-MM-DD")
           : null;
-        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate; // Assuming TestResultDate is same as EncounterDate for revenue
+        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
 
         // Process price
         const parsedPriceValue = parseFloat(row.Price);
@@ -108,12 +110,12 @@ async function loadDatabaseData() {
           : parsedPriceValue;
 
         // Standardize case for filtering
-        processedRow.Hospital_Unit = (row.Unit || "").toUpperCase(); // Corrected to use row.Unit
-        processedRow.LabSection = (row.Lab_Section || "").toLowerCase(); // Corrected to use row.Lab_Section
+        processedRow.Hospital_Unit = (row.Hospital_Unit || "").toUpperCase();
+        processedRow.LabSection = (row.LabSection || "").toLowerCase();
         processedRow.Shift = (row.Shift || "").toLowerCase();
-        processedRow.TestName = row.Test_Name || ""; // Corrected to use row.Test_Name
+        processedRow.TestName = row.TestName || "";
 
-        // Maintain all your existing calculated fields (if any, though these seem unused for revenue)
+        // Maintain all your existing calculated fields
         processedRow.Minutes_Delayed_Calculated = null;
         processedRow.Delay_Status_Calculated = "Not Uploaded";
         processedRow.Progress_Calculated = "Not Uploaded";
@@ -518,7 +520,7 @@ function getAggregatedData() {
       (aggregatedRevenueByUnit[unit] || 0) + row.parsedPrice;
 
     // Top Tests by Unit
-    const testName = (row.TestName || "").trim() || "UNKNOWN"; // Use TestName
+    const testName = (row.Tests || "").trim() || "UNKNOWN";
     if (!aggregatedTestCountByUnit[unit]) {
       aggregatedTestCountByUnit[unit] = {};
     }
