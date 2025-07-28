@@ -195,6 +195,7 @@ main.dashboard-layout {
   gap: 2rem;
   margin: 3rem;
   justify-content: space-between;
+  position: relative; /* Added for loading indicator positioning */
 }
 
 .charts-area {
