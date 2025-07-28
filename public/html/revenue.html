@@ -1,161 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Dashboard - Revenue</title>
-    <!-- Corrected path: relative to the served root (public/) -->
-    <link rel="icon" href="../images/zyntel_no_background.png" type="image/png">
-
-    <!-- Corrected paths: relative to the served root (public/) -->
-    <link rel="stylesheet" href="../css/general.css">
-    <link rel="stylesheet" href="../css/main.css">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NHL Dashboard - Revenue</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
-</head>
-<body>
-    <div class="dashboard-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <!-- Corrected path: relative to the served root (public/) -->
-                <img src="../images/zyntel_no_background.png" alt="Zyntel Logo">
-                <h1>Zyntel LIMS</h1>
+    <!-- Link to the separate general.css file -->
+    <link rel="stylesheet" href="../css/general.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="../images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>NHL Laboratory Dashboard</h1>
+        </div>
+        <div class="page">
+          <span>Revenue</span>
+          <button id="menuToggle">Show Filters</button>
+        </div>
+      </div>
+      <nav class="navbar">
+        <a href="index.html">Home</a>
+        <a href="revenue.html" class="active">Revenue</a>
+        <a href="numbers.html">Numbers</a>
+        <a href="tat.html">TAT</a>
+      </nav>
+
+      <div class="dashboard-filters">
+        <div class="filter-group">
+          <label for="startDateFilter">Start Date:</label>
+          <input type="date" id="startDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="endDateFilter">End Date:</label>
+          <input type="date" id="endDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="periodSelect">Period:</label>
+          <select id="periodSelect"></select>
+        </div>
+        <div class="filter-group">
+          <label for="labSectionFilter">Lab Section:</label>
+          <select id="labSectionFilter">
+            <option value="all">All Sections</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="shiftFilter">Shift:</label>
+          <select id="shiftFilter">
+            <option value="all">All Shifts</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-layout">
+      <aside class="revenue-progress-card">
+        <div class="label">Total Revenue</div>
+        <div class="percentage" id="percentageValue">0%</div>
+        <div class="amounts">
+          <span id="currentAmount">UGX 0</span>
+          <span class="target">of UGX 1.5B</span>
+        </div>
+        <canvas id="revenueBarChart" class="chart-bar"></canvas>
+
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Avg. Daily Revenue</div>
+            <div class="kpi-value" id="avgDailyRevenue">UGX 0</div>
+            <div class="kpi-trend" id="avgDailyRevenueTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Revenue Growth Rate</div>
+            <div class="kpi-value" id="revenueGrowthRate">0%</div>
+            <div class="kpi-trend" id="revenueGrowthRateTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Avg. Daily Tests</div>
+            <div class="kpi-value" id="avgDailyTestsPerformed">0</div>
+            <div class="kpi-trend" id="avgDailyTestsPerformedTrend"></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">Total Tests Performed</div>
+            <div class="kpi-value" id="totalTestsPerformed">0</div>
+            <div class="kpi-trend" id="totalTestsPerformedTrend"></div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="charts-area">
+        <div class="dashboard-charts">
+          <div class="section-revenue">
+            <div class="chart-title">Revenue by Laboratory Section</div>
+            <div class="chart-container">
+              <canvas id="sectionRevenueChart"></canvas>
             </div>
-            <nav class="main-nav">
-                <ul>
-                    <!-- Corrected paths: relative to the current HTML file's directory (html/) -->
-                    <li><a href="revenue.html" class="active">Revenue Overview</a></li>
-                    <li><a href="progress.html">Progress Tracking</a></li>
-                    <li><a href="performance.html">Performance Metrics</a></li>
-                    <li><a href="reception.html">Reception Data</a></li>
-                    <li><a href="tracker.html">Test Tracker</a></li>
-                </ul>
-            </nav>
-            <div class="sidebar-footer">
-                <p>&copy; 2025 Zyntel</p>
+          </div>
+          <div class="revenue">
+            <div class="chart-title">Daily Revenue</div>
+            <div class="chart-container">
+              <canvas id="revenueChart"></canvas>
             </div>
-        </aside>
+          </div>
+          <div class="hospital-unit">
+            <div class="chart-title">Revenue by Hospital Unit</div>
+            <div class="chart-container">
+              <canvas id="hospitalUnitRevenueChart"></canvas>
+            </div>
+          </div>
+          <div class="top-tests-container">
+            <div class="chart-title">
+              <label for="unitSelect" class="unitSelect-label"
+                >Select Hospital Unit:</label
+              >
+              <select id="unitSelect"></select>
+            </div>
+            <div class="chart-container">
+              <canvas id="topTestsChart"></canvas>
+            </div>
+          </div>
+          <div class="test-revenue">
+            <div class="chart-title">Revenue by Test</div>
+            <div class="chart-container">
+              <canvas id="testRevenueChart"></canvas>
+            </div>
+          </div>
+          <div class="test-count">
+            <div class="chart-title">Test Volume</div>
+            <div class="chart-container">
+              <canvas id="testCountChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
 
-        <main class="main-content">
-            <header class="dashboard-header">
-                <h2>Revenue Dashboard</h2>
-                <div class="header-info">
-                    <span>Last Updated: <span id="last-updated">Loading...</span></span>
-                </div>
-            </header>
-
-            <section class="filters-section">
-                <div class="filter-group">
-                    <label for="startDateFilter">Start Date:</label>
-                    <input type="date" id="startDateFilter" />
-                </div>
-                <div class="filter-group">
-                    <label for="endDateFilter">End Date:</label>
-                    <input type="date" id="endDateFilter" />
-                </div>
-                <div class="filter-group">
-                    <label for="periodSelect">Period:</label>
-                    <select id="periodSelect"></select>
-                </div>
-                <div class="filter-group">
-                    <label for="labSectionFilter">Lab Section:</label>
-                    <select id="labSectionFilter">
-                        <option value="all">All Sections</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="shiftFilter">Shift:</label>
-                    <select id="shiftFilter">
-                        <option value="all">All Shifts</option>
-                        <option value="Day">Day</option>
-                        <option value="Night">Night</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="hospitalUnitFilter">Hospital Unit:</label>
-                    <select id="hospitalUnitFilter">
-                        <option value="all">All Units</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <button id="showTableBtn" class="action-button">Show Table</button>
-                </div>
-            </section>
-
-            <section class="kpi-section">
-                <div class="kpi-card">
-                    <h3>Total Revenue</h3>
-                    <p id="totalRevenueKPI">Loading...</p>
-                    <div id="totalRevenueTrend" class="kpi-trend"></div>
-                </div>
-                <div class="kpi-card">
-                    <h3>Total Tests</h3>
-                    <p id="totalTestsKPI">Loading...</p>
-                    <div id="totalTestsTrend" class="kpi-trend"></div>
-                </div>
-                <div class="kpi-card">
-                    <h3>Average Revenue per Test</h3>
-                    <p id="avgRevenuePerTestKPI">Loading...</p>
-                    <div id="avgRevenuePerTestTrend" class="kpi-trend"></div>
-                </div>
-                <div class="kpi-card progress-card">
-                    <h3>Revenue Target</h3>
-                    <p id="percentageValue">0%</p>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar"></div>
-                    </div>
-                    <p class="current-amount">Current: <span id="currentAmount">UGX 0</span></p>
-                    <p class="target-amount">Target: UGX 1,500,000,000</p>
-                </div>
-            </section>
-
-            <section class="charts-section">
-                <div class="chart-card">
-                    <h3>Daily Revenue Trend</h3>
-                    <canvas id="dailyRevenueBarChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Revenue by Lab Section</h3>
-                    <canvas id="sectionRevenuePieChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>Revenue by Hospital Unit</h3>
-                    <canvas id="hospitalUnitRevenueChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">
-                        Top Tests by Revenue:
-                        <select id="unitSelect"></select> <!-- This is for filtering top tests by unit -->
-                    </div>
-                    <canvas id="topTestsRevenueChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <div class="chart-title">
-                        Top Tests by Volume:
-                        <select id="unitSelectVolume" style="display:none;"></select> <!-- Hidden, as unitSelect filters both -->
-                    </div>
-                    <canvas id="topTestsCountChart"></canvas>
-                </div>
-            </section>
-        </main>
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
     </div>
 
-    <!-- Loading Indicator (hidden by default) -->
-    <div id="loadingIndicator" style="display: none; text-align: center; margin-top: 20px; font-size: 1.2em; color: #21336a;">
-        Loading data... Please wait.
-    </div>
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="../images/zyntel_no_background.png" alt="logo" />
+      </div>
+    </footer>
 
-    <!-- Corrected path: relative to the served root (public/) -->
-    <script src="../js/revenue.js"></script>
-    <script>
-        // Optional: A small script to update the last updated time
-        document.addEventListener('DOMContentLoaded', () => {
-            const now = new Date();
-            document.getElementById('last-updated').textContent = now.toLocaleString();
-        });
-    </script>
-</body>
+    <!-- Link to the separate revenue.js file -->
+    <script type="module" src="../js/revenue.js"></script>
+  </body>
 </html>
