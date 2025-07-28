@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zyntel Dashboard - Revenue</title>
-    <link rel="icon" href="/images/zyntel_no_background.png" type="image/png">
+    <!-- Corrected path: relative to the served root (public/) -->
+    <link rel="icon" href="../images/zyntel_no_background.png" type="image/png">
 
-    <link rel="stylesheet" href="/css/general.css">
-    <link rel="stylesheet" href="/css/main.css">
+    <!-- Corrected paths: relative to the served root (public/) -->
+    <link rel="stylesheet" href="../css/general.css">
+    <link rel="stylesheet" href="../css/main.css">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Add Chart.js Datalabels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <!-- Add Moment.js and Chart.js Moment Adapter for time series charts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
 </head>
@@ -20,16 +20,18 @@
     <div class="dashboard-container">
         <aside class="sidebar">
             <div class="logo">
-                <img src="/images/zyntel_no_background.png" alt="Zyntel Logo">
+                <!-- Corrected path: relative to the served root (public/) -->
+                <img src="../images/zyntel_no_background.png" alt="Zyntel Logo">
                 <h1>Zyntel LIMS</h1>
             </div>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="/revenue.html" class="active">Revenue Overview</a></li>
-                    <li><a href="/progress.html">Progress Tracking</a></li>
-                    <li><a href="/performance.html">Performance Metrics</a></li>
-                    <li><a href="/reception.html">Reception Data</a></li>
-                    <li><a href="/tracker.html">Test Tracker</a></li>
+                    <!-- Corrected paths: relative to the current HTML file's directory (html/) -->
+                    <li><a href="revenue.html" class="active">Revenue Overview</a></li>
+                    <li><a href="progress.html">Progress Tracking</a></li>
+                    <li><a href="performance.html">Performance Metrics</a></li>
+                    <li><a href="reception.html">Reception Data</a></li>
+                    <li><a href="tracker.html">Test Tracker</a></li>
                 </ul>
             </nav>
             <div class="sidebar-footer">
@@ -146,7 +148,8 @@
         Loading data... Please wait.
     </div>
 
-    <script src="/js/revenue.js"></script>
+    <!-- Corrected path: relative to the served root (public/) -->
+    <script src="../js/revenue.js"></script>
     <script>
         // Optional: A small script to update the last updated time
         document.addEventListener('DOMContentLoaded', () => {

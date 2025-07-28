@@ -10,8 +10,8 @@
     </style>
     <!-- Moment.js CDN for robust date handling and parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <!-- Updated path for CSS assuming /public/css/main.css -->
-    <link rel="stylesheet" href="/css/main.css" />
+    <!-- Corrected path: relative to the served root (public/) -->
+    <link rel="stylesheet" href="../css/main.css" />
     <style>
       /* Add specific styles for the table and pagination if needed */
       #revenueTableContainer {
@@ -58,9 +58,9 @@
     <header>
       <div class="header-container">
         <div class="header-left">
-          <!-- Updated path for images assuming /public/images/logo-nakasero.png -->
+          <!-- Corrected path: relative to the served root (public/) -->
           <div class="logo">
-            <img src="/images/logo-nakasero.png" alt="logo" />
+            <img src="../images/logo-nakasero.png" alt="logo" />
           </div>
           <h1>NHL Laboratory Dashboard</h1>
         </div>
@@ -69,11 +69,11 @@
         </div>
       </div>
       <nav class="navbar">
-        <!-- Updated paths for HTML files assuming /public/html/index.html etc. -->
-        <a href="/html/index.html">Home</a>
-        <a href="/html/revenue.html">Revenue</a>
-        <a href="/html/numbers.html">Numbers</a>
-        <a href="/html/tat.html">TAT</a>
+        <!-- Corrected paths: relative to the current HTML file's directory (html/) -->
+        <a href="index.html">Home</a>
+        <a href="revenue.html">Revenue</a>
+        <a href="numbers.html">Numbers</a>
+        <a href="tat.html">TAT</a>
       </nav>
       <!-- Container for dynamic filter elements (date range, hospital unit, etc.) -->
       <!-- Filters will be re-initialized from URL params on this page -->
@@ -148,12 +148,12 @@
     <footer>
       <p>&copy;2025 Zyntel</p>
       <div class="zyntel">
-        <!-- Updated path for images assuming /public/images/zyntel_no_background.png -->
-        <img src="/images/zyntel_no_background.png" alt="logo" />
+        <!-- Corrected path: relative to the served root (public/) -->
+        <img src="../images/zyntel_no_background.png" alt="logo" />
       </div>
     </footer>
 
-    <!-- Updated path for JS assuming /public/js/revenue-table.js -->
-    <script type="module" src="/js/revenue-table.js"></script>
+    <!-- Corrected path: relative to the served root (public/) -->
+    <script type="module" src="../js/revenue-table.js"></script>
   </body>
 </html>
