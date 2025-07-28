@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="/public/css/main.css">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Chart.js Datalabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <!-- Add Moment.js and Chart.js Moment Adapter for time series charts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -40,41 +45,108 @@
                 </div>
             </header>
 
+            <section class="filters-section">
+                <div class="filter-group">
+                    <label for="startDateFilter">Start Date:</label>
+                    <input type="date" id="startDateFilter" />
+                </div>
+                <div class="filter-group">
+                    <label for="endDateFilter">End Date:</label>
+                    <input type="date" id="endDateFilter" />
+                </div>
+                <div class="filter-group">
+                    <label for="periodSelect">Period:</label>
+                    <select id="periodSelect"></select>
+                </div>
+                <div class="filter-group">
+                    <label for="labSectionFilter">Lab Section:</label>
+                    <select id="labSectionFilter">
+                        <option value="all">All Sections</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="shiftFilter">Shift:</label>
+                    <select id="shiftFilter">
+                        <option value="all">All Shifts</option>
+                        <option value="Day">Day</option>
+                        <option value="Night">Night</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="hospitalUnitFilter">Hospital Unit:</label>
+                    <select id="hospitalUnitFilter">
+                        <option value="all">All Units</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <button id="showTableBtn" class="action-button">Show Table</button>
+                </div>
+            </section>
+
             <section class="kpi-section">
                 <div class="kpi-card">
                     <h3>Total Revenue</h3>
-                    <p id="kpi-total-revenue">Loading...</p>
+                    <p id="totalRevenueKPI">Loading...</p>
+                    <div id="totalRevenueTrend" class="kpi-trend"></div>
                 </div>
                 <div class="kpi-card">
                     <h3>Total Tests</h3>
-                    <p id="kpi-total-tests">Loading...</p>
+                    <p id="totalTestsKPI">Loading...</p>
+                    <div id="totalTestsTrend" class="kpi-trend"></div>
                 </div>
                 <div class="kpi-card">
                     <h3>Average Revenue per Test</h3>
-                    <p id="kpi-avg-revenue-per-test">Loading...</p>
+                    <p id="avgRevenuePerTestKPI">Loading...</p>
+                    <div id="avgRevenuePerTestTrend" class="kpi-trend"></div>
                 </div>
-                </section>
+                <div class="kpi-card progress-card">
+                    <h3>Revenue Target</h3>
+                    <p id="percentageValue">0%</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <p class="current-amount">Current: <span id="currentAmount">UGX 0</span></p>
+                    <p class="target-amount">Target: UGX 1,500,000,000</p>
+                </div>
+            </section>
 
             <section class="charts-section">
                 <div class="chart-card">
-                    <h3>Monthly Revenue Trend</h3>
-                    <canvas id="monthlyRevenueChart"></canvas>
+                    <h3>Daily Revenue Trend</h3>
+                    <canvas id="dailyRevenueBarChart"></canvas>
                 </div>
                 <div class="chart-card">
-                    <h3>Revenue by Service</h3>
-                    <canvas id="revenueByServiceChart"></canvas>
+                    <h3>Revenue by Lab Section</h3>
+                    <canvas id="sectionRevenuePieChart"></canvas>
                 </div>
-                </section>
-
-            <section class="table-section" id="revenue-table-container">
-                <h3>Detailed Revenue Data</h3>
-                <div id="revenue-data-table"></div>
+                <div class="chart-card">
+                    <h3>Revenue by Hospital Unit</h3>
+                    <canvas id="hospitalUnitRevenueChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">
+                        Top Tests by Revenue:
+                        <select id="unitSelect"></select> <!-- This is for filtering top tests by unit -->
+                    </div>
+                    <canvas id="topTestsRevenueChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">
+                        Top Tests by Volume:
+                        <select id="unitSelectVolume" style="display:none;"></select> <!-- Hidden, as unitSelect filters both -->
+                    </div>
+                    <canvas id="topTestsCountChart"></canvas>
+                </div>
             </section>
         </main>
     </div>
 
+    <!-- Loading Indicator (hidden by default) -->
+    <div id="loadingIndicator" style="display: none; text-align: center; margin-top: 20px; font-size: 1.2em; color: #21336a;">
+        Loading data... Please wait.
+    </div>
+
     <script src="/public/js/revenue.js"></script>
-    <script src="/public/js/revenue-table.js"></script>
     <script>
         // Optional: A small script to update the last updated time
         document.addEventListener('DOMContentLoaded', () => {

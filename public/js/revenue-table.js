@@ -1,12 +1,15 @@
 // revenue-table.js
 
 // IMPORTANT: REPLACE WITH YOUR ACTUAL RENDER SERVICE URL for the backend API
-const API_REVENUE_ENDPOINT = "https://your-zyntel-api-url.onrender.com/api/revenue-data"; // e.g., "https://zyntel-api-abc1234.onrender.com/api/revenue-data"
+const API_REVENUE_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/revenue-data"; // Your Render API URL
 
 let allRevenueData = []; // Holds all fetched data
 let filteredRevenueData = []; // Holds data after applying filters (from API response)
 let currentPage = 1;
 const rowsPerPage = 20; // Number of rows to display per page
+
+// Client identifier for multi-tenancy - This should match the CLIENT_IDENTIFIER in your backend's .env
+const CLIENT_IDENTIFIER = "Nakasero";
 
 // DOM Elements
 const revenueTableBody = document.getElementById("revenueTableBody");
@@ -35,6 +38,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Helper to construct API URL with filters
 function constructApiUrl(baseApiUrl, paramsObject = {}) {
   const params = new URLSearchParams(paramsObject);
+  // Add client identifier for multi-tenancy
+  params.append("clientId", CLIENT_IDENTIFIER);
   return `${baseApiUrl}?${params.toString()}`;
 }
 
@@ -234,7 +239,7 @@ function renderTable() {
   } else {
     paginatedData.forEach(item => {
       const row = revenueTableBody.insertRow();
-      row.insertCell().textContent = item.id;
+      row.insertCell().textContent = item.ID; // Changed from item.id to item.ID
       row.insertCell().textContent = item.Date || 'N/A';
       row.insertCell().textContent = item.Shift || 'N/A';
       row.insertCell().textContent = item.Lab_Number || 'N/A';
