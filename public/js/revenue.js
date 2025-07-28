@@ -366,12 +366,38 @@ function getAggregatedCountByTest(data) {
 
 // --- Chart Rendering Functions ---
 
+// Helper function to create/re-create canvas element
+function getOrCreateCanvas(id) {
+  let canvas = document.getElementById(id);
+  // If canvas exists, replace it to clear any inline styles or Chart.js artifacts
+  if (canvas) {
+    const parent = canvas.parentElement;
+    const newCanvas = document.createElement('canvas');
+    newCanvas.id = id;
+    // Copy any necessary classes from the old canvas to the new one
+    newCanvas.className = canvas.className;
+    parent.replaceChild(newCanvas, canvas);
+    canvas = newCanvas;
+  } else {
+    // This case should ideally not happen if HTML is correct, but as a fallback
+    console.warn(`Canvas element with ID '${id}' not found. Attempting to create.`);
+    canvas = document.createElement('canvas');
+    canvas.id = id;
+    // For this fallback, you might need to append it to a known container
+    // For now, assume it's always in a .chart-container
+  }
+  return canvas;
+}
+
+
 function renderDailyRevenueChart() {
-  const ctx = document.getElementById("dailyRevenueBarChart").getContext("2d");
+  const canvas = getOrCreateCanvas("dailyRevenueBarChart");
+  const ctx = canvas.getContext("2d");
   const sortedDates = Object.keys(aggregatedRevenueByDate).sort();
   const labels = sortedDates;
   const data = sortedDates.map((date) => aggregatedRevenueByDate[date]);
 
+  // Destroy existing chart instance before creating a new one
   if (revenueChart) {
     revenueChart.destroy();
   }
@@ -393,6 +419,10 @@ function renderDailyRevenueChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      // Add resize property to explicitly handle resize events
+      // onResize: (chart, newSize) => {
+      //   console.log('Chart resized:', newSize);
+      // },
       plugins: {
         legend: {
           display: true,
@@ -438,7 +468,8 @@ function renderDailyRevenueChart() {
 }
 
 function renderSectionRevenueChart() {
-  const ctx = document.getElementById("sectionRevenuePieChart").getContext("2d");
+  const canvas = getOrCreateCanvas("sectionRevenuePieChart");
+  const ctx = canvas.getContext("2d");
 
   const labels = Object.keys(aggregatedRevenueBySection);
   const data = Object.values(aggregatedRevenueBySection);
@@ -452,6 +483,7 @@ function renderSectionRevenueChart() {
     "#C9CBCF",
   ];
 
+  // Destroy existing chart instance before creating a new one
   if (sectionRevenueChart) {
     sectionRevenueChart.destroy();
   }
@@ -488,7 +520,8 @@ function renderSectionRevenueChart() {
 }
 
 function renderHospitalUnitRevenueChart() {
-  const ctx = document.getElementById("hospitalUnitRevenueChart").getContext("2d");
+  const canvas = getOrCreateCanvas("hospitalUnitRevenueChart");
+  const ctx = canvas.getContext("2d");
 
   const sortedUnits = Object.keys(aggregatedRevenueByUnit).sort((a, b) => {
     return aggregatedRevenueByUnit[b] - aggregatedRevenueByUnit[a]; // Sort by revenue descending
@@ -498,6 +531,7 @@ function renderHospitalUnitRevenueChart() {
   const revenueData = sortedUnits.map((unit) => aggregatedRevenueByUnit[unit]);
   const countData = sortedUnits.map((unit) => aggregatedTestCountByUnit[unit]);
 
+  // Destroy existing chart instance before creating a new one
   if (hospitalUnitRevenueChart) {
     hospitalUnitRevenueChart.destroy();
   }
@@ -571,8 +605,10 @@ function renderHospitalUnitRevenueChart() {
 }
 
 function renderTopTestsCharts(unitFilter) {
-  const ctxRevenue = document.getElementById("topTestsRevenueChart").getContext("2d");
-  const ctxCount = document.getElementById("topTestsCountChart").getContext("2d");
+  const canvasRevenue = getOrCreateCanvas("topTestsRevenueChart");
+  const ctxRevenue = canvasRevenue.getContext("2d");
+  const canvasCount = getOrCreateCanvas("topTestsCountChart");
+  const ctxCount = canvasCount.getContext("2d");
 
   let dataForTopTests = filteredData;
 
@@ -596,6 +632,7 @@ function renderTopTestsCharts(unitFilter) {
   const top10CountData = top10CountLabels.map((test) => aggregatedCount[test]);
 
   // Render Top 10 Tests by Revenue
+  // Destroy existing chart instance before creating a new one
   if (topTestsRevenueChart) {
     topTestsRevenueChart.destroy();
   }
@@ -653,6 +690,7 @@ function renderTopTestsCharts(unitFilter) {
   });
 
   // Render Top 10 Tests by Count
+  // Destroy existing chart instance before creating a new one
   if (topTestsCountChart) {
     topTestsCountChart.destroy();
   }
