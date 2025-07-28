@@ -34,7 +34,7 @@ let filteredAndAggregatedData = {
 
 let chartInstances = {};
 
-// MAINTAINED USER'S ORIGINAL API_URL
+// MAINTAINED USER'S ORIGINAL API_URL - DO NOT CHANGE THIS LINE
 const API_URL = 'https://zyntel-data-updater.onrender.com/api/revenue-data';
 const REVENUE_TARGET = 1500000000; // 1.5 Billion UGX
 
@@ -329,10 +329,10 @@ function populateFilterDropdowns(data) {
         shiftFilter.value = 'all';
     }
 
-    if (currentUnit && Array.from(uniqueUnits).includes(currentUnit)) {
+    if (uniqueUnits.size > 0 && (!currentUnit || !Array.from(uniqueUnits).includes(currentUnit))) {
+        unitSelect.value = Array.from(uniqueUnits).sort()[0]; // Default to the first unit if none selected or invalid
+    } else if (currentUnit) {
         unitSelect.value = currentUnit;
-    } else if (uniqueUnits.size > 0) {
-        unitSelect.value = Array.from(uniqueUnits).sort()[0];
     }
 }
 
@@ -358,7 +358,7 @@ function renderNoDataCharts() {
             noDataMessage.className = 'no-data-message';
             noDataMessage.textContent = 'No data available for this chart based on current filters.';
             noDataMessage.style.textAlign = 'center';
-            noDataMessage.style.color = 'var(--text-color-light)';
+            noDataMessage.style.color = getComputedStyle(document.documentElement).getPropertyValue('--text-medium');
             noDataMessage.style.marginTop = '20px';
             parent.appendChild(noDataMessage);
             canvas.style.display = 'none';
@@ -384,25 +384,28 @@ function renderCharts(selectedUnitForTopTests) {
 // --- Specific Chart Rendering Implementations ---
 
 // Define a consistent color palette for charts, referencing CSS variables
+// Ensure these variables are defined in your general.css :root selector
 const chartColors = {
-    primary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-1'),
-    secondary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-2'),
-    tertiary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-3'),
-    quaternary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-4'),
-    quinary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-5'),
-    senary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-6'),
-    grey: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-grey'),
+    primary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-1').trim(),
+    secondary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-2').trim(),
+    tertiary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-3').trim(),
+    quaternary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-4').trim(),
+    quinary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-5').trim(),
+    senary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-6').trim(),
+    grey: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-grey').trim(),
 };
 
 // Function to get a slightly darker version of a color for borders
 function getBorderColor(color) {
-    // This is a simplified approach; for more robust color manipulation,
-    // a color library might be used or more complex HSL/RGB manipulation.
+    // Basic darkening logic for RGB/RGBA colors.
     if (color.startsWith('rgb')) {
         const parts = color.match(/\d+/g).map(Number);
-        return `rgba(${parts[0] * 0.8}, ${parts[1] * 0.8}, ${parts[2] * 0.8}, 1)`;
+        const r = Math.max(0, parts[0] * 0.8);
+        const g = Math.max(0, parts[1] * 0.8);
+        const b = Math.max(0, parts[2] * 0.8);
+        return `rgba(${r}, ${g}, ${b}, 1)`;
     }
-    return color; // Fallback
+    return color; // Fallback for other color formats
 }
 
 function renderRevenueBarChart(totalRevenue) {
@@ -471,7 +474,7 @@ function renderRevenueBarChart(totalRevenue) {
                         callback: function(value) {
                             return formatCurrency(value);
                         },
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -498,7 +501,7 @@ function renderDailyRevenueChart(data) {
                 label: 'Daily Revenue',
                 data: data.map(item => item.revenue),
                 borderColor: chartColors.primary,
-                backgroundColor: chartColors.primary.replace(')', ', 0.2)'), // Lighter fill
+                backgroundColor: chartColors.primary.replace(')', ', 0.2)'), // Lighter fill using rgba from rgb
                 tension: 0.3,
                 fill: true,
                 pointRadius: 3,
@@ -512,7 +515,7 @@ function renderDailyRevenueChart(data) {
                 title: {
                     display: true,
                     text: 'Daily Revenue Trends',
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -538,10 +541,10 @@ function renderDailyRevenueChart(data) {
                     title: {
                         display: true,
                         text: 'Date',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -552,13 +555,13 @@ function renderDailyRevenueChart(data) {
                     title: {
                         display: true,
                         text: 'Revenue (UGX)',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
                         },
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -580,9 +583,10 @@ function renderRevenueByLabSectionChart(data) {
         chartColors.quaternary,
         chartColors.quinary,
         chartColors.senary,
-        // Add more colors if needed
     ];
-    const borderColors = colors.map(c => getBorderColor(c));
+    // Cycle through defined colors if more data points than colors
+    const backgroundColors = data.map((_, i) => colors[i % colors.length]);
+    const borderColors = backgroundColors.map(c => getBorderColor(c));
 
     chartInstances.sectionRevenueChart = new Chart(ctx, {
         type: 'bar',
@@ -591,7 +595,7 @@ function renderRevenueByLabSectionChart(data) {
             datasets: [{
                 label: 'Revenue by Lab Section',
                 data: data.map(item => item.revenue),
-                backgroundColor: colors,
+                backgroundColor: backgroundColors,
                 borderColor: borderColors,
                 borderWidth: 1
             }]
@@ -603,7 +607,7 @@ function renderRevenueByLabSectionChart(data) {
                 title: {
                     display: true,
                     text: 'Revenue Distribution by Lab Section',
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -618,7 +622,7 @@ function renderRevenueByLabSectionChart(data) {
                     formatter: function(value) {
                         return formatCurrency(value);
                     },
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark'),
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark'),
                     font: {
                         weight: 'bold',
                         size: 10
@@ -631,13 +635,13 @@ function renderRevenueByLabSectionChart(data) {
                     title: {
                         display: true,
                         text: 'Revenue (UGX)',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
                         },
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -647,10 +651,10 @@ function renderRevenueByLabSectionChart(data) {
                     title: {
                         display: true,
                         text: 'Lab Section',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -673,7 +677,6 @@ function renderHospitalUnitRevenueChart(data) {
         chartColors.quinary,
         chartColors.senary,
     ];
-    // Cycle through defined colors if more data points than colors
     const backgroundColors = data.map((_, i) => dynamicColors[i % dynamicColors.length]);
     const borderColors = backgroundColors.map(c => getBorderColor(c));
 
@@ -696,7 +699,7 @@ function renderHospitalUnitRevenueChart(data) {
                 title: {
                     display: true,
                     text: 'Revenue Distribution by Hospital Unit',
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -761,7 +764,7 @@ function renderTopTestsChart(data, selectedUnit) {
                 title: {
                     display: true,
                     text: `Top ${topN} Tests by Revenue for ${selectedUnit || 'All Units'}`,
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -776,7 +779,7 @@ function renderTopTestsChart(data, selectedUnit) {
                     formatter: function(value) {
                         return formatCurrency(value);
                     },
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark'),
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark'),
                     font: {
                         weight: 'bold',
                         size: 10
@@ -789,13 +792,13 @@ function renderTopTestsChart(data, selectedUnit) {
                     title: {
                         display: true,
                         text: 'Revenue (UGX)',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
                         },
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -805,10 +808,10 @@ function renderTopTestsChart(data, selectedUnit) {
                     title: {
                         display: true,
                         text: 'Test Name',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -844,7 +847,7 @@ function renderTestRevenueChart(data) {
                 title: {
                     display: true,
                     text: 'All Tests by Revenue',
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -862,13 +865,13 @@ function renderTestRevenueChart(data) {
                     title: {
                         display: true,
                         text: 'Test Name',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     autoSkip: true,
                     maxRotation: 45,
                     minRotation: 45,
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -879,13 +882,13 @@ function renderTestRevenueChart(data) {
                     title: {
                         display: true,
                         text: 'Revenue (UGX)',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
                         },
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -921,7 +924,7 @@ function renderTestCountChart(data) {
                 title: {
                     display: true,
                     text: 'Number of Tests Performed',
-                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -939,13 +942,13 @@ function renderTestCountChart(data) {
                     title: {
                         display: true,
                         text: 'Test Name',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     autoSkip: true,
                     maxRotation: 45,
                     minRotation: 45,
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -956,10 +959,10 @@ function renderTestCountChart(data) {
                     title: {
                         display: true,
                         text: 'Number of Tests',
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     ticks: {
-                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-dark')
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)'
@@ -1025,7 +1028,8 @@ function populatePeriodSelector() {
         optionElement.textContent = opt.text;
         periodSelect.appendChild(optionElement);
     });
-    periodSelect.value = "thisMonth"; // Default selection
+    // Set default to "This Month" unless explicitly overridden
+    periodSelect.value = "thisMonth";
 }
 
 function handlePeriodChange() {
@@ -1038,15 +1042,15 @@ function handlePeriodChange() {
     let newEndDate = today;
 
     switch (periodSelect.value) {
-        case 'last7days':
+        case 'last7days': // This option is not in the periodSelect dropdown, but kept for robustness
             newStartDate = moment.utc().subtract(6, 'days').startOf('day');
             break;
-        case 'last30days':
+        case 'last30days': // This option is not in the periodSelect dropdown, but kept for robustness
             newStartDate = moment.utc().subtract(29, 'days').startOf('day');
             break;
         case 'thisMonth':
             newStartDate = moment.utc().startOf('month');
-            newEndDate = moment.utc().endOf('month'); // End of current month
+            newEndDate = moment.utc().endOf('month');
             break;
         case 'lastMonth':
             newStartDate = moment.utc().subtract(1, 'month').startOf('month');
@@ -1061,11 +1065,11 @@ function handlePeriodChange() {
             newEndDate = moment.utc().subtract(1, 'quarter').endOf('quarter');
             break;
         case 'all':
-            newStartDate = null; // Represents all time
-            newEndDate = null; // Represents all time
+            newStartDate = null;
+            newEndDate = null;
             break;
         default:
-            newStartDate = null;
+            newStartDate = null; // Default to all time if unknown period
             newEndDate = null;
             break;
     }
@@ -1085,20 +1089,20 @@ function applyInitialDateFilter() {
 
 function displayNoDataMessage(message) {
     const chartsArea = document.querySelector('.charts-area');
-    const existingMessage = chartsArea.querySelector('.no-data-overall-message');
+    let existingMessage = chartsArea.querySelector('.no-data-overall-message');
+
     if (!existingMessage) {
-        const noDataDiv = document.createElement('div');
-        noDataDiv.className = 'no-data-overall-message';
-        noDataDiv.style.textAlign = 'center';
-        noDataDiv.style.padding = '50px';
-        noDataDiv.style.color = 'var(--text-color-light)';
-        noDataDiv.style.fontSize = '1.2em';
-        noDataDiv.style.backgroundColor = 'var(--secondary-bg)';
-        noDataDiv.style.borderRadius = '10px';
-        noDataDiv.style.boxShadow = '0 4px 15px var(--shadow-light)';
-        noDataDiv.textContent = message;
-        chartsArea.appendChild(noDataDiv);
-    } else {
-        existingMessage.textContent = message;
+        existingMessage = document.createElement('div');
+        existingMessage.className = 'no-data-overall-message';
+        chartsArea.appendChild(existingMessage);
     }
+    existingMessage.textContent = message;
+    
+    // Hide all chart canvases when showing overall no data message
+    document.querySelectorAll('.chart-container canvas').forEach(canvas => {
+        canvas.style.display = 'none';
+        // Also remove individual no-data messages if present
+        const individualNoData = canvas.parentElement.querySelector('.no-data-message');
+        if (individualNoData) individualNoData.remove();
+    });
 }

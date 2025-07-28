@@ -1,60 +1,54 @@
-/* General styles from general.css */
+/* General styles derived from ideal_page.txt aesthetic */
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 
 :root {
-  /* Core Colors */
-  --primary-bg: #f5f7fa; /* Light background for the overall page */
-  --secondary-bg: #ffffff; /* White background for cards and main content areas */
-  --accent-color: #007bff; /* A vibrant blue for primary actions/highlights */
-  --header-bg: #2c3e50; /* Dark blue-grey for the header */
-  --header-text: #ecf0f1; /* Light grey for header text */
-  --nav-active-bg: #3498db; /* Brighter blue for active nav links */
-  --text-color-dark: #34495e; /* Dark text for general content */
-  --text-color-light: #7f8c8d; /* Lighter grey for secondary text/labels */
-  --border-color: #e0e0e0; /* Light border for separation */
-  --shadow-light: rgba(0, 0, 0, 0.08); /* Subtle shadow for cards */
-  --positive-trend: #27ae60; /* Green for positive trends */
-  --negative-trend: #e74c3c; /* Red for negative trends */
+  /* Colors inferred from ideal_page.txt structure for a clean, professional look */
+  --primary-bg: #f5f7fa; /* Light greyish-blue background for the entire page */
+  --secondary-bg: #ffffff; /* Pure white for cards and main content areas */
+  --header-footer-bg: #2c3e50; /* Dark blue-grey for header and footer */
+  --header-footer-text: #ecf0f1; /* Off-white for text in header/footer */
+  --nav-active-bg: #3498db; /* A vibrant blue for active navigation items */
+  --text-dark: #34495e; /* Dark slate grey for primary text */
+  --text-medium: #7f8c8d; /* Medium grey for labels and secondary text */
+  --border-light: #e0e0e0; /* Light grey for borders and separators */
+  --shadow-subtle: rgba(0, 0, 0, 0.08); /* A very light shadow for depth */
 
-  /* Chart Colors (matching palette) */
+  /* KPI and Trend Colors */
+  --kpi-positive: #27ae60; /* Emerald green for positive trends */
+  --kpi-negative: #e74c3c; /* Alizarin red for negative trends */
+
+  /* Chart Colors - A cohesive palette */
   --chart-color-1: #3498db; /* Peter River */
   --chart-color-2: #2ecc71; /* Emerald */
   --chart-color-3: #9b59b6; /* Amethyst */
   --chart-color-4: #e67e22; /* Carrot */
   --chart-color-5: #1abc9c; /* Turquoise */
   --chart-color-6: #f1c40f; /* Sunflower */
-  --chart-color-grey: #bdc3c7; /* Silver for inactive parts */
+  --chart-color-grey: #bdc3c7; /* Silver for inactive/remainder */
 }
 
+/* Base Styles */
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
   font-family: "Roboto", sans-serif;
-  color: var(--text-color-dark); /* Default text color */
+  color: var(--text-dark); /* Default text color */
 }
 
-html {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--primary-bg); /* Overall page background */
-}
-
-body {
-  display: flex;
-  flex-direction: column;
+html, body {
   min-height: 100vh;
-  width: 100%;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   background-color: var(--primary-bg);
+  font-size: 16px; /* Base font size */
 }
 
+/* Header */
 header {
-  background-color: var(--header-bg);
-  color: var(--header-text);
+  background-color: var(--header-footer-bg);
   padding: 15px 30px;
-  box-shadow: 0 2px 5px var(--shadow-light);
+  box-shadow: 0 2px 5px var(--shadow-subtle);
   width: 100%;
   z-index: 1000;
 }
@@ -65,13 +59,14 @@ header {
   align-items: center;
   max-width: 1400px; /* Max width for content */
   margin: 0 auto;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  flex-wrap: wrap;
+  gap: 15px; /* Spacing between sections */
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  flex-grow: 1; /* Allow left section to grow */
+  flex-grow: 1;
 }
 
 .logo img {
@@ -80,7 +75,7 @@ header {
 }
 
 header h1 {
-  color: var(--header-text);
+  color: var(--header-footer-text);
   font-size: 1.8em;
   font-weight: 500;
   margin: 0;
@@ -93,13 +88,13 @@ header h1 {
 }
 
 .page span {
-  color: var(--nav-active-bg); /* Highlight current page name */
+  color: var(--nav-active-bg);
   font-size: 1.2em;
   font-weight: bold;
 }
 
 #menuToggle {
-  background-color: var(--accent-color);
+  background-color: var(--nav-active-bg);
   color: white;
   border: none;
   padding: 8px 15px;
@@ -113,18 +108,19 @@ header h1 {
   background-color: #0056b3; /* Darker blue on hover */
 }
 
+/* Navigation Bar */
 .navbar {
-  background-color: var(--header-bg);
+  background-color: var(--header-footer-bg);
   padding: 10px 30px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 3px var(--shadow-light);
+  box-shadow: 0 1px 3px var(--shadow-subtle);
   display: flex;
-  justify-content: center; /* Center the navigation links */
-  flex-wrap: wrap; /* Allow nav items to wrap */
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .navbar a {
-  color: var(--header-text);
+  color: var(--header-footer-text);
   text-decoration: none;
   padding: 8px 20px;
   border-radius: 5px;
@@ -143,15 +139,16 @@ header h1 {
   font-weight: bold;
 }
 
+/* Dashboard Filters */
 .dashboard-filters {
   background-color: var(--secondary-bg);
-  padding: 20px 30px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 0 30px; /* Start with 0 padding when hidden */
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center;
-  box-shadow: 0 2px 4px var(--shadow-light);
+  box-shadow: 0 2px 4px var(--shadow-subtle);
   transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease;
   max-height: 0;
   overflow: hidden;
@@ -159,37 +156,37 @@ header h1 {
 }
 
 .dashboard-filters.visible {
-  max-height: 200px; /* Adjust as needed based on content */
-  padding: 20px 30px;
+  max-height: 200px; /* Sufficient height for filters */
+  padding: 20px 30px; /* Apply padding when visible */
   opacity: 1;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  min-width: 180px; /* Ensure filters have a minimum width */
+  min-width: 180px;
 }
 
 .filter-group label {
   font-size: 0.9em;
   margin-bottom: 5px;
-  color: var(--text-color-light);
+  color: var(--text-medium);
 }
 
 .filter-group input[type="date"],
 .filter-group select {
   padding: 8px 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-light);
   border-radius: 5px;
   font-size: 1em;
-  background-color: var(--primary-bg);
-  color: var(--text-color-dark);
+  background-color: var(--primary-bg); /* Match overall light background */
+  color: var(--text-dark);
   transition: border-color 0.3s ease;
 }
 
 .filter-group input[type="date"]:focus,
 .filter-group select:focus {
-  border-color: var(--accent-color);
+  border-color: var(--nav-active-bg);
   outline: none;
 }
 
@@ -199,19 +196,19 @@ header h1 {
   flex-grow: 1;
   padding: 20px;
   gap: 20px;
-  max-width: 1400px; /* Max width for content */
-  margin: 20px auto; /* Center the main content */
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  max-width: 1400px;
+  margin: 20px auto;
+  flex-wrap: wrap;
 }
 
 /* Revenue Progress Card (Aside) */
 .revenue-progress-card {
   background-color: var(--secondary-bg);
   border-radius: 10px;
-  box-shadow: 0 4px 15px var(--shadow-light);
+  box-shadow: 0 4px 15px var(--shadow-subtle);
   padding: 25px;
-  flex: 1; /* Allows it to grow and shrink */
-  min-width: 300px; /* Minimum width for the card */
+  flex: 1;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -220,13 +217,13 @@ header h1 {
 .revenue-progress-card .label {
   font-size: 1.1em;
   font-weight: bold;
-  color: var(--text-color-dark);
+  color: var(--text-dark);
 }
 
 .revenue-progress-card .percentage {
   font-size: 2.5em;
   font-weight: bold;
-  color: var(--accent-color);
+  color: var(--nav-active-bg); /* Use accent color for emphasis */
   margin-bottom: 5px;
 }
 
@@ -234,11 +231,11 @@ header h1 {
   display: flex;
   justify-content: space-between;
   font-size: 1.1em;
-  color: var(--text-color-light);
+  color: var(--text-medium);
 }
 
 .revenue-progress-card .amounts #currentAmount {
-  color: var(--text-color-dark);
+  color: var(--text-dark);
   font-weight: bold;
 }
 
@@ -255,11 +252,11 @@ header h1 {
 }
 
 .kpi-card {
-  background-color: var(--primary-bg);
+  background-color: var(--primary-bg); /* Slightly different background for KPIs */
   border-radius: 8px;
   padding: 15px;
   box-shadow: inset 0 0 5px rgba(0,0,0,0.05); /* Inner shadow for depth */
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -267,14 +264,14 @@ header h1 {
 
 .kpi-label {
   font-size: 0.9em;
-  color: var(--text-color-light);
+  color: var(--text-medium);
   margin-bottom: 5px;
 }
 
 .kpi-value {
   font-size: 1.6em;
   font-weight: bold;
-  color: var(--text-color-dark);
+  color: var(--text-dark);
 }
 
 .kpi-trend {
@@ -286,11 +283,11 @@ header h1 {
 }
 
 .kpi-trend.positive {
-  color: var(--positive-trend);
+  color: var(--kpi-positive);
 }
 
 .kpi-trend.negative {
-  color: var(--negative-trend);
+  color: var(--kpi-negative);
 }
 
 .kpi-trend .fas {
@@ -299,31 +296,31 @@ header h1 {
 
 /* Charts Area */
 .charts-area {
-  flex: 2; /* Allows it to take more space than the aside */
-  min-width: 600px; /* Minimum width for the charts area */
+  flex: 2;
+  min-width: 600px;
 }
 
 .dashboard-charts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid for charts */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
 }
 
 .dashboard-charts > div {
   background-color: var(--secondary-bg);
   border-radius: 10px;
-  box-shadow: 0 4px 15px var(--shadow-light);
+  box-shadow: 0 4px 15px var(--shadow-subtle);
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center chart title */
-  min-height: 350px; /* Minimum height for chart containers */
+  align-items: center;
+  min-height: 350px;
 }
 
 .chart-title {
   font-size: 1.1em;
   font-weight: bold;
-  color: var(--text-color-dark);
+  color: var(--text-dark);
   margin-bottom: 15px;
   text-align: center;
 }
@@ -331,7 +328,7 @@ header h1 {
 .chart-container {
   width: 100%;
   flex-grow: 1;
-  display: flex; /* For centering canvas within container */
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -344,20 +341,20 @@ header h1 {
 .unitSelect-label {
   margin-right: 10px;
   font-size: 1em;
-  color: var(--text-color-light);
+  color: var(--text-medium);
 }
 
 /* Notice for small screens */
 .notice {
   background-color: var(--secondary-bg);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-light);
   padding: 20px;
   margin: 20px;
   text-align: center;
   border-radius: 8px;
-  box-shadow: 0 2px 5px var(--shadow-light);
-  display: none; /* Hidden by default */
-  color: var(--text-color-dark);
+  box-shadow: 0 2px 5px var(--shadow-subtle);
+  display: none;
+  color: var(--text-dark);
 }
 
 .notice p {
@@ -368,26 +365,39 @@ header h1 {
 
 /* Footer */
 footer {
-  background-color: var(--header-bg);
-  color: var(--header-text);
+  background-color: var(--header-footer-bg);
+  color: var(--header-footer-text);
   text-align: center;
   padding: 15px;
-  margin-top: auto; /* Pushes footer to the bottom */
+  margin-top: auto;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 -2px 5px var(--shadow-light);
+  box-shadow: 0 -2px 5px var(--shadow-subtle);
 }
 
 footer p {
-  color: var(--header-text);
+  color: var(--header-footer-text);
   font-size: 0.9em;
 }
 
 .zyntel img {
-  height: 30px; /* Adjust as needed */
+  height: 30px;
   vertical-align: middle;
+}
+
+/* Overall "No Data" Message for the charts area */
+.no-data-overall-message {
+  text-align: center;
+  padding: 50px;
+  color: var(--text-medium);
+  font-size: 1.2em;
+  background-color: var(--secondary-bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px var(--shadow-subtle);
+  grid-column: 1 / -1; /* Span across all columns in grid */
+  margin: 20px; /* Give it some margin */
 }
 
 /* Responsive adjustments */
@@ -399,13 +409,13 @@ footer p {
 
   .revenue-progress-card,
   .charts-area {
-    min-width: unset; /* Remove min-width to allow shrinking */
-    width: 100%; /* Take full width */
-    max-width: 700px; /* Max width for cards on smaller screens */
+    min-width: unset;
+    width: 100%;
+    max-width: 700px; /* Limit width for readability on tablets */
   }
 
   .dashboard-filters {
-    justify-content: flex-start; /* Align filters to start */
+    justify-content: flex-start;
   }
 }
 
@@ -426,28 +436,33 @@ footer p {
   }
 
   .dashboard-charts {
-    grid-template-columns: 1fr; /* Stack charts on very small screens */
+    grid-template-columns: 1fr;
   }
 
   .dashboard-filters.visible {
-    max-height: 400px; /* Allow more height for stacked filters */
+    max-height: 400px;
   }
 
   .notice {
-    display: block; /* Show notice on smaller screens */
+    display: block;
   }
 
   .charts-area {
     display: none; /* Hide charts if screen is too small, let notice show */
   }
+
+  /* When charts are hidden, the overall no-data message should still display if applicable */
+  .no-data-overall-message {
+    display: block; /* Ensure it's visible even if charts-area is hidden */
+  }
 }
 
 @media (min-width: 769px) {
   .notice {
-    display: none; /* Hide notice on wider screens */
+    display: none;
   }
 
   .charts-area {
-    display: block; /* Show charts on wider screens */
+    display: block;
   }
 }
