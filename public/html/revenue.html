@@ -1,160 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NHL Dashboard - Revenue</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-    </style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyntel Dashboard - Revenue</title>
+    <link rel="icon" href="/public/images/zyntel_no_background.png" type="image/png">
+
+    <link rel="stylesheet" href="/public/css/general.css">
+    <link rel="stylesheet" href="/public/css/main.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
-    <!-- Updated path for CSS assuming /public/css/main.css -->
-    <link rel="stylesheet" href="/css/main.css" />
-  </head>
-  <body>
-    <header>
-      <div class="header-container">
-        <div class="header-left">
-          <!-- Updated path for images assuming /public/images/logo-nakasero.png -->
-          <div class="logo">
-            <img src="/images/logo-nakasero.png" alt="logo" />
-          </div>
-          <h1>NHL Laboratory Dashboard</h1>
-        </div>
-        <div class="page">
-          <span>Revenue</span>
-          <button id="menuToggle">Show Filters</button>
-        </div>
-      </div>
-      <nav class="navbar">
-        <!-- Updated paths for HTML files assuming /public/html/index.html etc. -->
-        <a href="/html/index.html">Home</a>
-        <a href="/html/revenue.html" class="active">Revenue</a>
-        <a href="/html/numbers.html">Numbers</a>
-        <a href="/html/tat.html">TAT</a>
-      </nav>
-
-      <div class="dashboard-filters">
-        <div class="filter-group">
-          <label for="startDateFilter">Start Date:</label>
-          <input type="date" id="startDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="endDateFilter">End Date:</label>
-          <input type="date" id="endDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="periodSelect">Period:</label>
-          <select id="periodSelect"></select>
-        </div>
-        <div class="filter-group">
-          <label for="labSectionFilter">Lab Section:</label>
-          <select id="labSectionFilter">
-            <option value="all">All Sections</option>
-            <!-- Options will be dynamically populated by JS -->
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="shiftFilter">Shift:</label>
-          <select id="shiftFilter">
-            <option value="all">All Shifts</option>
-            <option value="Day">Day</option>
-            <option value="Night">Night</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="hospitalUnitFilter">Hospital Unit:</label>
-          <select id="hospitalUnitFilter">
-            <option value="all">All Units</option>
-            <!-- Options will be dynamically populated by JS -->
-          </select>
-        </div>
-        <!-- NEW: Show Table Button -->
-        <div class="filter-group">
-            <button id="showTableBtn" class="action-button">Show Revenue Table</button>
-        </div>
-      </div>
-    </header>
-
-    <main class="dashboard-layout">
-      <aside class="revenue-progress-card">
-        <div class="label">Total Revenue</div>
-        <div class="percentage" id="percentageValue">0%</div>
-        <div class="amounts">
-          <span id="currentAmount">UGX 0</span>
-          <span class="target">of UGX 1.5B</span>
-        </div>
-        <canvas id="revenueBarChart" class="chart-bar"></canvas>
-
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-label">Total Revenue</div>
-            <div class="kpi-value" id="totalRevenueKPI">UGX 0</div>
-            <div class="kpi-trend" id="totalRevenueTrend"></div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-label">Total Tests</div>
-            <div class="kpi-value" id="totalTestsKPI">0</div>
-            <div class="kpi-trend" id="totalTestsTrend"></div>
-          </div>
-
-          <div class="kpi-card">
-            <div class="kpi-label">Avg. Revenue/Test</div>
-            <div class="kpi-value" id="avgRevenuePerTestKPI">UGX 0</div>
-            <div class="kpi-trend" id="avgRevenuePerTestTrend"></div>
-          </div>
-        </div>
-      </aside>
-
-      <div class="charts-area">
-        <div class="dashboard-charts">
-          <div class="chart-container section-revenue">
-            <div class="chart-title">Revenue by Laboratory Section</div>
-            <canvas id="sectionRevenuePieChart"></canvas>
-          </div>
-          <div class="chart-container revenue">
-            <div class="chart-title">Daily Revenue</div>
-            <canvas id="dailyRevenueBarChart"></canvas>
-          </div>
-          <div class="chart-container hospital-unit">
-            <div class="chart-title">Revenue by Hospital Unit</div>
-            <canvas id="hospitalUnitRevenueChart"></canvas>
-          </div>
-          <div class="top-tests-container chart-container">
-            <div class="chart-title">
-              <label for="unitSelect" class="unitSelect-label"
-                >Top Tests by Revenue:</label
-              >
-              <select id="unitSelect"></select> <!-- This is for filtering top tests by unit -->
+</head>
+<body>
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="/public/images/zyntel_no_background.png" alt="Zyntel Logo">
+                <h1>Zyntel LIMS</h1>
             </div>
-            <canvas id="topTestsRevenueChart"></canvas>
-          </div>
-          <div class="test-count chart-container">
-            <div class="chart-title">Test Volume</div>
-            <canvas id="topTestsCountChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </main>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="/revenue.html" class="active">Revenue Overview</a></li>
+                    <li><a href="/progress.html">Progress Tracking</a></li>
+                    <li><a href="/performance.html">Performance Metrics</a></li>
+                    <li><a href="/reception.html">Reception Data</a></li>
+                    <li><a href="/tracker.html">Test Tracker</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2025 Zyntel</p>
+            </div>
+        </aside>
 
-    <div class="notice">
-      <p>Sorry!</p>
-      You need a wider screen to view the charts.
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h2>Revenue Dashboard</h2>
+                <div class="header-info">
+                    <span>Last Updated: <span id="last-updated">Loading...</span></span>
+                </div>
+            </header>
+
+            <section class="kpi-section">
+                <div class="kpi-card">
+                    <h3>Total Revenue</h3>
+                    <p id="kpi-total-revenue">Loading...</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Total Tests</h3>
+                    <p id="kpi-total-tests">Loading...</p>
+                </div>
+                <div class="kpi-card">
+                    <h3>Average Revenue per Test</h3>
+                    <p id="kpi-avg-revenue-per-test">Loading...</p>
+                </div>
+                </section>
+
+            <section class="charts-section">
+                <div class="chart-card">
+                    <h3>Monthly Revenue Trend</h3>
+                    <canvas id="monthlyRevenueChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Revenue by Service</h3>
+                    <canvas id="revenueByServiceChart"></canvas>
+                </div>
+                </section>
+
+            <section class="table-section" id="revenue-table-container">
+                <h3>Detailed Revenue Data</h3>
+                <div id="revenue-data-table"></div>
+            </section>
+        </main>
     </div>
 
-    <footer>
-      <p>&copy;2025 Zyntel</p>
-      <div class="zyntel">
-        <!-- Updated path for images assuming /public/images/zyntel_no_background.png -->
-        <img src="/images/zyntel_no_background.png" alt="logo" />
-      </div>
-    </footer>
-
-    <!-- Updated path for JS assuming /public/js/revenue.js -->
-    <script type="module" src="/js/revenue.js"></script>
-  </body>
+    <script src="/public/js/revenue.js"></script>
+    <script src="/public/js/revenue-table.js"></script>
+    <script>
+        // Optional: A small script to update the last updated time
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('last-updated').textContent = now.toLocaleString();
+        });
+    </script>
+</body>
 </html>
