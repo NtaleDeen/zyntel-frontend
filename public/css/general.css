@@ -1,462 +1,453 @@
 /* General styles from general.css */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+
+:root {
+  /* Core Colors */
+  --primary-bg: #f5f7fa; /* Light background for the overall page */
+  --secondary-bg: #ffffff; /* White background for cards and main content areas */
+  --accent-color: #007bff; /* A vibrant blue for primary actions/highlights */
+  --header-bg: #2c3e50; /* Dark blue-grey for the header */
+  --header-text: #ecf0f1; /* Light grey for header text */
+  --nav-active-bg: #3498db; /* Brighter blue for active nav links */
+  --text-color-dark: #34495e; /* Dark text for general content */
+  --text-color-light: #7f8c8d; /* Lighter grey for secondary text/labels */
+  --border-color: #e0e0e0; /* Light border for separation */
+  --shadow-light: rgba(0, 0, 0, 0.08); /* Subtle shadow for cards */
+  --positive-trend: #27ae60; /* Green for positive trends */
+  --negative-trend: #e74c3c; /* Red for negative trends */
+
+  /* Chart Colors (matching palette) */
+  --chart-color-1: #3498db; /* Peter River */
+  --chart-color-2: #2ecc71; /* Emerald */
+  --chart-color-3: #9b59b6; /* Amethyst */
+  --chart-color-4: #e67e22; /* Carrot */
+  --chart-color-5: #1abc9c; /* Turquoise */
+  --chart-color-6: #f1c40f; /* Sunflower */
+  --chart-color-grey: #bdc3c7; /* Silver for inactive parts */
+}
+
 * {
   padding: 0;
   margin: 0;
   box-sizing: border-box;
   font-family: "Roboto", sans-serif;
-  color: var(--main-color);
-}
-
-:root {
-  --main-color: #21336a;
-  --primary-color: #000;
-  --canvas-color: #fff;
-  --hover-color: #deab5f;
-  --background-color: rgba(250, 250, 250, 0.9);
-  --border-bottom: rgb(228, 228, 228);
-  --box-shadow: rgba(0, 0, 0, 0.05);
+  color: var(--text-color-dark); /* Default text color */
 }
 
 html {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 1000;
-  background-color: var(--background-color);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  height: 90px;
+  background-color: var(--primary-bg); /* Overall page background */
 }
 
 body {
-  margin: 0;
-  padding-top: 150px; /* Adjusted padding-to... */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0 auto;
+  background-color: var(--primary-bg);
 }
 
-/* header h1,
-header nav,
-header .navbar {
-  margin: 0;
-} */
+header {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  padding: 15px 30px;
+  box-shadow: 0 2px 5px var(--shadow-light);
+  width: 100%;
+  z-index: 1000;
+}
 
 .header-container {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  height: auto;
-  padding: 10px 20px 0 20px;
+  align-items: center;
+  max-width: 1400px; /* Max width for content */
+  margin: 0 auto;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-grow: 1; /* Allow left section to grow */
 }
 
 .logo img {
-  height: 40px;
+  height: 50px;
+  margin-right: 15px;
 }
 
-h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  word-spacing: 10px;
-  color: var(--main-color); /* Ensure h1 uses main-color */
+header h1 {
+  color: var(--header-text);
+  font-size: 1.8em;
+  font-weight: 500;
+  margin: 0;
 }
 
 .page {
   display: flex;
   align-items: center;
-  gap: 30px;
-  font-size: 1rem;
-  padding: 10px 20px;
-  font-weight: 500;
-  border-left: 2px solid var(--hover-color);
-  justify-content: space-between;
+  gap: 15px;
+}
+
+.page span {
+  color: var(--nav-active-bg); /* Highlight current page name */
+  font-size: 1.2em;
+  font-weight: bold;
 }
 
 #menuToggle {
-  display: none;
-  color: var(--main-color);
+  background-color: var(--accent-color);
+  color: white;
   border: none;
-  background-color: unset;
-  padding: 3px 5px;
-  margin-right: 10px;
+  padding: 8px 15px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 0.7rem !important;
-  font-weight: normal !important;
+  font-size: 0.9em;
+  transition: background-color 0.3s ease;
 }
 
 #menuToggle:hover {
-  border-bottom: 2px solid var(--hover-color);
+  background-color: #0056b3; /* Darker blue on hover */
 }
 
 .navbar {
+  background-color: var(--header-bg);
+  padding: 10px 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-light);
   display: flex;
-  gap: 20px;
-  justify-content: center;
-  align-items: center;
-  line-height: 1;
-  background-color: #21336a;
-  padding: 10px 20px;
-  margin-top: 0;
+  justify-content: center; /* Center the navigation links */
+  flex-wrap: wrap; /* Allow nav items to wrap */
 }
 
 .navbar a {
+  color: var(--header-text);
   text-decoration: none;
-  color: #fff;
+  padding: 8px 20px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease;
   font-weight: 500;
-  margin: 0 40px;
-  padding: 5px;
 }
 
 .navbar a:hover {
-  border-bottom: 2px solid var(--hover-color);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--nav-active-bg);
 }
 
 .navbar a.active {
-  border-bottom: 2px solid var(--hover-color);
+  background-color: var(--nav-active-bg);
+  color: white;
+  font-weight: bold;
 }
 
-.dashboard-filters,
-.filtersContainer {
-  position: fixed; /* Keep fixed to stay at top with scrolling */
-  top: 102px; /* Below the header */
-  left: 0;
-  width: 100vw;
-  z-index: 999;
+.dashboard-filters {
+  background-color: var(--secondary-bg);
+  padding: 20px 30px;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   gap: 20px;
-  padding: 17px 30px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background-color: var(--background-color);
-  border-bottom: 1px solid var(--border-bottom);
-  box-shadow: 0 1px 2px var(--box-shadow);
+  justify-content: center;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.3s ease;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
 }
 
-.filter-group,
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.dashboard-filters.visible {
+  max-height: 200px; /* Adjust as needed based on content */
+  padding: 20px 30px;
+  opacity: 1;
 }
 
-select,
-input {
-  padding: 5px 8px;
-  font-size: 10.5px;
-  color: var(--primary-color);
-  border: 1px solid var(--main-color);
-  border-radius: 4px;
-  width: auto;
-  margin-left: 5px;
-}
-
-input:hover,
-select:hover,
-input:active,
-select:active {
-  border-color: var(--hover-color);
-}
-
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--main-color);
-}
-
-main.dashboard-layout {
-  display: flex;
-  gap: 2rem;
-  margin: 3rem;
-  justify-content: space-between;
-}
-
-.charts-area {
-  flex: 3;
-}
-
-.revenue-progress-card {
-  position: sticky;
-  top: 200px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  height: fit-content;
-  overflow-y: auto;
-  font-family: Roboto, sans-serif;
+.filter-group {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  min-width: 180px; /* Ensure filters have a minimum width */
 }
 
-.chart-bar {
-  height: 20px !important;
-  margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.05);
+.filter-group label {
+  font-size: 0.9em;
+  margin-bottom: 5px;
+  color: var(--text-color-light);
 }
 
-.percentage {
-  font-size: 28px;
+.filter-group input[type="date"],
+.filter-group select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  font-size: 1em;
+  background-color: var(--primary-bg);
+  color: var(--text-color-dark);
+  transition: border-color 0.3s ease;
+}
+
+.filter-group input[type="date"]:focus,
+.filter-group select:focus {
+  border-color: var(--accent-color);
+  outline: none;
+}
+
+/* Main Dashboard Layout */
+.dashboard-layout {
+  display: flex;
+  flex-grow: 1;
+  padding: 20px;
+  gap: 20px;
+  max-width: 1400px; /* Max width for content */
+  margin: 20px auto; /* Center the main content */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+/* Revenue Progress Card (Aside) */
+.revenue-progress-card {
+  background-color: var(--secondary-bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px var(--shadow-light);
+  padding: 25px;
+  flex: 1; /* Allows it to grow and shrink */
+  min-width: 300px; /* Minimum width for the card */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.revenue-progress-card .label {
+  font-size: 1.1em;
   font-weight: bold;
-  color: #deab5f;
+  color: var(--text-color-dark);
 }
 
-.label {
-  margin-bottom: 4px;
-  font-size: 0.9rem;
-  color: #555;
+.revenue-progress-card .percentage {
+  font-size: 2.5em;
+  font-weight: bold;
+  color: var(--accent-color);
+  margin-bottom: 5px;
+}
+
+.revenue-progress-card .amounts {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1em;
+  color: var(--text-color-light);
+}
+
+.revenue-progress-card .amounts #currentAmount {
+  color: var(--text-color-dark);
+  font-weight: bold;
+}
+
+.revenue-progress-card .amounts .target {
   font-weight: 500;
 }
 
-.amounts {
-  display: flex;
-  justify-content: space-between;
-  color: var(--main-color);
-  font-size: 14px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-
-.amounts .target {
-  color: #6b7280;
-  font-weight: normal;
-}
-
+/* KPI Grid */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  width: 100%;
-  margin-top: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
 }
 
 .kpi-card {
-  background-color: #fff;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background-color: var(--primary-bg);
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.05); /* Inner shadow for depth */
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  text-align: center;
+  justify-content: space-between;
 }
 
 .kpi-label {
-  font-size: 0.9rem;
-  color: #555;
-  font-weight: 500;
+  font-size: 0.9em;
+  color: var(--text-color-light);
+  margin-bottom: 5px;
 }
 
 .kpi-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--main-color);
+  font-size: 1.6em;
+  font-weight: bold;
+  color: var(--text-color-dark);
 }
 
-.trend-positive {
-  color: green; /* Or a specific shade of green: #22c55e */
+.kpi-trend {
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
 }
 
-.trend-negative {
-  color: red; /* Or a specific shade of red: #ef4444 */
+.kpi-trend.positive {
+  color: var(--positive-trend);
 }
 
-.trend-neutral {
-  color: blue; /* Or a specific shade of blue: #3b82f6 */
+.kpi-trend.negative {
+  color: var(--negative-trend);
+}
+
+.kpi-trend .fas {
+  font-size: 0.8em;
+}
+
+/* Charts Area */
+.charts-area {
+  flex: 2; /* Allows it to take more space than the aside */
+  min-width: 600px; /* Minimum width for the charts area */
 }
 
 .dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive grid for charts */
+  gap: 20px;
+}
+
+.dashboard-charts > div {
+  background-color: var(--secondary-bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px var(--shadow-light);
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  align-items: center; /* Center chart title */
+  min-height: 350px; /* Minimum height for chart containers */
 }
 
 .chart-title {
-  color: var(--main-color);
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0 0 5px 0;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: var(--text-color-dark);
+  margin-bottom: 15px;
   text-align: center;
-  text-decoration: underline;
-}
-
-/* Styles specifically for the dashboard layout, merged from inline HTML styles */
-.container {
-  max-width: 1200px;
-  margin-left: auto; /* Center the container */
-  margin-right: auto;
 }
 
 .chart-container {
-  background-color: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
-  position: relative; /* Added for chart-loading overlay */
-  height: 400px; /* Standard height for charts */
-  width: 100%; /* Ensure responsiveness */
-  max-width: 800px; /* Max width for single chart containers */
-  margin-left: auto; /* Center individual chart containers */
-  margin-right: auto;
+  width: 100%;
+  flex-grow: 1;
+  display: flex; /* For centering canvas within container */
+  justify-content: center;
+  align-items: center;
 }
 
+.chart-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.unitSelect-label {
+  margin-right: 10px;
+  font-size: 1em;
+  color: var(--text-color-light);
+}
+
+/* Notice for small screens */
 .notice {
-  display: none;
+  background-color: var(--secondary-bg);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  margin: 20px;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px var(--shadow-light);
+  display: none; /* Hidden by default */
+  color: var(--text-color-dark);
 }
 
+.notice p {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+/* Footer */
 footer {
+  background-color: var(--header-bg);
+  color: var(--header-text);
+  text-align: center;
+  padding: 15px;
+  margin-top: auto; /* Pushes footer to the bottom */
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 10px 20px;
-  margin-top: 100px;
-}
-
-.zyntel {
-  height: 50px;
-  width: 120px;
-  overflow: hidden;
-  position: relative;
-  display: block;
-  margin-left: 20px;
-  padding: 10px;
-}
-
-.zyntel img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.14);
-  transform-origin: center center;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 -2px 5px var(--shadow-light);
 }
 
 footer p {
-  margin-left: 20px;
-  color: var(--main-color);
-  font-size: 13.5px;
+  color: var(--header-text);
+  font-size: 0.9em;
 }
 
-/* Media Queries for responsiveness (from general.css) */
+.zyntel img {
+  height: 30px; /* Adjust as needed */
+  vertical-align: middle;
+}
+
+/* Responsive adjustments */
 @media (max-width: 1024px) {
+  .dashboard-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .revenue-progress-card,
   .charts-area {
-    flex: 2;
+    min-width: unset; /* Remove min-width to allow shrinking */
+    width: 100%; /* Take full width */
+    max-width: 700px; /* Max width for cards on smaller screens */
+  }
+
+  .dashboard-filters {
+    justify-content: flex-start; /* Align filters to start */
   }
 }
 
 @media (max-width: 768px) {
-  h1 {
-    font-size: 1.2rem;
-    word-spacing: normal;
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .page {
-    font-size: 0.85rem;
-    margin-top: 15px;
-    padding: 1px 10px;
+    width: 100%;
     justify-content: space-between;
   }
 
-  .navbar {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
+  header h1 {
+    font-size: 1.5em;
   }
 
-  .navbar a {
-    margin: 50px 30px;
+  .dashboard-charts {
+    grid-template-columns: 1fr; /* Stack charts on very small screens */
   }
 
-  /* Adjustments for the new main dashboard structure */
-  .container {
-    padding: 1rem; /* Adjust container padding for smaller screens */
-  }
-  .grid.grid-cols-1.lg\:grid-cols-2 {
-    grid-template-columns: 1fr; /* Stack charts vertically on small screens */
-  }
-  .chart-container {
-    margin-bottom: 1rem; /* Adjust margin between stacked charts */
+  .dashboard-filters.visible {
+    max-height: 400px; /* Allow more height for stacked filters */
   }
 
-  main {
-    /* This rule from general.css hides main on small screens, which might hide charts */
-    display: block; /* Override to ensure main content is visible */
+  .notice {
+    display: block; /* Show notice on smaller screens */
   }
 
   .charts-area {
-    /* This rule from general.css hides charts-area on small screens, which might hide charts */
-    display: block; /* Override to ensure charts-area content is visible */
-    width: 100%;
-  }
-
-  .revenue-progress-card {
-    position: static; /* Remove sticky positioning on small screens */
-    max-width: 100%; /* Allow full width */
-  }
-
-  .kpi-grid {
-    grid-template-columns: 1fr; /* Stack KPIs vertically on small screens */
-  }
-
-  main.dashboard-layout {
-    flex-direction: column;
-    margin: 1rem;
-    gap: 1rem;
+    display: none; /* Hide charts if screen is too small, let notice show */
   }
 }
 
-/* Print styles (from general.css) */
-@media print {
-  body {
-    padding-top: 0;
-    overflow: visible;
+@media (min-width: 769px) {
+  .notice {
+    display: none; /* Hide notice on wider screens */
   }
 
-  header,
-  .filtersContainer,
-  footer,
-  #menuToggle {
-    display: none !important;
-  }
-
-  main.dashboard-layout {
-    display: block;
-    margin: 0;
-  }
-
-  .revenue-progress-card,
-  .chart-container,
-  .kpi-card {
-    box-shadow: none !important;
-    border: 1px solid #ddd;
-    page-break-inside: avoid;
-    margin-bottom: 15px;
-  }
-
-  .chart-title {
-    font-size: 1.2rem;
-    text-align: left;
-    margin-bottom: 10px;
-  }
-
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
+  .charts-area {
+    display: block; /* Show charts on wider screens */
   }
 }

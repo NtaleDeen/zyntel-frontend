@@ -2,7 +2,6 @@
 console.log("NHL Dashboard Revenue Logic script loaded and starting...");
 
 // Ensure Chart.js and its adapters are available
-// These checks help in debugging if external scripts fail to load
 if (typeof Chart === 'undefined') {
     console.error("Chart.js is not loaded. Please ensure it's linked correctly in your HTML.");
 }
@@ -12,7 +11,6 @@ if (typeof moment === 'undefined') {
 if (typeof ChartDataLabels === 'undefined') {
     console.warn("Chart.js Datalabels Plugin is not loaded. Some features might not work.");
 } else {
-    // Register the datalabels plugin globally if it's loaded
     Chart.register(ChartDataLabels);
 }
 
@@ -20,12 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM fully loaded and parsed. Initializing dashboard.");
     initializeDashboard();
     setupEventListeners();
-    // Set initial date filter to cover the last 30 days from the current date or all data
     applyInitialDateFilter();
 });
 
-let revenueData = []; // Stores the raw data fetched from the API
-let filteredAndAggregatedData = { // Stores data after filtering and aggregation
+let revenueData = [];
+let filteredAndAggregatedData = {
     totalRevenue: 0,
     dailyRevenue: [],
     revenueBySection: [],
@@ -33,29 +30,23 @@ let filteredAndAggregatedData = { // Stores data after filtering and aggregation
     testCountByUnit: [],
     revenueByTest: [],
     countByTest: [],
-    // Add other aggregated data as needed for KPIs
 };
 
-// Object to hold Chart.js instances for proper destruction and re-rendering
 let chartInstances = {};
 
-// Constants
+// MAINTAINED USER'S ORIGINAL API_URL
 const API_URL = 'https://zyntel-data-updater.onrender.com/api/revenue-data';
 const REVENUE_TARGET = 1500000000; // 1.5 Billion UGX
 
 // --- Utility Functions ---
 
-// Function to safely parse dates regardless of timezone issues
-// It converts to YYYY-MM-DD for consistent comparison and keying
 function parseDateToUTC(dateString) {
-    // Expected format: "Wed, 05 Feb 2025 00:00:00 GMT"
-    // Use moment.utc() to parse directly as UTC to avoid local timezone offsets
     const date = moment.utc(dateString, "ddd, DD MMM YYYY HH:mm:ss [GMT]");
     if (!date.isValid()) {
         console.warn(`Invalid date string received from API: ${dateString}`);
         return null;
     }
-    return date.startOf('day'); // Get start of the day in UTC for consistent date comparisons
+    return date.startOf('day');
 }
 
 function formatCurrency(amount) {
@@ -79,15 +70,37 @@ async function fetchData() {
         }
         const data = await response.json();
         console.log(`✅ Loaded ${data.length} rows from database.`);
-        revenueData = data; // Store the fetched data
+        
+        // Process database rows to match your existing data structure
+        revenueData = data.map((row) => {
+            const processedRow = { ...row };
 
-        // Populate dropdowns and then process data
+            // Process dates
+            processedRow.date = row.Date; // Use original Date string for consistency with parsing logic
+            processedRow.parsedEncounterDate = row.Date
+                ? moment(row.Date, "YYYY-MM-DD")
+                : null;
+            
+            // Process price
+            const parsedPriceValue = parseFloat(row.Price);
+            processedRow.price = isNaN(parsedPriceValue)
+                ? 0
+                : parsedPriceValue;
+
+            // Standardize case for filtering
+            processedRow.unit = (row.Hospital_Unit || "").toUpperCase();
+            processedRow.lab_section = (row.LabSection || "").toLowerCase();
+            processedRow.shift = (row.Shift || "").toLowerCase();
+            processedRow.test_name = row.TestName || "";
+
+            return processedRow;
+        });
+
         populateFilterDropdowns(revenueData);
-        processData(); // Initial data processing and chart rendering
+        processData();
     } catch (error) {
         console.error("❌ Error fetching data:", error);
-        displayNoDataMessage("Error loading data. Please try again later.");
-        // Clear KPIs and charts on fetch error
+        displayNoDataMessage("Error loading data. Please ensure your data source is available at " + API_URL);
         updateKPIs({
             totalRevenue: 0,
             avgDailyRevenue: 0,
@@ -115,21 +128,19 @@ function processData() {
         return;
     }
 
-    // Get current filter values from HTML elements
     const startDateFilterInput = document.getElementById('startDateFilter');
     const endDateFilterInput = document.getElementById('endDateFilter');
     const selectedLabSection = document.getElementById('labSectionFilter').value;
     const selectedShift = document.getElementById('shiftFilter').value;
-    const selectedUnit = document.getElementById('unitSelect').value; // For top tests chart, specific to the "Select Hospital Unit" filter
+    const selectedUnit = document.getElementById('unitSelect').value;
 
     let startDateMoment = startDateFilterInput.value ? moment.utc(startDateFilterInput.value).startOf('day') : null;
     let endDateMoment = endDateFilterInput.value ? moment.utc(endDateFilterInput.value).endOf('day') : null;
 
     let filteredData = revenueData.filter(item => {
         const itemDate = parseDateToUTC(item.date);
-        if (!itemDate) return false; // Skip items with invalid dates
+        if (!itemDate) return false;
 
-        // Date filter logic
         let meetsDateCriteria = true;
         if (startDateMoment && itemDate.isBefore(startDateMoment)) {
             meetsDateCriteria = false;
@@ -138,10 +149,7 @@ function processData() {
             meetsDateCriteria = false;
         }
 
-        // Lab Section filter logic
         let meetsSectionCriteria = (selectedLabSection === 'all' || item.lab_section === selectedLabSection);
-
-        // Shift filter logic
         let meetsShiftCriteria = (selectedShift === 'all' || item.shift === selectedShift);
 
         return meetsDateCriteria && meetsSectionCriteria && meetsShiftCriteria;
@@ -162,26 +170,25 @@ function processData() {
         return;
     }
 
-    // --- Data Aggregation ---
     const aggregated = {
         totalRevenue: 0,
         dailyRevenueMap: new Map(),
         revenueBySectionMap: new Map(),
         revenueByUnitMap: new Map(),
         testCountByUnitMap: new Map(),
-        revenueByTestMap: new Map(), // Global revenue by test
-        countByTestMap: new Map(),   // Global count by test
-        revenueByTestByUnitMap: new Map(), // For the 'Top Tests by Unit' chart
+        revenueByTestMap: new Map(),
+        countByTestMap: new Map(),
+        revenueByTestByUnitMap: new Map(),
         uniqueDates: new Set(),
         totalTestsPerformed: 0
     };
 
     filteredData.forEach(item => {
-        const dateKey = parseDateToUTC(item.date).format('YYYY-MM-DD'); // Consistent date key for aggregation
-        const price = parseFloat(item.price);
+        const dateKey = parseDateToUTC(item.date).format('YYYY-MM-DD');
+        const price = item.price; // Use processed item.price directly
 
         if (isNaN(price)) {
-            console.warn(`Invalid price for item (ID: ${item.id}, Test: ${item.test_name}): "${item.price}". Skipping.`);
+            console.warn(`Invalid price for item (Test: ${item.test_name}, Date: ${item.date}): "${item.price}". Skipping.`);
             return;
         }
 
@@ -189,29 +196,18 @@ function processData() {
         aggregated.totalTestsPerformed += 1;
         aggregated.uniqueDates.add(dateKey);
 
-        // Daily Revenue
         aggregated.dailyRevenueMap.set(dateKey, (aggregated.dailyRevenueMap.get(dateKey) || 0) + price);
-
-        // Revenue by Section
         aggregated.revenueBySectionMap.set(item.lab_section, (aggregated.revenueBySectionMap.get(item.lab_section) || 0) + price);
-
-        // Revenue by Unit
         aggregated.revenueByUnitMap.set(item.unit, (aggregated.revenueByUnitMap.get(item.unit) || 0) + price);
-
-        // Test Count by Unit
         aggregated.testCountByUnitMap.set(item.unit, (aggregated.testCountByUnitMap.get(item.unit) || 0) + 1);
-
-        // Revenue by Test & Count by Test (Global)
         aggregated.revenueByTestMap.set(item.test_name, (aggregated.revenueByTestMap.get(item.test_name) || 0) + price);
         aggregated.countByTestMap.set(item.test_name, (aggregated.countByTestMap.get(item.test_name) || 0) + 1);
 
-        // Revenue by Test for specific Unit (for Top Tests Chart)
         if (item.unit === selectedUnit) {
             aggregated.revenueByTestByUnitMap.set(item.test_name, (aggregated.revenueByTestByUnitMap.get(item.test_name) || 0) + price);
         }
     });
 
-    // Convert Maps to array of objects for Chart.js and sorting
     filteredAndAggregatedData.dailyRevenue = Array.from(aggregated.dailyRevenueMap).map(([date, revenue]) => ({ date, revenue })).sort((a, b) => moment(a.date).diff(moment(b.date)));
     filteredAndAggregatedData.revenueBySection = Array.from(aggregated.revenueBySectionMap).map(([section, revenue]) => ({ section, revenue })).sort((a, b) => b.revenue - a.revenue);
     filteredAndAggregatedData.revenueByUnit = Array.from(aggregated.revenueByUnitMap).map(([unit, revenue]) => ({ unit, revenue })).sort((a, b) => b.revenue - a.revenue);
@@ -223,15 +219,10 @@ function processData() {
     filteredAndAggregatedData.totalTestsPerformed = aggregated.totalTestsPerformed;
 
 
-    // Calculate KPIs
     const numDays = aggregated.uniqueDates.size > 0 ? aggregated.uniqueDates.size : 1;
     const avgDailyRevenue = aggregated.totalRevenue / numDays;
     const avgDailyTestsPerformed = aggregated.totalTestsPerformed / numDays;
-
-    // Placeholder for Revenue Growth Rate: You would typically compare revenue from the current period
-    // to a previous period (e.g., last month vs. this month). This requires more data or explicit
-    // period selection. For now, it's a fixed value.
-    const revenueGrowthRate = 0; // Needs actual calculation logic
+    const revenueGrowthRate = 0; // Placeholder, requires more complex logic for comparison periods
 
     updateKPIs({
         totalRevenue: aggregated.totalRevenue,
@@ -241,7 +232,7 @@ function processData() {
         totalTestsPerformed: aggregated.totalTestsPerformed
     });
 
-    renderCharts(selectedUnit); // Pass selectedUnit to potentially filter top tests if needed
+    renderCharts(selectedUnit);
 
     console.log("--- Finished processData() ---");
 }
@@ -250,18 +241,18 @@ function updateKPIs(kpis) {
     document.getElementById('percentageValue').textContent = `${((kpis.totalRevenue / REVENUE_TARGET) * 100).toFixed(2)}%`;
     document.getElementById('currentAmount').textContent = formatCurrency(kpis.totalRevenue);
     document.getElementById('avgDailyRevenue').textContent = formatCurrency(kpis.avgDailyRevenue);
-    document.getElementById('avgDailyTestsPerformed').textContent = kpis.avgDailyTestsPerformed.toFixed(0); // Round for display
+    document.getElementById('avgDailyTestsPerformed').textContent = kpis.avgDailyTestsPerformed.toFixed(0);
     document.getElementById('totalTestsPerformed').textContent = kpis.totalTestsPerformed.toLocaleString('en-US');
 
-    // For trends, you'd need comparative data. For now, just set placeholders.
-    // Ensure you have Font Awesome or similar for icons, or use text/emojis.
+    document.getElementById('revenueGrowthRate').textContent = `${kpis.revenueGrowthRate.toFixed(2)}%`;
+
     const trendSpan = (id, value, isPositiveBetter = true) => {
         const element = document.getElementById(id);
         if (element) {
-            element.innerHTML = ''; // Clear previous content
-            element.classList.remove('positive', 'negative'); // Clear previous classes
+            element.innerHTML = '';
+            element.classList.remove('positive', 'negative');
 
-            // Example simple trend indicator (replace with actual calculation)
+            // Example simple trend indicator
             if (value > 0) {
                 element.classList.add('positive');
                 element.innerHTML = `<i class="fas fa-arrow-up"></i> +${value.toFixed(2)}%`;
@@ -274,14 +265,11 @@ function updateKPIs(kpis) {
         }
     };
 
-    // Example placeholder trends (replace with actual calculations if you implement period comparison)
-    trendSpan('avgDailyRevenueTrend', 5); // Example: 5% positive trend
-    document.getElementById('revenueGrowthRate').textContent = `${kpis.revenueGrowthRate.toFixed(2)}%`;
+    trendSpan('avgDailyRevenueTrend', 5);
     trendSpan('revenueGrowthRateTrend', kpis.revenueGrowthRate);
-    trendSpan('avgDailyTestsPerformedTrend', 3); // Example: 3% positive trend
-    trendSpan('totalTestsPerformedTrend', 7); // Example: 7% positive trend
+    trendSpan('avgDailyTestsPerformedTrend', 3);
+    trendSpan('totalTestsPerformedTrend', 7);
 
-    // Update the revenueBarChart (Total Revenue Progress)
     renderRevenueBarChart(kpis.totalRevenue);
 }
 
@@ -290,15 +278,13 @@ function populateFilterDropdowns(data) {
     const shiftFilter = document.getElementById('shiftFilter');
     const unitSelect = document.getElementById('unitSelect');
 
-    // Store current selections to reapply them after repopulating
     const currentSection = labSectionFilter.value;
     const currentShift = shiftFilter.value;
     const currentUnit = unitSelect.value;
 
-    // Clear existing options, but keep "All" option for Lab Section and Shift
     labSectionFilter.innerHTML = '<option value="all">All Sections</option>';
     shiftFilter.innerHTML = '<option value="all">All Shifts</option>';
-    unitSelect.innerHTML = ''; // Units don't need 'All' option, default to first or currently selected
+    unitSelect.innerHTML = '';
 
     const uniqueSections = new Set();
     const uniqueShifts = new Set();
@@ -313,25 +299,24 @@ function populateFilterDropdowns(data) {
     Array.from(uniqueSections).sort().forEach(section => {
         const option = document.createElement('option');
         option.value = section;
-        option.textContent = section;
+        option.textContent = section.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize
         labSectionFilter.appendChild(option);
     });
 
     Array.from(uniqueShifts).sort().forEach(shift => {
         const option = document.createElement('option');
         option.value = shift;
-        option.textContent = shift;
+        option.textContent = shift.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize
         shiftFilter.appendChild(option);
     });
 
     Array.from(uniqueUnits).sort().forEach(unit => {
         const option = document.createElement('option');
         option.value = unit;
-        option.textContent = unit;
+        option.textContent = unit.replace(/\b\w/g, char => char.toUpperCase()); // Capitalize
         unitSelect.appendChild(option);
     });
 
-    // Reapply previous selections or set a default
     if (currentSection && Array.from(uniqueSections).includes(currentSection)) {
         labSectionFilter.value = currentSection;
     } else {
@@ -347,7 +332,7 @@ function populateFilterDropdowns(data) {
     if (currentUnit && Array.from(uniqueUnits).includes(currentUnit)) {
         unitSelect.value = currentUnit;
     } else if (uniqueUnits.size > 0) {
-        unitSelect.value = Array.from(uniqueUnits).sort()[0]; // Select the first unit by default
+        unitSelect.value = Array.from(uniqueUnits).sort()[0];
     }
 }
 
@@ -365,64 +350,80 @@ function renderNoDataCharts() {
     const chartCanvases = document.querySelectorAll('.chart-container canvas');
     chartCanvases.forEach(canvas => {
         const chartId = canvas.id;
-        destroyChart(chartId); // Destroy any existing chart instance on this canvas
+        destroyChart(chartId);
 
-        // Find the parent container of the canvas
         const parent = canvas.parentElement;
         if (parent && !parent.querySelector('.no-data-message')) {
-            // Only add message if it doesn't already exist
             const noDataMessage = document.createElement('p');
             noDataMessage.className = 'no-data-message';
             noDataMessage.textContent = 'No data available for this chart based on current filters.';
             noDataMessage.style.textAlign = 'center';
-            noDataMessage.style.color = '#777';
+            noDataMessage.style.color = 'var(--text-color-light)';
             noDataMessage.style.marginTop = '20px';
             parent.appendChild(noDataMessage);
-            canvas.style.display = 'none'; // Hide the canvas when no data
+            canvas.style.display = 'none';
         }
     });
 }
 
 function renderCharts(selectedUnitForTopTests) {
-    // Clear any "No data" messages and ensure canvases are visible before rendering
     document.querySelectorAll('.no-data-message').forEach(el => el.remove());
     document.querySelectorAll('.chart-container canvas').forEach(canvas => {
-        canvas.style.display = ''; // Make sure canvas is visible
+        canvas.style.display = '';
     });
 
-    // Render each chart with the appropriate aggregated data
-    renderRevenueBarChart(filteredAndAggregatedData.totalRevenue); // Main KPI chart
+    renderRevenueBarChart(filteredAndAggregatedData.totalRevenue);
     renderDailyRevenueChart(filteredAndAggregatedData.dailyRevenue);
     renderRevenueByLabSectionChart(filteredAndAggregatedData.revenueBySection);
     renderHospitalUnitRevenueChart(filteredAndAggregatedData.revenueByUnit);
-    renderTopTestsChart(filteredAndAggregatedData.revenueByTestForUnit, selectedUnitForTopTests); // Pass unit-specific data
+    renderTopTestsChart(filteredAndAggregatedData.revenueByTestForUnit, selectedUnitForTopTests);
     renderTestRevenueChart(filteredAndAggregatedData.revenueByTest);
     renderTestCountChart(filteredAndAggregatedData.countByTest);
 }
 
-
 // --- Specific Chart Rendering Implementations ---
+
+// Define a consistent color palette for charts, referencing CSS variables
+const chartColors = {
+    primary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-1'),
+    secondary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-2'),
+    tertiary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-3'),
+    quaternary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-4'),
+    quinary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-5'),
+    senary: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-6'),
+    grey: getComputedStyle(document.documentElement).getPropertyValue('--chart-color-grey'),
+};
+
+// Function to get a slightly darker version of a color for borders
+function getBorderColor(color) {
+    // This is a simplified approach; for more robust color manipulation,
+    // a color library might be used or more complex HSL/RGB manipulation.
+    if (color.startsWith('rgb')) {
+        const parts = color.match(/\d+/g).map(Number);
+        return `rgba(${parts[0] * 0.8}, ${parts[1] * 0.8}, ${parts[2] * 0.8}, 1)`;
+    }
+    return color; // Fallback
+}
 
 function renderRevenueBarChart(totalRevenue) {
     const ctx = document.getElementById('revenueBarChart').getContext('2d');
-    destroyChart('revenueBarChart'); // Destroy previous instance
+    destroyChart('revenueBarChart');
 
-    const currentPercentage = (totalRevenue / REVENUE_TARGET) * 100;
     const data = {
         labels: ['Revenue Progress'],
         datasets: [{
             label: 'Current Revenue',
             data: [totalRevenue],
-            backgroundColor: 'rgba(75, 192, 192, 0.6)',
-            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: chartColors.primary,
+            borderColor: getBorderColor(chartColors.primary),
             borderWidth: 1,
-            barPercentage: 0.8, // Make bars wider
-            categoryPercentage: 0.8 // Make bars wider
+            barPercentage: 0.8,
+            categoryPercentage: 0.8
         }, {
             label: 'Remaining to Target',
-            data: [Math.max(0, REVENUE_TARGET - totalRevenue)], // Ensure non-negative
-            backgroundColor: 'rgba(201, 203, 207, 0.6)',
-            borderColor: 'rgba(201, 203, 207, 1)',
+            data: [Math.max(0, REVENUE_TARGET - totalRevenue)],
+            backgroundColor: chartColors.grey,
+            borderColor: getBorderColor(chartColors.grey),
             borderWidth: 1,
             barPercentage: 0.8,
             categoryPercentage: 0.8
@@ -433,15 +434,15 @@ function renderRevenueBarChart(totalRevenue) {
         type: 'bar',
         data: data,
         options: {
-            indexAxis: 'y', // Horizontal bar chart
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 title: {
-                    display: false, // Title handled by HTML
+                    display: false,
                 },
                 legend: {
-                    display: false // No legend needed for stacked progress
+                    display: false
                 },
                 tooltip: {
                     callbacks: {
@@ -458,7 +459,7 @@ function renderRevenueBarChart(totalRevenue) {
                     }
                 },
                 datalabels: {
-                    display: false // Usually not needed for stacked progress bars
+                    display: false
                 }
             },
             scales: {
@@ -469,15 +470,16 @@ function renderRevenueBarChart(totalRevenue) {
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
-                        }
+                        },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
-                    title: {
-                        display: false
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 },
                 y: {
                     stacked: true,
-                    display: false // Hide y-axis labels
+                    display: false
                 }
             }
         }
@@ -485,7 +487,7 @@ function renderRevenueBarChart(totalRevenue) {
 }
 
 function renderDailyRevenueChart(data) {
-    const ctx = document.getElementById('revenueChart').getContext('2d'); // Note: ID is 'revenueChart' in HTML
+    const ctx = document.getElementById('revenueChart').getContext('2d');
     destroyChart('revenueChart');
 
     chartInstances.revenueChart = new Chart(ctx, {
@@ -495,9 +497,12 @@ function renderDailyRevenueChart(data) {
             datasets: [{
                 label: 'Daily Revenue',
                 data: data.map(item => item.revenue),
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1,
-                fill: false
+                borderColor: chartColors.primary,
+                backgroundColor: chartColors.primary.replace(')', ', 0.2)'), // Lighter fill
+                tension: 0.3,
+                fill: true,
+                pointRadius: 3,
+                pointBackgroundColor: chartColors.primary
             }]
         },
         options: {
@@ -506,7 +511,8 @@ function renderDailyRevenueChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Daily Revenue Trends'
+                    text: 'Daily Revenue Trends',
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -516,7 +522,7 @@ function renderDailyRevenueChart(data) {
                     }
                 },
                 datalabels: {
-                    display: false // Keep it clean for line charts
+                    display: false
                 }
             },
             scales: {
@@ -531,19 +537,31 @@ function renderDailyRevenueChart(data) {
                     },
                     title: {
                         display: true,
-                        text: 'Date'
+                        text: 'Date',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Revenue (UGX)'
+                        text: 'Revenue (UGX)',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
-                        }
+                        },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -552,8 +570,19 @@ function renderDailyRevenueChart(data) {
 }
 
 function renderRevenueByLabSectionChart(data) {
-    const ctx = document.getElementById('sectionRevenueChart').getContext('2d'); // Note: ID is 'sectionRevenueChart' in HTML
+    const ctx = document.getElementById('sectionRevenueChart').getContext('2d');
     destroyChart('sectionRevenueChart');
+
+    const colors = [
+        chartColors.primary,
+        chartColors.secondary,
+        chartColors.tertiary,
+        chartColors.quaternary,
+        chartColors.quinary,
+        chartColors.senary,
+        // Add more colors if needed
+    ];
+    const borderColors = colors.map(c => getBorderColor(c));
 
     chartInstances.sectionRevenueChart = new Chart(ctx, {
         type: 'bar',
@@ -562,8 +591,8 @@ function renderRevenueByLabSectionChart(data) {
             datasets: [{
                 label: 'Revenue by Lab Section',
                 data: data.map(item => item.revenue),
-                backgroundColor: 'rgba(153, 102, 255, 0.6)',
-                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: colors,
+                borderColor: borderColors,
                 borderWidth: 1
             }]
         },
@@ -573,7 +602,8 @@ function renderRevenueByLabSectionChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Revenue Distribution by Lab Section'
+                    text: 'Revenue Distribution by Lab Section',
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -588,7 +618,11 @@ function renderRevenueByLabSectionChart(data) {
                     formatter: function(value) {
                         return formatCurrency(value);
                     },
-                    color: '#333'
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark'),
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    }
                 }
             },
             scales: {
@@ -596,18 +630,30 @@ function renderRevenueByLabSectionChart(data) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Revenue (UGX)'
+                        text: 'Revenue (UGX)',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
-                        }
+                        },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Lab Section'
+                        text: 'Lab Section',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -619,9 +665,17 @@ function renderHospitalUnitRevenueChart(data) {
     const ctx = document.getElementById('hospitalUnitRevenueChart').getContext('2d');
     destroyChart('hospitalUnitRevenueChart');
 
-    // Generate dynamic colors for better visual distinction
-    const backgroundColors = data.map((_, i) => `hsl(${i * 60 % 360}, 70%, 70%)`);
-    const borderColors = data.map((_, i) => `hsl(${i * 60 % 360}, 70%, 50%)`);
+    const dynamicColors = [
+        chartColors.primary,
+        chartColors.secondary,
+        chartColors.tertiary,
+        chartColors.quaternary,
+        chartColors.quinary,
+        chartColors.senary,
+    ];
+    // Cycle through defined colors if more data points than colors
+    const backgroundColors = data.map((_, i) => dynamicColors[i % dynamicColors.length]);
+    const borderColors = backgroundColors.map(c => getBorderColor(c));
 
     chartInstances.hospitalUnitRevenueChart = new Chart(ctx, {
         type: 'doughnut',
@@ -641,7 +695,8 @@ function renderHospitalUnitRevenueChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Revenue Distribution by Hospital Unit'
+                    text: 'Revenue Distribution by Hospital Unit',
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -667,9 +722,10 @@ function renderHospitalUnitRevenueChart(data) {
                         let percentage = (value * 100 / sum).toFixed(1) + "%";
                         return percentage;
                     },
-                    color: '#fff',
+                    color: '#fff', // White for better contrast on colored segments
                     font: {
-                        weight: 'bold'
+                        weight: 'bold',
+                        size: 10
                     }
                 }
             }
@@ -681,7 +737,6 @@ function renderTopTestsChart(data, selectedUnit) {
     const ctx = document.getElementById('topTestsChart').getContext('2d');
     destroyChart('topTestsChart');
 
-    // Sort data and take top N (e.g., top 10)
     data.sort((a, b) => b.revenue - a.revenue);
     const topN = 10;
     const topData = data.slice(0, topN);
@@ -693,19 +748,20 @@ function renderTopTestsChart(data, selectedUnit) {
             datasets: [{
                 label: `Top ${topN} Tests by Revenue for ${selectedUnit || 'All Units'}`,
                 data: topData.map(item => item.revenue),
-                backgroundColor: 'rgba(255, 99, 132, 0.6)',
-                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: chartColors.tertiary,
+                borderColor: getBorderColor(chartColors.tertiary),
                 borderWidth: 1
             }]
         },
         options: {
-            indexAxis: 'y', // Makes it a horizontal bar chart
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 title: {
                     display: true,
-                    text: `Top ${topN} Tests by Revenue for ${selectedUnit || 'All Units'}`
+                    text: `Top ${topN} Tests by Revenue for ${selectedUnit || 'All Units'}`,
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -720,7 +776,11 @@ function renderTopTestsChart(data, selectedUnit) {
                     formatter: function(value) {
                         return formatCurrency(value);
                     },
-                    color: '#333'
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark'),
+                    font: {
+                        weight: 'bold',
+                        size: 10
+                    }
                 }
             },
             scales: {
@@ -728,18 +788,30 @@ function renderTopTestsChart(data, selectedUnit) {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Revenue (UGX)'
+                        text: 'Revenue (UGX)',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
-                        }
+                        },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Test Name'
+                        text: 'Test Name',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -751,7 +823,6 @@ function renderTestRevenueChart(data) {
     const ctx = document.getElementById('testRevenueChart').getContext('2d');
     destroyChart('testRevenueChart');
 
-    // Sort data (optional, but good for consistency)
     data.sort((a, b) => b.revenue - a.revenue);
 
     chartInstances.testRevenueChart = new Chart(ctx, {
@@ -761,8 +832,8 @@ function renderTestRevenueChart(data) {
             datasets: [{
                 label: 'Revenue by Test',
                 data: data.map(item => item.revenue),
-                backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: chartColors.secondary,
+                borderColor: getBorderColor(chartColors.secondary),
                 borderWidth: 1
             }]
         },
@@ -772,7 +843,8 @@ function renderTestRevenueChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'All Tests by Revenue'
+                    text: 'All Tests by Revenue',
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -782,29 +854,41 @@ function renderTestRevenueChart(data) {
                     }
                 },
                 datalabels: {
-                    display: false // Can enable if you want values on bars, but might clutter
+                    display: false
                 }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: 'Test Name'
+                        text: 'Test Name',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
-                    autoSkip: true, // Automatically skip labels if too many
-                    maxRotation: 45, // Rotate labels for better fit
-                    minRotation: 45
+                    autoSkip: true,
+                    maxRotation: 45,
+                    minRotation: 45,
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Revenue (UGX)'
+                        text: 'Revenue (UGX)',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
                     ticks: {
                         callback: function(value) {
                             return formatCurrency(value);
-                        }
+                        },
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -816,7 +900,6 @@ function renderTestCountChart(data) {
     const ctx = document.getElementById('testCountChart').getContext('2d');
     destroyChart('testCountChart');
 
-    // Sort data
     data.sort((a, b) => b.count - a.count);
 
     chartInstances.testCountChart = new Chart(ctx, {
@@ -826,8 +909,8 @@ function renderTestCountChart(data) {
             datasets: [{
                 label: 'Test Count',
                 data: data.map(item => item.count),
-                backgroundColor: 'rgba(255, 206, 86, 0.6)',
-                borderColor: 'rgba(255, 206, 86, 1)',
+                backgroundColor: chartColors.quaternary,
+                borderColor: getBorderColor(chartColors.quaternary),
                 borderWidth: 1
             }]
         },
@@ -837,7 +920,8 @@ function renderTestCountChart(data) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Number of Tests Performed'
+                    text: 'Number of Tests Performed',
+                    color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                 },
                 tooltip: {
                     callbacks: {
@@ -847,24 +931,38 @@ function renderTestCountChart(data) {
                     }
                 },
                 datalabels: {
-                    display: false // Can enable if you want values on bars
+                    display: false
                 }
             },
             scales: {
                 x: {
                     title: {
                         display: true,
-                        text: 'Test Name'
+                        text: 'Test Name',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
                     },
                     autoSkip: true,
                     maxRotation: 45,
-                    minRotation: 45
+                    minRotation: 45,
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Number of Tests'
+                        text: 'Number of Tests',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    ticks: {
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text-color-dark')
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
                     }
                 }
             }
@@ -874,20 +972,19 @@ function renderTestCountChart(data) {
 
 // --- Event Listeners and Initial Setup ---
 
+function initializeDashboard() {
+    console.log("Initializing dashboard: Populating filters and fetching data.");
+    populatePeriodSelector(); // Ensure period options are there before setting initial date
+    fetchData(); // Fetch data and trigger initial processing/rendering
+}
+
 function setupEventListeners() {
-    // Filter controls
     document.getElementById('startDateFilter').addEventListener('change', processData);
     document.getElementById('endDateFilter').addEventListener('change', processData);
     document.getElementById('labSectionFilter').addEventListener('change', processData);
     document.getElementById('shiftFilter').addEventListener('change', processData);
-    document.getElementById('unitSelect').addEventListener('change', () => {
-        // Only re-render Top Tests Chart and KPIs that depend on it
-        // and avoid full processData if only unitSelect changes
-        // For simplicity, we'll re-process all data for now.
-        processData();
-    });
+    document.getElementById('unitSelect').addEventListener('change', processData);
 
-    // Menu toggle for filters (if you have styling for this)
     const menuToggle = document.getElementById('menuToggle');
     const dashboardFilters = document.querySelector('.dashboard-filters');
     if (menuToggle && dashboardFilters) {
@@ -901,19 +998,34 @@ function setupEventListeners() {
         });
     }
 
-    // Period Select (needs implementation for logic: e.g., last 7 days, last 30 days)
     const periodSelect = document.getElementById('periodSelect');
     if (periodSelect) {
-        // Populate period options (example)
-        periodSelect.innerHTML = `
-            <option value="all">All Time</option>
-            <option value="last7days">Last 7 Days</option>
-            <option value="last30days">Last 30 Days</option>
-            <option value="thisMonth">This Month</option>
-            <option value="thisYear">This Year</option>
-        `;
         periodSelect.addEventListener('change', handlePeriodChange);
     }
+}
+
+// Function to populate the period selector dynamically
+function populatePeriodSelector() {
+    const periodSelect = document.getElementById("periodSelect");
+    if (!periodSelect) return;
+
+    periodSelect.innerHTML = "";
+
+    const options = [
+        { value: "thisMonth", text: "This Month" },
+        { value: "lastMonth", text: "Last Month" },
+        { value: "thisQuarter", text: "This Quarter" },
+        { value: "lastQuarter", text: "Last Quarter" },
+        { value: "all", text: "All Time" }
+    ];
+
+    options.forEach((opt) => {
+        const optionElement = document.createElement("option");
+        optionElement.value = opt.value;
+        optionElement.textContent = opt.text;
+        periodSelect.appendChild(optionElement);
+    });
+    periodSelect.value = "thisMonth"; // Default selection
 }
 
 function handlePeriodChange() {
@@ -934,69 +1046,59 @@ function handlePeriodChange() {
             break;
         case 'thisMonth':
             newStartDate = moment.utc().startOf('month');
-            newEndDate = moment.utc().endOf('month');
+            newEndDate = moment.utc().endOf('month'); // End of current month
             break;
-        case 'thisYear':
-            newStartDate = moment.utc().startOf('year');
-            newEndDate = moment.utc().endOf('year');
+        case 'lastMonth':
+            newStartDate = moment.utc().subtract(1, 'month').startOf('month');
+            newEndDate = moment.utc().subtract(1, 'month').endOf('month');
+            break;
+        case 'thisQuarter':
+            newStartDate = moment.utc().startOf('quarter');
+            newEndDate = moment.utc().endOf('quarter');
+            break;
+        case 'lastQuarter':
+            newStartDate = moment.utc().subtract(1, 'quarter').startOf('quarter');
+            newEndDate = moment.utc().subtract(1, 'quarter').endOf('quarter');
             break;
         case 'all':
+            newStartDate = null; // Represents all time
+            newEndDate = null; // Represents all time
+            break;
         default:
-            // Fetch initial start/end dates from data if 'all' is selected
-            if (revenueData.length > 0) {
-                const dates = revenueData.map(item => parseDateToUTC(item.date)).filter(d => d);
-                if (dates.length > 0) {
-                    newStartDate = moment.min(dates);
-                    newEndDate = moment.max(dates);
-                }
-            } else {
-                // Fallback if no data yet or empty
-                newStartDate = null; // No specific start date
-                newEndDate = null; // No specific end date
-            }
+            newStartDate = null;
+            newEndDate = null;
             break;
     }
 
     startDateFilter.value = newStartDate ? newStartDate.format('YYYY-MM-DD') : '';
     endDateFilter.value = newEndDate ? newEndDate.format('YYYY-MM-DD') : '';
 
-    processData(); // Re-process data with new dates
+    processData(); // Re-process data with new date range
 }
-
 
 function applyInitialDateFilter() {
-    const startDateFilter = document.getElementById('startDateFilter');
-    const endDateFilter = document.getElementById('endDateFilter');
-
-    // Default to last 30 days from today (current date)
-    const today = moment.utc().startOf('day');
-    const thirtyDaysAgo = moment.utc().subtract(29, 'days').startOf('day');
-
-    startDateFilter.value = thirtyDaysAgo.format('YYYY-MM-DD');
-    endDateFilter.value = today.format('YYYY-MM-DD');
-
-    // This will trigger processData() indirectly via the change event listener
-    // or you can explicitly call processData() here if no listener
-    // processData(); // Ensure initial data is processed after setting default dates
-}
-
-
-// Initial dashboard setup
-function initializeDashboard() {
-    console.log("Initializing dashboard...");
-    fetchData(); // Fetch data when the dashboard initializes
+    const periodSelect = document.getElementById('periodSelect');
+    // Set initial period to 'thisMonth' and apply its dates
+    periodSelect.value = 'thisMonth';
+    handlePeriodChange();
 }
 
 function displayNoDataMessage(message) {
-    const mainContent = document.querySelector('main.dashboard-layout');
-    if (mainContent && !mainContent.querySelector('.global-no-data-message')) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'global-no-data-message';
-        msgDiv.style.textAlign = 'center';
-        msgDiv.style.padding = '50px';
-        msgDiv.style.fontSize = '1.2em';
-        msgDiv.style.color = '#dc3545';
-        msgDiv.textContent = message;
-        mainContent.prepend(msgDiv); // Add at the beginning of main content
+    const chartsArea = document.querySelector('.charts-area');
+    const existingMessage = chartsArea.querySelector('.no-data-overall-message');
+    if (!existingMessage) {
+        const noDataDiv = document.createElement('div');
+        noDataDiv.className = 'no-data-overall-message';
+        noDataDiv.style.textAlign = 'center';
+        noDataDiv.style.padding = '50px';
+        noDataDiv.style.color = 'var(--text-color-light)';
+        noDataDiv.style.fontSize = '1.2em';
+        noDataDiv.style.backgroundColor = 'var(--secondary-bg)';
+        noDataDiv.style.borderRadius = '10px';
+        noDataDiv.style.boxShadow = '0 4px 15px var(--shadow-light)';
+        noDataDiv.textContent = message;
+        chartsArea.appendChild(noDataDiv);
+    } else {
+        existingMessage.textContent = message;
     }
 }
