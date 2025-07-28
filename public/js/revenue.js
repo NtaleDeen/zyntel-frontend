@@ -306,8 +306,9 @@ function processData() {
 function getAggregatedRevenueByDate(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const date = d.Date; // Date is already in YYYY-MM-DD format from API
-    const revenue = parseFloat(d.Price) || 0;
+    // Corrected to use 'date' (lowercase) and parse with moment.js
+    const date = moment(d.date).format('YYYY-MM-DD');
+    const revenue = parseFloat(d.price) || 0; // Corrected to use 'price' (lowercase)
     if (date) {
       aggregated[date] = (aggregated[date] || 0) + revenue;
     }
@@ -318,8 +319,8 @@ function getAggregatedRevenueByDate(data) {
 function getAggregatedRevenueBySection(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const section = d.Lab_Section || "Unknown"; // Use Lab_Section from DB
-    const revenue = parseFloat(d.Price) || 0;
+    const section = d.lab_section || "Unknown"; // Corrected to 'lab_section' (lowercase)
+    const revenue = parseFloat(d.price) || 0; // Corrected to 'price' (lowercase)
     aggregated[section] = (aggregated[section] || 0) + revenue;
   });
   return aggregated;
@@ -328,8 +329,8 @@ function getAggregatedRevenueBySection(data) {
 function getAggregatedRevenueByUnit(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const unit = d.Unit || "Unknown"; // Use Unit from DB
-    const revenue = parseFloat(d.Price) || 0;
+    const unit = d.unit || "Unknown"; // Corrected to 'unit' (lowercase)
+    const revenue = parseFloat(d.price) || 0; // Corrected to 'price' (lowercase)
     aggregated[unit] = (aggregated[unit] || 0) + revenue;
   });
   return aggregated;
@@ -338,7 +339,7 @@ function getAggregatedRevenueByUnit(data) {
 function getAggregatedTestCountByUnit(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const unit = d.Unit || "Unknown"; // Use Unit from DB
+    const unit = d.unit || "Unknown"; // Corrected to 'unit' (lowercase)
     aggregated[unit] = (aggregated[unit] || 0) + 1; // Count each test
   });
   return aggregated;
@@ -347,8 +348,8 @@ function getAggregatedTestCountByUnit(data) {
 function getAggregatedRevenueByTest(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const testName = d.Test_Name || "Unknown"; // Use Test_Name from DB
-    const revenue = parseFloat(d.Price) || 0;
+    const testName = d.test_name || "Unknown"; // Corrected to 'test_name' (lowercase)
+    const revenue = parseFloat(d.price) || 0; // Corrected to 'price' (lowercase)
     aggregated[testName] = (aggregated[testName] || 0) + revenue;
   });
   return aggregated;
@@ -357,7 +358,7 @@ function getAggregatedRevenueByTest(data) {
 function getAggregatedCountByTest(data) {
   const aggregated = {};
   data.forEach((d) => {
-    const testName = d.Test_Name || "Unknown"; // Use Test_Name from DB
+    const testName = d.test_name || "Unknown"; // Corrected to 'test_name' (lowercase)
     aggregated[testName] = (aggregated[testName] || 0) + 1;
   });
   return aggregated;
@@ -576,7 +577,7 @@ function renderTopTestsCharts(unitFilter) {
   let dataForTopTests = filteredData;
 
   if (unitFilter && unitFilter !== "All") {
-    dataForTopTests = filteredData.filter((d) => d.Unit === unitFilter); // Filter by 'Unit' from DB
+    dataForTopTests = filteredData.filter((d) => d.unit === unitFilter); // Corrected to 'unit' (lowercase)
   }
 
   const aggregatedRevenue = getAggregatedRevenueByTest(dataForTopTests);
