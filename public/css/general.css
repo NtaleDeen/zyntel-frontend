@@ -325,6 +325,16 @@ main.dashboard-layout {
   max-width: 800px; /* Max width for single chart containers */
   margin-left: auto; /* Center individual chart containers */
   margin-right: auto;
+  display: flex; /* Added to make it a flex container */
+  flex-direction: column; /* Stack title and canvas vertically */
+  justify-content: center; /* Center content vertically */
+  align-items: center; /* Center content horizontally */
+}
+
+/* Ensure canvas fills its parent container */
+.chart-container canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .notice {
