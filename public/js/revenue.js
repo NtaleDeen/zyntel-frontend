@@ -24,7 +24,7 @@ let aggregatedTestCountByUnit = {};
 let aggregatedRevenueByTest = {};
 let aggregatedCountByTest = {};
 
-// Hospital Unit arrays (unchanged) - These are not used by the current data model, but kept for consistency with ideal_page.txt
+// Hospital Unit arrays (unchanged)
 const inpatientUnits = [
   "APU",
   "GWA",
@@ -67,7 +67,6 @@ const monthlyTargets = {
 
 // Helper function (unchanged)
 function capitalizeWords(str) {
-  if (!str) return ''; // Added null/undefined check
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -75,9 +74,8 @@ function capitalizeWords(str) {
  * Loads data from database instead of CSV
  */
 async function loadDatabaseData() {
-  showLoading(true); // Show loading indicator
   try {
-    // Use this exact fetch URL, updated to Render API endpoint
+    // IMPORTANT: Updated fetch URL to your Render backend
     const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue-data", {
       headers: {
         Accept: "application/json",
@@ -93,7 +91,7 @@ async function loadDatabaseData() {
       allData = [];
       filteredData = [];
     } else {
-      // Process database rows to match your existing data structure expected by ideal_page.txt JS
+      // Process database rows to match your existing data structure
       allData = dbData.map((row) => {
         const processedRow = { ...row };
 
@@ -101,7 +99,7 @@ async function loadDatabaseData() {
         processedRow.parsedEncounterDate = row.Date
           ? moment(row.Date, "YYYY-MM-DD")
           : null;
-        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate; // Assuming TestResultDate is same as EncounterDate for revenue
 
         // Process price
         const parsedPriceValue = parseFloat(row.Price);
@@ -109,14 +107,13 @@ async function loadDatabaseData() {
           ? 0
           : parsedPriceValue;
 
-        // Standardize case for filtering and map backend fields to ideal_page.txt JS expectations
-        processedRow.Hospital_Unit = (row.Unit || "").toUpperCase(); // Map 'Unit' from backend to 'Hospital_Unit'
-        processedRow.LabSection = (row.Lab_Section || "").toLowerCase(); // Map 'Lab_Section' from backend to 'LabSection'
+        // Standardize case for filtering
+        processedRow.Hospital_Unit = (row.Unit || "").toUpperCase(); // Corrected to use row.Unit
+        processedRow.LabSection = (row.Lab_Section || "").toLowerCase(); // Corrected to use row.Lab_Section
         processedRow.Shift = (row.Shift || "").toLowerCase();
-        processedRow.TestName = row.Test_Name || ""; // Map 'Test_Name' from backend to 'TestName'
-        processedRow.Tests = row.Test_Name || ""; // 'Tests' field is used in ideal_page.txt for test name, map from Test_Name
+        processedRow.TestName = row.Test_Name || ""; // Corrected to use row.Test_Name
 
-        // Maintain all your existing calculated fields (these are placeholders if not calculated by backend)
+        // Maintain all your existing calculated fields (if any, though these seem unused for revenue)
         processedRow.Minutes_Delayed_Calculated = null;
         processedRow.Delay_Status_Calculated = "Not Uploaded";
         processedRow.Progress_Calculated = "Not Uploaded";
@@ -151,38 +148,38 @@ async function loadDatabaseData() {
     }
   } catch (err) {
     console.error("Data load failed:", err);
-    showError("Failed to load data from the server. Please check the console for more details. " + err.message);
-    allData = [];
-    filteredData = [];
-
-    // Clear KPI displays on error
-    const percentageValueElement = document.getElementById("percentageValue");
-    const currentAmountElement = document.getElementById("currentAmount");
-    const targetElement = document.querySelector(".amounts .target");
-    if (percentageValueElement) percentageValueElement.textContent = "0%";
-    if (currentAmountElement) currentAmountElement.textContent = "UGX 0";
-    if (targetElement) targetElement.textContent = "of UGX 0";
+    // Keep your existing error handling
+    const totalRevenueElem = document.getElementById("totalRevenue");
+    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
 
     const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
-    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX 0";
-    const revenueGrowthRateElem = document.getElementById("revenueGrowthRate");
-    if (revenueGrowthRateElem) revenueGrowthRateElem.textContent = "UGX 0";
-    const avgDailyTestsPerformedElem = document.getElementById("avgDailyTestsPerformed");
-    if (avgDailyTestsPerformedElem) avgDailyTestsPerformedElem.textContent = "0";
-    const totalTestsPerformedElem = document.getElementById("totalTestsPerformed");
-    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "0";
+    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
+
+    const totalTestsPerformedElem = document.getElementById(
+      "totalTestsPerformed"
+    );
+    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
+
+    const avgDailyTestsPerformedElem = document.getElementById(
+      "avgDailyTestsPerformed"
+    );
+    if (avgDailyTestsPerformedElem)
+      avgDailyTestsPerformedElem.textContent = "N/A";
 
     // Clear all charts
-    if (revenueBarChart) { revenueBarChart.destroy(); revenueBarChart = null; }
-    if (revenueChart) { revenueChart.destroy(); revenueChart = null; }
-    if (sectionRevenueChart) { sectionRevenueChart.destroy(); sectionRevenueChart = null; }
-    if (hospitalUnitRevenueChart) { hospitalUnitRevenueChart.destroy(); hospitalUnitRevenueChart = null; }
-    if (topTestsChart) { topTestsChart.destroy(); topTestsChart = null; }
-    if (testRevenueChart) { testRevenueChart.destroy(); testRevenueChart = null; }
-    if (testCountChart) { testCountChart.destroy(); testCountChart = null; }
-
-  } finally {
-    showLoading(false); // Hide loading indicator
+    [
+      revenueChart,
+      sectionRevenueChart,
+      hospitalUnitRevenueChart,
+      topTestsChart,
+      testRevenueChart,
+      testCountChart,
+    ].forEach((chart) => {
+      if (chart) {
+        chart.data.datasets[0].data = [];
+        chart.update();
+      }
+    });
   }
 }
 
@@ -468,34 +465,25 @@ function processData() {
 
 // Consolidate chart rendering calls
 function updateAllCharts(unit = "ICU") {
-  // Ensure canvases are available before rendering charts
-  const revenueChartCanvas = document.getElementById("revenueChart");
-  const sectionRevenueChartCanvas = document.getElementById("sectionRevenueChart");
-  const hospitalUnitRevenueChartCanvas = document.getElementById("hospitalUnitRevenueChart");
-  const topTestsChartCanvas = document.getElementById("topTestsChart");
-  const testRevenueChartCanvas = document.getElementById("testRevenueChart");
-  const testCountChartCanvas = document.getElementById("testCountChart");
-
-  if (revenueChartCanvas) renderChart();
-  if (sectionRevenueChartCanvas) renderSectionRevenueChart();
-  if (hospitalUnitRevenueChartCanvas) renderHospitalUnitRevenueChart();
-
+  renderChart();
+  renderSectionRevenueChart();
+  renderHospitalUnitRevenueChart();
   const unitSelect = document.getElementById("unitSelect");
-  if (unitSelect && topTestsChartCanvas) {
-    const currentUnitSelected = unitSelect.value;
+  if (unitSelect) {
+    const currentUnitSelected = unitSelect.value; // Get the currently selected unit
     renderTopTestsChart(currentUnitSelected);
-  } else if (topTestsChartCanvas) {
+  } else {
     console.warn(
       "Unit select (#unitSelect) not found. Skipping Top Tests chart render with specific unit."
     );
+    // If unitSelect doesn't exist, we can't get a specific unit.
+    // For safety, pass the first unit from the data if available.
     const firstUnit = Object.keys(aggregatedTestCountByUnit)[0];
-    renderTopTestsChart(firstUnit || unit);
+    renderTopTestsChart(firstUnit || unit); // Fallback to 'ICU' if no units found
   }
-
-  if (testRevenueChartCanvas) renderTestRevenueChart();
-  if (testCountChartCanvas) renderTestCountChart();
+  renderTestRevenueChart();
+  renderTestCountChart();
 }
-
 
 /**
  * Performs all necessary data aggregations on filteredData once.
@@ -530,7 +518,7 @@ function getAggregatedData() {
       (aggregatedRevenueByUnit[unit] || 0) + row.parsedPrice;
 
     // Top Tests by Unit
-    const testName = (row.Tests || "").trim() || "UNKNOWN"; // Use row.Tests as per ideal_page.txt JS
+    const testName = (row.TestName || "").trim() || "UNKNOWN"; // Use TestName
     if (!aggregatedTestCountByUnit[unit]) {
       aggregatedTestCountByUnit[unit] = {};
     }
@@ -651,7 +639,7 @@ function updateTotalRevenue() {
 
   const percentageValueElement = document.getElementById("percentageValue");
   const currentAmountElement = document.getElementById("currentAmount");
-  const targetElement = document.querySelector(".amounts .target"); // Corrected selector
+  const targetElement = document.querySelector(".target");
 
   if (percentageValueElement) {
     percentageValueElement.textContent = `${percentage.toFixed(2)}%`;
@@ -664,55 +652,51 @@ function updateTotalRevenue() {
   }
 
   // Update the revenue bar chart
-  const canvas = document.getElementById("revenueBarChart");
-  if (!canvas) {
-      console.warn("revenueBarChart canvas not found. Cannot render progress bar.");
-      return;
-  }
-  const ctx = canvas.getContext("2d");
-
-  // Destroy existing chart if it exists to prevent memory leaks and re-render issues
-  if (window.revenueBarChartInstance) { // Use a global variable to store the instance
-      window.revenueBarChartInstance.destroy();
-  }
-
-  window.revenueBarChartInstance = new Chart(ctx, { // Store instance in global variable
+  if (revenueBarChart) {
+    revenueBarChart.data.datasets[0].data = [total];
+    revenueBarChart.options.scales.x.max = dynamicTarget;
+    revenueBarChart.update();
+  } else {
+    const ctx = document.getElementById("revenueBarChart").getContext("2d");
+    revenueBarChart = new Chart(ctx, {
       type: "bar",
       data: {
-          labels: [""],
-          datasets: [
-              {
-                  label: "Revenue",
-                  data: [total], // Data should be total, not percentage for bar
-                  backgroundColor: "#deab5f",
-                  borderRadius: 5,
-                  barPercentage: 1.0,
-                  categoryPercentage: 1.0,
-                  borderColor: "#6b7280",
-                  borderWidth: 1,
-              },
-          ],
+        labels: [""],
+        datasets: [
+          {
+            label: "Revenue",
+            data: [percentage],
+            backgroundColor: "#deab5f",
+            borderRadius: 5,
+            barPercentage: 1.0,
+            categoryPercentage: 1.0,
+            borderColor: "#6b7280", // Added border color
+            borderWidth: 1, // Added border width
+          },
+        ],
       },
       options: {
-          indexAxis: "y",
-          plugins: {
-              legend: { display: false },
-              tooltip: { enabled: false },
-              datalabels: { display: false },
+        indexAxis: "y",
+        plugins: {
+          legend: { display: false },
+          tooltip: { enabled: false },
+          datalabels: {
+            // Explicitly disable datalabels for this chart
+            display: false,
           },
-          scales: {
-              x: {
-                  display: false,
-                  max: dynamicTarget, // Max should be the target
-              },
-              y: {
-                  display: false,
-              },
+        },
+        scales: {
+          x: {
+            display: false,
+            max: 100,
           },
-          responsive: true,
-          maintainAspectRatio: false,
+          y: {
+            display: false,
+          },
+        },
       },
-  });
+    });
+  }
 }
 
 /**
@@ -877,11 +861,6 @@ function renderSectionRevenueChart() {
     return;
   }
 
-  // Destroy existing chart instance if it exists
-  if (sectionRevenueChart) {
-    sectionRevenueChart.destroy();
-  }
-
   const sections = Object.keys(aggregatedRevenueBySection);
   const revenues = sections.map(
     (section) => aggregatedRevenueBySection[section]
@@ -972,12 +951,17 @@ function renderSectionRevenueChart() {
     cutout: "60%",
   };
 
-
+  if (sectionRevenueChart) {
+    sectionRevenueChart.data = data;
+    sectionRevenueChart.options = options;
+    sectionRevenueChart.update();
+  } else {
     sectionRevenueChart = new Chart(ctx, {
       type: "doughnut",
       data: data,
       options: options,
     });
+  }
   console.log("Revenue by Lab Section Chart rendered.");
 }
 
@@ -993,11 +977,6 @@ function renderChart() {
   }
   const ctx = canvas.getContext("2d");
 
-  // Destroy existing chart instance if it exists
-  if (revenueChart) {
-    revenueChart.destroy();
-  }
-
   let labels = Object.keys(aggregatedRevenueByDate).sort();
   // Limit to max 31 columns (last 31 days) for daily chart visibility
   if (labels.length > 31) {
@@ -1005,6 +984,11 @@ function renderChart() {
   }
   const data = labels.map((date) => aggregatedRevenueByDate[date]);
 
+  if (revenueChart) {
+    revenueChart.data.labels = labels;
+    revenueChart.data.datasets[0].data = data;
+    revenueChart.update();
+  } else {
     revenueChart = new Chart(ctx, {
       type: "bar", // Changed back to bar type
       data: {
@@ -1052,6 +1036,7 @@ function renderChart() {
         },
       },
     });
+  }
   console.log("Daily Revenue Chart updated/rendered.");
 }
 
@@ -1069,11 +1054,6 @@ function renderHospitalUnitRevenueChart() {
   }
   const ctx = canvas.getContext("2d");
 
-  // Destroy existing chart instance if it exists
-  if (hospitalUnitRevenueChart) {
-    hospitalUnitRevenueChart.destroy();
-  }
-
   const sorted = Object.entries(aggregatedRevenueByUnit).sort(
     (a, b) => b[1] - a[1]
   );
@@ -1081,6 +1061,11 @@ function renderHospitalUnitRevenueChart() {
   const labels = sorted.map(([unit]) => unit);
   const data = sorted.map(([_, val]) => val);
 
+  if (hospitalUnitRevenueChart) {
+    hospitalUnitRevenueChart.data.labels = labels;
+    hospitalUnitRevenueChart.data.datasets[0].data = data;
+    hospitalUnitRevenueChart.update();
+  } else {
     hospitalUnitRevenueChart = new Chart(ctx, {
       type: "line", // Still type 'line' but fill will make it area
       data: {
@@ -1118,6 +1103,7 @@ function renderHospitalUnitRevenueChart() {
         },
       },
     });
+  }
   console.log("Hospital Unit Revenue Chart updated/rendered.");
 }
 
@@ -1133,11 +1119,6 @@ function renderTopTestsChart(unit = "ICU") {
   }
   const ctx = canvas.getContext("2d");
 
-  // Destroy existing chart instance if it exists
-  if (topTestsChart) {
-    topTestsChart.destroy();
-  }
-
   const testCountForUnit = aggregatedTestCountByUnit[unit] || {};
 
   const sorted = Object.entries(testCountForUnit)
@@ -1152,6 +1133,15 @@ function renderTopTestsChart(unit = "ICU") {
     (val) => (total > 0 ? `${((val / total) * 100).toFixed(0)}%` : "0%") // Removed decimals
   );
 
+  if (topTestsChart) {
+    topTestsChart.data.labels = labels;
+    topTestsChart.data.datasets[0].data = data;
+    topTestsChart.data.datasets[0].label = `Top Tests in ${unit}`;
+    topTestsChart.data.datasets[0].datalabels.formatter = (value, context) => {
+      return percentageLabels[context.dataIndex];
+    };
+    topTestsChart.update();
+  } else {
     topTestsChart = new Chart(ctx, {
       type: "bar",
       data: {
@@ -1199,6 +1189,7 @@ function renderTopTestsChart(unit = "ICU") {
       },
       plugins: [ChartDataLabels],
     });
+  }
   console.log(`Top Tests Chart for unit ${unit} updated/rendered.`);
 }
 
@@ -1213,11 +1204,6 @@ function renderTestRevenueChart() {
   }
   const ctx = canvas.getContext("2d");
 
-  // Destroy existing chart instance if it exists
-  if (testRevenueChart) {
-    testRevenueChart.destroy();
-  }
-
   const sorted = Object.entries(aggregatedRevenueByTest)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15);
@@ -1230,6 +1216,17 @@ function renderTestRevenueChart() {
     (val) => (total > 0 ? `${((val / total) * 100).toFixed(0)}%` : "0%") // Removed decimals
   );
 
+  if (testRevenueChart) {
+    testRevenueChart.data.labels = labels;
+    testRevenueChart.data.datasets[0].data = data;
+    testRevenueChart.data.datasets[0].datalabels.formatter = (
+      value,
+      context
+    ) => {
+      return percentageLabels[context.dataIndex];
+    };
+    testRevenueChart.update();
+  } else {
     testRevenueChart = new Chart(ctx, {
       type: "bar",
       data: {
@@ -1280,6 +1277,7 @@ function renderTestRevenueChart() {
       },
       plugins: [ChartDataLabels],
     });
+  }
   console.log("Test Revenue Chart updated/rendered.");
 }
 
@@ -1294,11 +1292,6 @@ function renderTestCountChart() {
   }
   const ctx = canvas.getContext("2d");
 
-  // Destroy existing chart instance if it exists
-  if (testCountChart) {
-    testCountChart.destroy();
-  }
-
   const sorted = Object.entries(aggregatedCountByTest)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15);
@@ -1306,6 +1299,14 @@ function renderTestCountChart() {
   const labels = sorted.map(([test]) => test);
   const data = sorted.map(([_, count]) => count);
 
+  if (testCountChart) {
+    testCountChart.data.labels = labels;
+    testCountChart.data.datasets[0].data = data;
+    testCountChart.data.datasets[0].datalabels.formatter = (value) => {
+      return value.toLocaleString(); // Display actual value
+    };
+    testCountChart.update();
+  } else {
     testCountChart = new Chart(ctx, {
       type: "bar",
       data: {
@@ -1352,10 +1353,11 @@ function renderTestCountChart() {
       },
       plugins: [ChartDataLabels],
     });
+  }
   console.log("Test Count Chart updated/rendered.");
 }
 
-// Event Listeners for Filters
+// Event Listeners for Filters (unchanged)
 window.addEventListener("DOMContentLoaded", () => {
   populatePeriodSelector();
 
@@ -1375,7 +1377,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   if (endDateFilterInput) {
-    endDateInput.addEventListener("change", () => {
+    endDateFilterInput.addEventListener("change", () => {
       applyFilters("endDateFilter");
       processData();
       if (periodSelect) periodSelect.value = "";
@@ -1413,35 +1415,3 @@ window.addEventListener("DOMContentLoaded", () => {
   // Change this line from loadCSVData() to loadDatabaseData()
   loadDatabaseData();
 });
-
-// Show error message
-function showError(message) {
-  const errorBox = document.createElement("div");
-  errorBox.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-  `;
-  errorBox.innerHTML = `<strong>Error:</strong> ${message}`;
-  document.body.appendChild(errorBox);
-
-  // Auto-hide after 5 seconds
-  setTimeout(() => {
-    errorBox.remove();
-  }, 5000);
-}
-
-function showLoading(show) {
-  const loadingIndicator = document.getElementById('loadingIndicator');
-  if (loadingIndicator) {
-    loadingIndicator.style.display = show ? 'flex' : 'none'; // Use 'flex' for the spinner container
-  }
-}

@@ -8,17 +8,13 @@
 }
 
 :root {
-  --main-color: #21336a; /* Dark blue */
+  --main-color: #21336a;
   --primary-color: #000;
   --canvas-color: #fff;
-  --hover-color: #deab5f; /* Gold/Orange */
+  --hover-color: #deab5f;
   --background-color: rgba(250, 250, 250, 0.9);
   --border-bottom: rgb(228, 228, 228);
   --box-shadow: rgba(0, 0, 0, 0.05);
-  /* New colors for KPI trends */
-  --trend-positive-color: #22c55e; /* Green */
-  --trend-negative-color: #ef4444; /* Red */
-  --trend-neutral-color: #3b82f6; /* Blue */
 }
 
 html {
@@ -40,8 +36,14 @@ header {
 
 body {
   margin: 0;
-  padding-top: 150px; /* Adjusted padding-top to accommodate fixed header and filters */
+  padding-top: 150px; /* Adjusted padding-to... */
 }
+
+/* header h1,
+header nav,
+header .navbar {
+  margin: 0;
+} */
 
 .header-container {
   display: flex;
@@ -172,30 +174,11 @@ select:focus {
   border-color: var(--main-color);
 }
 
-/* New button styles (if any, from ideal_page.txt) */
-.action-button {
-  background-color: var(--main-color); /* Use your main color */
-  color: #fff;
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-}
-
-.action-button:hover {
-  background-color: var(--hover-color); /* Use your hover color */
-}
-
-
 main.dashboard-layout {
   display: flex;
   gap: 2rem;
   margin: 3rem;
   justify-content: space-between;
-  position: relative; /* Added for loading indicator positioning */
 }
 
 .charts-area {
@@ -213,7 +196,7 @@ main.dashboard-layout {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   height: fit-content;
   overflow-y: auto;
-  font-family: "Roboto", sans-serif;
+  font-family: Roboto, sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -228,7 +211,7 @@ main.dashboard-layout {
 .percentage {
   font-size: 28px;
   font-weight: bold;
-  color: var(--hover-color); /* Matches ideal page */
+  color: #deab5f;
 }
 
 .label {
@@ -284,17 +267,16 @@ main.dashboard-layout {
   color: var(--main-color);
 }
 
-/* KPI Trend Colors from ideal_page.txt */
 .trend-positive {
-  color: var(--trend-positive-color);
+  color: green; /* Or a specific shade of green: #22c55e */
 }
 
 .trend-negative {
-  color: var(--trend-negative-color);
+  color: red; /* Or a specific shade of red: #ef4444 */
 }
 
 .trend-neutral {
-  color: var(--trend-neutral-color);
+  color: blue; /* Or a specific shade of blue: #3b82f6 */
 }
 
 .dashboard-charts {
@@ -331,58 +313,7 @@ main.dashboard-layout {
   max-width: 800px; /* Max width for single chart containers */
   margin-left: auto; /* Center individual chart containers */
   margin-right: auto;
-  display: flex; /* Added to make it a flex container */
-  flex-direction: column; /* Stack title and canvas vertically */
-  justify-content: center; /* Center content vertically */
-  align-items: center; /* Center content horizontally */
-  overflow: hidden; /* Add overflow hidden to clip content if it tries to escape */
 }
-
-/* Ensure canvas fills its parent container using absolute positioning */
-.chart-container canvas {
-  position: absolute; /* Position absolutely within the relative parent */
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
-  display: block; /* Ensure it behaves as a block element */
-}
-
-/* Loading Spinner Styles */
-.loading-spinner-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: absolute; /* Position over charts area */
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
-  z-index: 10; /* Above charts, below header/filters */
-  border-radius: 0.75rem;
-  text-align: center;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--main-color); /* Brand color for text */
-}
-
-.loading-spinner {
-  border: 8px solid var(--border-bottom); /* Light grey border */
-  border-top: 8px solid var(--main-color); /* Brand color for spinner part */
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 15px;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
 
 .notice {
   display: none;
