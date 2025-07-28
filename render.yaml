@@ -3,16 +3,17 @@
 services:
   - type: static
     name: zyntel-frontend # Name this service in Render dashboard (e.g., "zyntel-frontend")
-    # Your static files (HTML, CSS, JS, images) are in the 'public' subfolder.
-    # So, the root of this repository is ".", and the publish directory is "public".
+    # Your static files (HTML, CSS, JS, images) are likely at the root of this repo,
+    # or in subfolders directly off the root (e.g., css/, js/, images/, html/).
+    # So, the staticPublishPath should be '.'
     rootDir: . # The root of this repository
-    staticPublishPath: public # The subfolder within rootDir that contains your deployable static files
-    
+    staticPublishPath: . # Changed from 'public' to '.' to match common asset structure
+
     # For a simple HTML/CSS/JS site, no build command is typically needed.
     # If you later use a frontend framework (React, Vue, etc.),
     # you would put your build command here (e.g., "npm install && npm run build")
     # and then adjust staticPublishPath to your build output folder (e.g., "dist" or "build").
     buildCommand: "" # No build command for pure static files
-    
+
     # Enable pull request previews (optional)
     pullRequestPreviewsEnabled: true
