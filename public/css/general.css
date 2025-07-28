@@ -208,7 +208,7 @@ main.dashboard-layout {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   height: fit-content;
   overflow-y: auto;
-  font-family: Roboto, sans-serif;
+  font-family: "Roboto", sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -329,12 +329,17 @@ main.dashboard-layout {
   flex-direction: column; /* Stack title and canvas vertically */
   justify-content: center; /* Center content vertically */
   align-items: center; /* Center content horizontally */
+  overflow: hidden; /* Add overflow hidden to clip content if it tries to escape */
 }
 
-/* Ensure canvas fills its parent container */
+/* Ensure canvas fills its parent container using absolute positioning */
 .chart-container canvas {
+  position: absolute; /* Position absolutely within the relative parent */
+  top: 0;
+  left: 0;
   width: 100% !important;
   height: 100% !important;
+  display: block; /* Ensure it behaves as a block element */
 }
 
 .notice {
