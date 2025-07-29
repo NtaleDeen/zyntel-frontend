@@ -12,122 +12,121 @@ let dailyNumbersBarChart = null;
 let hourlyNumbersLineChart = null;
 let allData = [];
 let filteredData = [];
-// OLD: const CSV_PATH = "./progress.csv"; // This line is now effectively replaced by the API endpoint
-
-// NEW: Define your API endpoint for Numbers data
-const API_NUMBERS_ENDPOINT = "https://your-zyntel-api.onrender.com/api/numbers-data"; // IMPORTANT: REPLACE WITH YOUR ACTUAL RENDER SERVICE URL
+const CSV_PATH = "./progress.csv";
 
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("Numbers Dashboard initializing...");
-  // initCommonDashboard will call loadAndRender as its callback
-  initCommonDashboard(loadAndRender);
+  await loadData();
+  initCommonDashboard(processNumbersData);
 });
 
-// Load and render function (called by initCommonDashboard)
-async function loadAndRender() {
-  await loadData(); // Call the updated loadData function
-  processNumbersData(); // This remains unchanged
-}
-
-// Load data from API
+// Load and parse CSV data
 async function loadData() {
   try {
-    showLoading(true); // Show loading indicator
-    const url = constructApiUrl(API_NUMBERS_ENDPOINT);
-    const res = await fetch(url);
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
-    }
+    const res = await fetch(CSV_PATH);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
-    allData = await res.json(); // Data is already parsed as JSON
-    console.log("Data loaded successfully:", allData.length, "records");
-    // No need to call processNumbersData here, initCommonDashboard's callback handles it.
+    const text = await res.text();
+    const lines = text.trim().split(/\r?\n/);
+    const headers = parseCSVRow(lines.shift());
 
+    allData = lines.map((row) => {
+      const values = parseCSVRow(row);
+      const obj = {};
+      headers.forEach((h, i) => (obj[h] = values[i] || ""));
+
+      // Parse dates and times
+      obj.parsedDate = parseTATDate(obj["Timestamp"] || obj["Date"]);
+
+      // Parse Time_In for hourly chart (bulldozer approach)
+      if (obj["Time_In"]) {
+        const timePart = obj["Time_In"].split(" ")[1]; // Gets "20:25" from "6/25/2025 20:25"
+        if (timePart) {
+          const hour = parseInt(timePart.split(":")[0]);
+          obj.timeInHour = !isNaN(hour) && hour >= 0 && hour < 24 ? hour : null;
+        } else {
+          obj.timeInHour = null;
+        }
+      } else {
+        obj.timeInHour = null;
+      }
+
+      return obj;
+    });
+
+    filteredData = applyTATFilters(allData);
+    console.log("Data loaded successfully. Total records:", allData.length);
   } catch (error) {
     console.error("Error loading data:", error);
-    showError("Failed to load data from the server. Please try again later. " + error.message);
-    allData = []; // Clear data on error
-  } finally {
-    showLoading(false); // Hide loading indicator
+    showError("Failed to load data. Please check the file path and try again.");
   }
 }
 
-// Helper to construct API URL with filters
-function constructApiUrl(baseApiUrl) {
-  const periodSelect = document.getElementById("periodSelect");
-  const startDateInput = document.getElementById("startDateFilter");
-  const endDateInput = document.getElementById("endDateFilter");
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  const shiftFilter = document.getElementById("shiftFilter");
-  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
+// CSV row parser
+function parseCSVRow(row) {
+  const result = [];
+  let current = "";
+  let inQuotes = false;
 
-  const params = new URLSearchParams();
-
-  if (periodSelect && periodSelect.value) {
-    params.append("period", periodSelect.value);
-  }
-  if (startDateInput && startDateInput.value) {
-    params.append("startDate", startDateInput.value);
-  }
-  if (endDateInput && endDateInput.value) {
-    params.append("endDate", endDateInput.value);
-  }
-  if (labSectionFilter && labSectionFilter.value && labSectionFilter.value !== "All") {
-    params.append("labSection", labSectionFilter.value);
-  }
-  if (shiftFilter && shiftFilter.value && shiftFilter.value !== "All") {
-    params.append("shift", shiftFilter.value);
-  }
-  if (hospitalUnitFilter && hospitalUnitFilter.value && hospitalUnitFilter.value !== "All") {
-    params.append("hospitalUnit", hospitalUnitFilter.value);
-  }
-
-  return `${baseApiUrl}?${params.toString()}`;
-}
-
-// Process data for charts and KPIs
-function processNumbersData() {
-  filteredData = applyTATFilters(allData); // Use the common filter logic
-
-  renderDailyNumbersChart(filteredData);
-  renderHourlyNumbersChart(filteredData);
-  updateNumberKPIs(filteredData);
-  console.log("Numbers data processed.");
-}
-
-// Render Daily Numbers Bar Chart
-function renderDailyNumbersChart(data) {
-  const ctx = document.getElementById("dailyNumbersBarChart").getContext("2d");
-
-  // Aggregate data by date
-  const countsByDate = data.reduce((acc, record) => {
-    const date = record.parsedDate ? record.parsedDate.format("YYYY-MM-DD") : "Invalid Date";
-    if (date !== "Invalid Date") {
-      acc[date] = (acc[date] || 0) + 1;
+  for (let i = 0; i < row.length; i++) {
+    const char = row[i];
+    if (char === '"') {
+      if (inQuotes && row[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      result.push(current);
+      current = "";
+    } else {
+      current += char;
     }
-    return acc;
-  }, {});
-
-  const sortedDates = Object.keys(countsByDate).sort();
-  const labels = sortedDates;
-  const values = sortedDates.map((date) => countsByDate[date]);
-
-  if (dailyNumbersBarChart) {
-    dailyNumbersBarChart.destroy();
   }
+  result.push(current);
+  return result.map((s) => s.trim().replace(/^"|"$/g, ""));
+}
+
+// Process data and update all visualizations
+function processNumbersData() {
+  console.log("Processing numbers data...");
+  filteredData = applyTATFilters(allData);
+  updateNumberKPIs();
+  renderDailyNumbersBarChart();
+  renderHourlyNumbersLineChart();
+}
+
+// Render daily numbers bar chart
+function renderDailyNumbersBarChart() {
+  const ctx = document.getElementById("dailyNumbersBarChart");
+  if (!ctx) return;
+
+  const dailyCounts = {};
+  filteredData.forEach((row) => {
+    const date = row.parsedDate;
+    if (date && date.isValid()) {
+      const dateKey = date.format("YYYY-MM-DD");
+      dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+    }
+  });
+
+  const sortedDates = Object.keys(dailyCounts).sort();
+  const data = sortedDates.map((date) => dailyCounts[date]);
+
+  if (dailyNumbersBarChart) dailyNumbersBarChart.destroy();
 
   dailyNumbersBarChart = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: labels,
+      labels: sortedDates,
       datasets: [
         {
-          label: "Daily Number of Tests",
-          data: values,
-          backgroundColor: "#42A5F5",
-          borderColor: "#1976D2",
+          label: "Daily Request Volume",
+          data: data,
+          backgroundColor: "#21336a",
+          borderColor: "#21336a",
           borderWidth: 1,
         },
       ],
@@ -136,13 +135,11 @@ function renderDailyNumbersChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: true,
-          position: "top",
-        },
+        legend: { display: false },
         tooltip: {
-          mode: "index",
-          intersect: false,
+          callbacks: {
+            label: (context) => `${context.parsed.y} requests`,
+          },
         },
       },
       scales: {
@@ -150,64 +147,52 @@ function renderDailyNumbersChart(data) {
           type: "time",
           time: {
             unit: "day",
-            tooltipFormat: "ll",
-            displayFormats: {
-              day: "MMM D",
-            },
+            tooltipFormat: "MMM D, YYYY",
+            displayFormats: { day: "MMM D" },
           },
-          title: {
-            display: true,
-            text: "Date",
-          },
-          grid: {
-            display: false,
-          },
+          grid: { display: false },
+          title: { display: true, text: "Date" },
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: "Number of Tests",
-          },
+          title: { display: true, text: "Number of Requests" },
         },
       },
     },
   });
 }
 
-// Render Hourly Numbers Line Chart
-function renderHourlyNumbersChart(data) {
-  const ctx = document.getElementById("hourlyNumbersLineChart").getContext("2d");
+// Render hourly numbers line chart
+function renderHourlyNumbersLineChart() {
+  const ctx = document.getElementById("hourlyNumbersLineChart");
+  if (!ctx) return;
 
-  // Aggregate data by hour of day
-  const countsByHour = Array(24).fill(0); // Initialize counts for 24 hours
-
-  data.forEach((record) => {
-    if (record.parsedDate && record.parsedDate.isValid()) {
-      const hour = record.parsedDate.hour();
-      countsByHour[hour]++;
+  const hourlyCounts = Array(24).fill(0);
+  filteredData.forEach((row) => {
+    if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
+      hourlyCounts[row.timeInHour]++;
     }
   });
 
-  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-  const values = countsByHour;
-
-  if (hourlyNumbersLineChart) {
-    hourlyNumbersLineChart.destroy();
-  }
+  if (hourlyNumbersLineChart) hourlyNumbersLineChart.destroy();
 
   hourlyNumbersLineChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: labels,
+      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
       datasets: [
         {
-          label: "Hourly Test Distribution",
-          data: values,
-          borderColor: "#FF7043",
-          backgroundColor: "#FF7043",
-          fill: false,
-          tension: 0.1,
+          label: "Hourly Request Volume",
+          data: hourlyCounts,
+          borderColor: "#21336a",
+          backgroundColor: "rgba(33, 51, 106, 0.2)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: "#21336a",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 1,
         },
       ],
     },
@@ -215,61 +200,84 @@ function renderHourlyNumbersChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          display: true,
-          position: "top",
-        },
+        legend: { position: "bottom" },
         tooltip: {
-          mode: "index",
-          intersect: false,
+          callbacks: {
+            label: (context) => `${context.parsed.y} requests`,
+          },
         },
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: "Hour of Day",
-          },
-          grid: {
-            display: false,
-          },
+          title: { display: true, text: "Hour of Day" },
+          grid: { display: false },
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: "Number of Tests",
-          },
+          title: { display: true, text: "Number of Requests" },
+          grid: { color: "#e0e0e0" },
         },
       },
     },
   });
 }
 
-// Update KPIs for Numbers Dashboard
-function updateNumberKPIs(data) {
-  const totalTests = data.length;
-  document.getElementById("totalTestsKPI").textContent = totalTests.toLocaleString();
+// Update all KPIs
+function updateNumberKPIs() {
+  // Total Requests
+  const totalRequests = filteredData.length;
+  document.getElementById("totalRequestsValue").textContent =
+    totalRequests.toLocaleString();
 
-  // Assuming a "Delay_Status" field for 'Not Uploaded' or 'Delayed' in your data
-  const notUploadedTests = data.filter(record => record.Delay_Status === "Not Uploaded").length;
-  document.getElementById("notUploadedKPI").textContent = notUploadedTests.toLocaleString();
+  // Average Daily Requests
+  const uniqueDates = new Set(
+    filteredData
+      .map((row) => row.parsedDate?.format("YYYY-MM-DD"))
+      .filter(Boolean)
+  );
+  const avgDailyRequests =
+    uniqueDates.size > 0 ? totalRequests / uniqueDates.size : 0;
+  document.getElementById("avgDailyRequests").textContent =
+    Math.round(avgDailyRequests).toLocaleString();
 
-  // You might need to define 'pending' based on your data structure
-  // For example, if there's a status like "Pending Result"
-  const pendingTests = data.filter(record => record.Delay_Status === "Pending Result").length; // Example, adjust as needed
-  document.getElementById("pendingTestsKPI").textContent = pendingTests.toLocaleString();
+  // Busiest Hour
+  const hourlyCounts = Array(24).fill(0);
+  filteredData.forEach((row) => {
+    if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
+      hourlyCounts[row.timeInHour]++;
+    }
+  });
+  const peakHour = hourlyCounts.indexOf(Math.max(...hourlyCounts));
+  document.getElementById("busiestHour").textContent =
+    peakHour >= 0 ? `${peakHour}:00 - ${peakHour + 1}:00` : "N/A";
 
-  // You would typically compare current period data to previous period data for trends
-  // For simplicity, this example just shows 0% change.
-  updateTrendArrow("totalTestsTrend", 0, true);
-  updateTrendArrow("notUploadedTrend", 0, false); // Not uploaded is bad, so false
-  updateTrendArrow("pendingTestsTrend", 0, false); // Pending is bad, so false
+  // Busiest Day
+  const dailyCounts = {};
+  filteredData.forEach((row) => {
+    const date = row.parsedDate;
+    if (date && date.isValid()) {
+      const dateKey = date.format("YYYY-MM-DD");
+      dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+    }
+  });
+
+  let busiestDay = "N/A";
+  let maxCount = 0;
+  Object.entries(dailyCounts).forEach(([date, count]) => {
+    if (count > maxCount) {
+      maxCount = count;
+      busiestDay = moment(date).format("MMM D, YYYY");
+    }
+  });
+  document.getElementById("busiestDay").textContent = busiestDay;
+
+  // Update trends (simplified example)
+  updateTrend("totalRequestsTrend", totalRequests * 0.1, true); // 10% increase for demo
+  updateTrend("avgDailyRequestsTrend", avgDailyRequests * 0.05, true); // 5% increase for demo
 }
 
-
-// Generic function to update trend arrows
-function updateTrendArrow(elementId, value, isPositiveGood) {
+// Update trend indicators
+function updateTrend(elementId, value, isPositiveGood) {
   const element = document.getElementById(elementId);
   if (!element) return;
 
@@ -290,36 +298,4 @@ function updateTrendArrow(elementId, value, isPositiveGood) {
   }
 
   element.innerHTML = `<span class="${colorClass}">${arrow} ${displayText}</span>`;
-}
-
-// Show error message
-function showError(message) {
-  const errorBox = document.createElement("div");
-  errorBox.style.cssText = `
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-  `;
-  errorBox.innerHTML = `<strong>Error:</strong> ${message}`;
-  document.body.appendChild(errorBox);
-
-  // Auto-hide after 5 seconds
-  setTimeout(() => {
-    errorBox.remove();
-  }, 5000);
-}
-
-function showLoading(show) {
-  const loadingIndicator = document.getElementById('loadingIndicator'); // Assume you have this in your HTML
-  if (loadingIndicator) {
-    loadingIndicator.style.display = show ? 'block' : 'none';
-  }
 }
