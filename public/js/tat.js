@@ -311,7 +311,6 @@ function setTrendArrow(
       trendClass = "";
     }
   }
-
   // Combine arrow and percentage text, only display percentage if it's meaningful
   element.innerHTML = `<span class="${trendClass}">${arrowSymbol} ${trendText}</span>`;
 }
