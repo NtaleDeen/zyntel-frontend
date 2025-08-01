@@ -3,10 +3,10 @@ const loginBox = document.querySelector('.login-box');
 
 // Define the colors for the icon's source images
 const iconColors = [
-    '../assets/VividCyan(00f0ff).png',
-    '../assets/PastelYellow(ffe066).png',
-    '../assets/Green(7de19a).png',
-    '../assets/LightGray(c0c0c0).png'
+    '../images/VividCyan(00f0ff).png',
+    '../images/PastelYellow(ffe066).png',
+    '../images/Green(7de19a).png',
+    '../images/LightGray(c0c0c0).png'
 ];
 
 // Define the corresponding hex/rgba colors for the box-shadow glow

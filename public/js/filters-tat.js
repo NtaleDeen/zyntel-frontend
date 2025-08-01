@@ -37,160 +37,112 @@ export function parseTATDate(dateStr) {
     "M/D/YYYY h:mm A",
     "M/D/YY h:mm A",
     "M/D/YYYY H:mm",
-    "M/D/YY H:mm",
-    "YYYY-MM-DD HH:mm:ss.SSS",
-    "YYYY-MM-DD HH:mm:ss", // Added for new schema's request_time_in
+    "MM-DD-YYYY",
+    "ddd, D MMM YYYY HH:mm:ss [GMT]", // Added to handle the new date format from the API
   ];
-  // Access moment from the global scope (window.moment)
-  return window.moment(dateStr, formats, true);
+  return window.moment.utc(dateStr, formats, true);
 }
 
-// Function to update date inputs based on period selection
+
+// A new function to update the date inputs based on a period (e.g., 'thisMonth')
 export function updateDatesForPeriod(period) {
-  const startDateInput = document.getElementById("startDateFilter");
-  const endDateInput = document.getElementById("endDateFilter");
+    const startDateFilterInput = document.getElementById("startDateFilter");
+    const endDateFilterInput = document.getElementById("endDateFilter");
 
-  if (!startDateInput || !endDateInput) return;
+    if (!startDateFilterInput || !endDateFilterInput) return;
 
-  let startMoment, endMoment;
-  const now = window.moment().tz("Africa/Nairobi"); // Use Nairobi timezone for period calculations
+    let startDate, endDate;
+    const now = window.moment();
 
-  switch (period) {
-    case "today":
-      startMoment = now.clone().hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "yesterday":
-      startMoment = now.clone().subtract(1, 'day').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "last7days":
-      startMoment = now.clone().subtract(6, 'days').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "thisMonth":
-      // For 'thisMonth', the "day" starts at 8 AM of the first day of the month
-      // and ends at 8 AM of the first day of the next month (minus a millisecond)
-      startMoment = now.clone().startOf('month').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().endOf('month').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      // If the current time is before 8 AM on the first day, adjust start to previous month's 8 AM
-      if (now.hour() < 8 && now.date() === 1) {
-        startMoment = now.clone().subtract(1, 'month').startOf('month').hour(8).minute(0).second(0).millisecond(0);
-      }
-      break;
-    case "lastMonth":
-      startMoment = now.clone().subtract(1, 'month').startOf('month').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().subtract(1, 'month').endOf('month').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "thisQuarter":
-      startMoment = now.clone().startOf('quarter').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().endOf('quarter').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "lastQuarter":
-      startMoment = now.clone().subtract(1, 'quarter').startOf('quarter').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().subtract(1, 'quarter').endOf('quarter').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "thisYear":
-      startMoment = now.clone().startOf('year').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().endOf('year').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "lastYear":
-      startMoment = now.clone().subtract(1, 'year').startOf('year').hour(8).minute(0).second(0).millisecond(0);
-      endMoment = now.clone().subtract(1, 'year').endOf('year').add(1, 'day').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    case "allTime":
-      // For 'allTime', you might want to consider the absolute min/max dates from your data
-      // For now, setting a very wide range.
-      startMoment = window.moment("2020-01-01").hour(8).minute(0).second(0).millisecond(0).tz("Africa/Nairobi");
-      endMoment = now.clone().add(5, 'years').hour(8).minute(0).second(0).millisecond(0).subtract(1, 'millisecond');
-      break;
-    default:
-      // Fallback for customDate or unknown period
-      return;
-  }
+    if (period === "today") {
+        startDate = now.clone().startOf("day");
+        endDate = now.clone().endOf("day");
+    } else if (period === "thisWeek") {
+        startDate = now.clone().startOf("week");
+        endDate = now.clone().endOf("week");
+    } else if (period === "thisMonth") {
+        startDate = now.clone().startOf("month");
+        endDate = now.clone().endOf("month");
+    } else if (period === "lastMonth") {
+        startDate = now.clone().subtract(1, 'month').startOf('month');
+        endDate = now.clone().subtract(1, 'month').endOf('month');
+    } else if (period === "lastQuarter") {
+        const quarter = Math.floor((now.month() + 3) / 3); // Current quarter (1-4)
+        const startOfLastQuarter = now.clone().month((quarter - 2) * 3).startOf('month');
+        startDate = startOfLastQuarter;
+        endDate = startOfLastQuarter.clone().add(2, 'months').endOf('month');
+    } else if (period === "thisYear") {
+        startDate = now.clone().startOf("year");
+        endDate = now.clone().endOf("year");
+    }
 
-  // Set the input values (display only the date part)
-  startDateInput.value = startMoment.format("YYYY-MM-DD");
-  endDateInput.value = endMoment.format("YYYY-MM-DD");
+    if (startDate && endDate) {
+        startDateFilterInput.value = startDate.format("YYYY-MM-DD");
+        endDateFilterInput.value = endDate.format("YYYY-MM-DD");
+    }
 }
 
-// Filter application - Updated to use pre-parsed dates and standardized field names
-export function applyTATFilters(allData) {
-  const periodSelect = document.getElementById("periodSelect");
-  const startDateInput = document.getElementById("startDateFilter");
-  const endDateInput = document.getElementById("endDateFilter");
-  const labSection =
-    document.getElementById("labSectionFilter")?.value || "all";
-  const shift = document.getElementById("shiftFilter")?.value || "all";
-  const hospitalUnit =
-    document.getElementById("hospitalUnitFilter")?.value || "all";
+// applyTATFilters function to filter data based on dashboard filter inputs
+export function applyTATFilters(data) {
+  // Get filter values from the DOM
+  const startDateFilter = document.getElementById("startDateFilter")?.value;
+  const endDateFilter = document.getElementById("endDateFilter")?.value;
+  const labSectionFilter = document.getElementById("labSectionFilter")?.value;
+  const shiftFilter = document.getElementById("shiftFilter")?.value;
+  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter")?.value;
 
-  // Get current values from date inputs.
-  // These are displayed as YYYY-MM-DD, so parse them as such, then
-  // convert them to Nairobi timezone and set the 8 AM time.
-  let filterStartDate = startDateInput?.value ? window.moment.tz(startDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi") : null;
-  let filterEndDate = endDateInput?.value ? window.moment.tz(endDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day').subtract(1, 'millisecond') : null;
+  console.log("[filters-tat.js] Applying filters:");
+  console.log("  Period:", document.getElementById("periodSelect")?.value);
+  console.log("  Start Date Input:", startDateFilter);
+  console.log("  End Date Input:", endDateFilter);
+  console.log("  Lab Section:", labSectionFilter);
+  console.log("  Shift:", shiftFilter);
+  console.log("  Hospital Unit:", hospitalUnitFilter);
 
-  console.log(`[filters-tat.js] Applying filters:`);
-  console.log(`  Period: ${periodSelect?.value}`);
-  console.log(`  Start Date Input: ${startDateInput?.value}`);
-  console.log(`  End Date Input: ${endDateInput?.value}`);
-  console.log(`  Effective Filter Start Date (EAT): ${filterStartDate ? filterStartDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}`);
-  console.log(`  Effective Filter End Date (EAT): ${filterEndDate ? filterEndDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}`);
-  console.log(`  Lab Section: ${labSection}`);
-  console.log(`  Shift: ${shift}`);
-  console.log(`  Hospital Unit: ${hospitalUnit}`);
+  // Parse filter dates to UTC Moment objects
+  const startMoment = startDateFilter ? window.moment.utc(startDateFilter) : null;
+  const endMoment = endDateFilter ? window.moment.utc(endDateFilter) : null;
 
-  // Convert filter dates to UTC for comparison with row.Request_Time_In which is assumed to be UTC or parsed into UTC
-  const filterStartDateUTC = filterStartDate ? filterStartDate.utc() : null;
-  const filterEndDateUTC = filterEndDate ? filterEndDate.utc() : null;
+  // The logs show that the data dates are in the format "ddd, D MMM YYYY HH:mm:ss [GMT]".
+  // This is a valid moment.js format, but it's important to use UTC to match the data.
+  // The `parseTATDate` function is now updated to handle this format.
+  // The `isBetween` method in moment.js is inclusive by default.
 
-  console.log(`  Effective Filter Start Date (UTC for comparison): ${filterStartDateUTC ? filterStartDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
-  console.log(`  Effective Filter End Date (UTC for comparison): ${filterEndDateUTC ? filterEndDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
-
-
-  const filteredData = allData.filter((row) => {
-    // Date filtering: Use row.Request_Time_In from the new schema
-    // Ensure Request_Time_In is parsed into a Moment object in tat.js before filtering
-    const rowRequestTimeIn = row.Request_Time_In; // This should be a Moment object parsed from the data
-    if (!rowRequestTimeIn?.isValid()) {
-      // console.log(`Skipping row due to invalid Request_Time_In: ${row.Request_Time_In}`);
-      return false;
+  const filteredData = data.filter((row) => {
+    // Correctly parse the date from the data row using the updated parseTATDate
+    const rowDate = parseTATDate(row.date);
+    
+    // Check if the rowDate is valid before performing comparisons
+    if (!rowDate.isValid()) {
+        console.error(`Invalid date format for row: ${row.date}`);
+        return false;
     }
+    
+    // Date filter logic
+    const isDateInRange =
+      (!startMoment || rowDate.isSameOrAfter(startMoment, "day")) &&
+      (!endMoment || rowDate.isSameOrBefore(endMoment, "day"));
 
-    // Ensure filter dates are valid before comparison. All dates are now UTC.
-    if (filterStartDateUTC && filterStartDateUTC.isValid() && rowRequestTimeIn.isBefore(filterStartDateUTC)) {
-      // console.log(`Skipping row ${row.ID} - Request_Time_In ${rowRequestTimeIn.format('YYYY-MM-DD HH:mm:ss')} is before start date ${filterStartDateUTC.format('YYYY-MM-DD HH:mm:ss')}`);
-      return false;
-    }
-    if (filterEndDateUTC && filterEndDateUTC.isValid() && rowRequestTimeIn.isAfter(filterEndDateUTC)) {
-      // console.log(`Skipping row ${row.ID} - Request_Time_In ${rowRequestTimeIn.format('YYYY-MM-DD HH:mm:ss')} is after end date ${filterEndDateUTC.format('YYYY-MM-DD HH:mm:ss')}`);
-      return false;
-    }
+    // Other filter logic (unchanged)
+    const isLabSectionMatch =
+      labSectionFilter === "all" || row.lab_section === labSectionFilter;
+    const isShiftMatch = shiftFilter === "all" || row.shift === shiftFilter;
+    const isHospitalUnitMatch =
+      hospitalUnitFilter === "all" || row.unit === hospitalUnitFilter;
 
-    // Lab section filter (Assuming 'LabSection' still exists or maps to a new field)
-    // If 'LabSection' is not in the new schema, this filter might need to be removed or adapted.
-    // For now, keeping it as is, assuming a field named LabSection still exists or is derived.
-    if (labSection !== "all" && row.LabSection !== labSection) {
-      return false;
-    }
-
-    // Shift filter: Use 'Shift' from the new schema
-    if (shift !== "all" && row.Shift !== shift) {
-      return false;
-    }
-
-    // Hospital unit filter: Use 'Unit' from the new schema
-    if (hospitalUnit !== "all" && row.Unit !== hospitalUnit) {
-      return false;
-    }
-
-    return true;
+    // Return true only if all filter conditions are met
+    return (
+      isDateInRange &&
+      isLabSectionMatch &&
+      isShiftMatch &&
+      isHospitalUnitMatch
+    );
   });
   return filteredData;
 }
 
-// Common dashboard initialization (assuming this sets up event listeners for filters)
+
+// initCommonDashboard function (unchanged, but now exports helper functions for use)
 export function initCommonDashboard(callback) {
   const periodSelect = document.getElementById("periodSelect");
   const startDateFilterInput = document.getElementById("startDateFilter");
@@ -199,16 +151,37 @@ export function initCommonDashboard(callback) {
   const shiftFilter = document.getElementById("shiftFilter");
   const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
 
-  if (periodSelect) {
-    periodSelect.addEventListener("change", () => {
-      if (periodSelect.value !== "custom") {
-        updateDatesForPeriod(periodSelect.value); // Update date inputs based on period
-      }
-      callback();
+  // Populate Hospital Unit Select
+  if (hospitalUnitFilter) {
+    const allUnits = ["all", ...inpatientUnits, ...outpatientUnits, ...annexUnits].sort();
+    allUnits.forEach(unit => {
+      const option = document.createElement("option");
+      option.value = unit;
+      option.textContent = unit.replace("_", " ");
+      hospitalUnitFilter.appendChild(option);
     });
   }
 
-  // Add event listeners for direct date input changes
+  // Populate Lab Section Select
+  if (labSectionFilter) {
+    // The lab sections need to be dynamically populated from the data.
+    // For now, we'll use a placeholder until we can get a list from the data.
+    // In tat.js, we will call the callback after data is loaded and filters are initialized.
+  }
+
+  // Set default filter values
+  if (periodSelect) periodSelect.value = "thisMonth";
+  if (labSectionFilter) labSectionFilter.value = "all";
+  if (shiftFilter) shiftFilter.value = "all";
+  if (hospitalUnitFilter) hospitalUnitFilter.value = "all";
+
+  // Add event listeners for filters
+  if (periodSelect) {
+    periodSelect.addEventListener("change", (e) => {
+      updateDatesForPeriod(e.target.value);
+      callback();
+    });
+  }
   if (startDateFilterInput) {
     startDateFilterInput.addEventListener("change", () => {
       if (periodSelect) periodSelect.value = "custom"; // Set to custom if dates are manually changed
@@ -248,6 +221,26 @@ export function initCommonDashboard(callback) {
     }
   }
 
-  // Call the initial data load and render
-  callback();
+  // A slight delay to ensure all inputs are ready before the first callback.
+  // This is a common pattern for dashboards with many interlocking components.
+  setTimeout(callback, 50);
+}
+
+// Function to calculate the previous period based on the current filter dates
+export function calculatePreviousPeriod(startDate, endDate) {
+  const startMoment = window.moment.utc(startDate);
+  const endMoment = window.moment.utc(endDate);
+
+  if (!startMoment.isValid() || !endMoment.isValid()) {
+    console.error("Invalid dates provided for previous period calculation.");
+    return { prevStartDate: null, prevEndDate: null };
+  }
+
+  const duration = endMoment.diff(startMoment, "days") + 1; // +1 to include the end date
+  const prevStartDate = startMoment.clone().subtract(duration, "days");
+  const prevEndDate = endMoment.clone().subtract(duration, "days");
+
+  console.log(`[tat.js] Previous Period Calculated: Start=${prevStartDate.format()}, End=${prevEndDate.format()}`);
+
+  return { prevStartDate, prevEndDate };
 }
