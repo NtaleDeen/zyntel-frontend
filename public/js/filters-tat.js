@@ -1,7 +1,8 @@
+// filters-tat.js - Complete version sharing filters with TAT page
 // Remove the import statement for moment, as it's loaded globally via a script tag in tat.html
 // import moment from "https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js";
 
-// Unit definitions (unchanged)
+// Unit definitions
 export const inpatientUnits = [
   "APU",
   "GWA",
@@ -25,8 +26,9 @@ export const outpatientUnits = [
 ];
 export const annexUnits = ["ANNEX"];
 
-// Date parsing - This function is no longer directly used by tat.js for primary date parsing,
-// but kept for potential future use or if other modules rely on it.
+// Date parsing - IMPORTANT: This function should parse the raw database string (which is GMT/UTC)
+// into a Moment.js object that represents that *exact* UTC timestamp.
+// We will handle the 8 AM EAT "day start" logic when applying filters.
 export function parseTATDate(dateStr) {
   if (!dateStr) return null;
   const formats = [
@@ -37,210 +39,215 @@ export function parseTATDate(dateStr) {
     "M/D/YYYY h:mm A",
     "M/D/YY h:mm A",
     "M/D/YYYY H:mm",
-    "MM-DD-YYYY",
-    "ddd, D MMM YYYY HH:mm:ss [GMT]", // Added to handle the new date format from the API
+    "M/D/YY H:mm",
+    "YYYY-MM-DD HH:mm:ss.SSS",
+    "ddd, DD MMM YYYY HH:mm:ss [GMT]", // Added to explicitly parse the GMT string from DB
   ];
+  // Parse as UTC to maintain the original timestamp from the database.
   return window.moment.utc(dateStr, formats, true);
 }
 
 
-// A new function to update the date inputs based on a period (e.g., 'thisMonth')
-export function updateDatesForPeriod(period) {
-    const startDateFilterInput = document.getElementById("startDateFilter");
-    const endDateFilterInput = document.getElementById("endDateFilter");
+// Filter application
+export function applyTATFilters(allData) {
+  const periodSelect = document.getElementById("periodSelect");
+  const startDateInput = document.getElementById("startDateFilter");
+  const endDateInput = document.getElementById("endDateFilter");
+  const labSectionFilter = document.getElementById("labSectionFilter"); // Get element for value access
+  const shiftFilter = document.getElementById("shiftFilter");           // Get element for value access
+  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter"); // Get element for value access
 
-    if (!startDateFilterInput || !endDateFilterInput) return;
+  // Get selected values for comparison
+  const selectedLabSection = labSectionFilter?.value || "all";
+  const selectedShift = shiftFilter?.value || "all";
+  const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
 
-    let startDate, endDate;
-    const now = window.moment();
 
-    if (period === "today") {
-        startDate = now.clone().startOf("day");
-        endDate = now.clone().endOf("day");
-    } else if (period === "thisWeek") {
-        startDate = now.clone().startOf("week");
-        endDate = now.clone().endOf("week");
-    } else if (period === "thisMonth") {
-        startDate = now.clone().startOf("month");
-        endDate = now.clone().endOf("month");
-    } else if (period === "lastMonth") {
-        startDate = now.clone().subtract(1, 'month').startOf('month');
-        endDate = now.clone().subtract(1, 'month').endOf('month');
-    } else if (period === "lastQuarter") {
-        const quarter = Math.floor((now.month() + 3) / 3); // Current quarter (1-4)
-        const startOfLastQuarter = now.clone().month((quarter - 2) * 3).startOf('month');
-        startDate = startOfLastQuarter;
-        endDate = startOfLastQuarter.clone().add(2, 'months').endOf('month');
-    } else if (period === "thisYear") {
-        startDate = now.clone().startOf("year");
-        endDate = now.clone().endOf("year");
+  // Define filter start and end dates based on 8 AM EAT day concept
+  let filterStartDate = null;
+  let filterEndDate = null;
+
+  if (startDateInput?.value) {
+    // Parse the input date as EAT, and set it to 8 AM EAT
+    filterStartDate = window.moment.tz(startDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi");
+  }
+
+  if (endDateInput?.value) {
+    // Parse the input date as EAT, and set it to 7:59:59 AM EAT on the *next* day
+    filterEndDate = window.moment.tz(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day');
+  }
+
+  const filteredData = allData.filter((row) => {
+    // Date filtering
+    // row.parsedDate is already in UTC from loadAndRender -> dbData.map -> parseTATDate
+    const rowDate = row.parsedDate;
+    if (!rowDate?.isValid()) return false;
+
+    // Convert filter dates to UTC for comparison with rowDate
+    const filterStartDateUTC = filterStartDate ? filterStartDate.utc() : null;
+    const filterEndDateUTC = filterEndDate ? filterEndDate.utc() : null;
+
+    if (filterStartDateUTC && rowDate.isBefore(filterStartDateUTC)) return false;
+    if (filterEndDateUTC && rowDate.isAfter(filterEndDateUTC)) return false;
+
+
+    // --- Start Debugging Other Filters ---
+    console.log(`--- Row Debug ---`);
+    console.log(`Row Date (UTC): ${rowDate ? rowDate.format() : 'Invalid'}`);
+    console.log(`Row Lab Section: '${row.LabSection}' (compared as: '${row.LabSection?.toLowerCase()}')`);
+    console.log(`Row Shift: '${row.Shift}' (compared as: '${row.Shift?.toLowerCase()}')`);
+    console.log(`Row Unit: '${row.Hospital_Unit}' (compared as: '${row.Hospital_Unit?.toUpperCase()}')`);
+    console.log(`Selected Lab Section: '${selectedLabSection}'`);
+    console.log(`Selected Shift: '${selectedShift}'`);
+    console.log(`Selected Unit: '${selectedHospitalUnit}'`);
+    // --- End Debugging Other Filters ---
+
+
+    // Other filters (these are your actual filter conditions)
+    if (selectedLabSection !== "all" && row.LabSection?.toLowerCase() !== selectedLabSection) {
+      console.log(`  -- Lab Section Mismatch: row '${row.LabSection?.toLowerCase()}' != selected '${selectedLabSection}'`);
+      return false;
     }
 
-    if (startDate && endDate) {
-        startDateFilterInput.value = startDate.format("YYYY-MM-DD");
-        endDateFilterInput.value = endDate.format("YYYY-MM-DD");
+    if (selectedShift !== "all" && row.Shift?.toLowerCase() !== selectedShift) {
+      console.log(`  -- Shift Mismatch: row '${row.Shift?.toLowerCase()}' != selected '${selectedShift}'`);
+      return false;
     }
-}
 
-// applyTATFilters function to filter data based on dashboard filter inputs
-export function applyTATFilters(data) {
-  // Get filter values from the DOM
-  const startDateFilter = document.getElementById("startDateFilter")?.value;
-  const endDateFilter = document.getElementById("endDateFilter")?.value;
-  const labSectionFilter = document.getElementById("labSectionFilter")?.value;
-  const shiftFilter = document.getElementById("shiftFilter")?.value;
-  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter")?.value;
-
-  console.log("[filters-tat.js] Applying filters:");
-  console.log("  Period:", document.getElementById("periodSelect")?.value);
-  console.log("  Start Date Input:", startDateFilter);
-  console.log("  End Date Input:", endDateFilter);
-  console.log("  Lab Section:", labSectionFilter);
-  console.log("  Shift:", shiftFilter);
-  console.log("  Hospital Unit:", hospitalUnitFilter);
-
-  // Parse filter dates to UTC Moment objects
-  const startMoment = startDateFilter ? window.moment.utc(startDateFilter) : null;
-  const endMoment = endDateFilter ? window.moment.utc(endDateFilter) : null;
-
-  // The logs show that the data dates are in the format "ddd, D MMM YYYY HH:mm:ss [GMT]".
-  // This is a valid moment.js format, but it's important to use UTC to match the data.
-  // The `parseTATDate` function is now updated to handle this format.
-  // The `isBetween` method in moment.js is inclusive by default.
-
-  const filteredData = data.filter((row) => {
-    // Correctly parse the date from the data row using the updated parseTATDate
-    const rowDate = parseTATDate(row.date);
-    
-    // Check if the rowDate is valid before performing comparisons
-    if (!rowDate.isValid()) {
-        console.error(`Invalid date format for row: ${row.date}`);
+    if (selectedHospitalUnit !== "all") {
+      const unit = row.Hospital_Unit?.toUpperCase();
+      if (
+        selectedHospitalUnit === "mainLab" &&
+        ![...inpatientUnits, ...outpatientUnits].includes(unit)
+      ) {
+        console.log(`  -- Hospital Unit Mismatch (mainLab): row '${unit}' not in mainLab units.`);
         return false;
+      }
+      if (selectedHospitalUnit === "annex" && !annexUnits.includes(unit)) {
+        console.log(`  -- Hospital Unit Mismatch (annex): row '${unit}' not in annex units.`);
+        return false;
+      }
+      // If selectedHospitalUnit is a specific unit name and not 'mainLab' or 'annex'
+      if (selectedHospitalUnit !== "mainLab" && selectedHospitalUnit !== "annex" && unit !== selectedHospitalUnit) {
+          console.log(`  -- Hospital Unit Mismatch (specific unit): row '${unit}' != selected '${selectedHospitalUnit}'`);
+          return false;
+      }
     }
-    
-    // Date filter logic
-    const isDateInRange =
-      (!startMoment || rowDate.isSameOrAfter(startMoment, "day")) &&
-      (!endMoment || rowDate.isSameOrBefore(endMoment, "day"));
-
-    // Other filter logic (unchanged)
-    const isLabSectionMatch =
-      labSectionFilter === "all" || row.lab_section === labSectionFilter;
-    const isShiftMatch = shiftFilter === "all" || row.shift === shiftFilter;
-    const isHospitalUnitMatch =
-      hospitalUnitFilter === "all" || row.unit === hospitalUnitFilter;
-
-    // Return true only if all filter conditions are met
-    return (
-      isDateInRange &&
-      isLabSectionMatch &&
-      isShiftMatch &&
-      isHospitalUnitMatch
-    );
+    console.log(`--- Row Passes All Filters ---`);
+    return true; // If all filters pass
   });
+
+  console.log(`[filters-tat.js] Final Filtered Data Length: ${filteredData.length}`);
   return filteredData;
 }
 
-
-// initCommonDashboard function (unchanged, but now exports helper functions for use)
+// Initialize dashboard
 export function initCommonDashboard(callback) {
-  const periodSelect = document.getElementById("periodSelect");
-  const startDateFilterInput = document.getElementById("startDateFilter");
-  const endDateFilterInput = document.getElementById("endDateFilter");
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  const shiftFilter = document.getElementById("shiftFilter");
-  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
-
-  // Populate Hospital Unit Select
-  if (hospitalUnitFilter) {
-    const allUnits = ["all", ...inpatientUnits, ...outpatientUnits, ...annexUnits].sort();
-    allUnits.forEach(unit => {
-      const option = document.createElement("option");
-      option.value = unit;
-      option.textContent = unit.replace("_", " ");
-      hospitalUnitFilter.appendChild(option);
-    });
-  }
-
-  // Populate Lab Section Select
-  if (labSectionFilter) {
-    // The lab sections need to be dynamically populated from the data.
-    // For now, we'll use a placeholder until we can get a list from the data.
-    // In tat.js, we will call the callback after data is loaded and filters are initialized.
-  }
-
-  // Set default filter values
-  if (periodSelect) periodSelect.value = "thisMonth";
-  if (labSectionFilter) labSectionFilter.value = "all";
-  if (shiftFilter) shiftFilter.value = "all";
-  if (hospitalUnitFilter) hospitalUnitFilter.value = "all";
-
-  // Add event listeners for filters
-  if (periodSelect) {
-    periodSelect.addEventListener("change", (e) => {
-      updateDatesForPeriod(e.target.value);
-      callback();
-    });
-  }
-  if (startDateFilterInput) {
-    startDateFilterInput.addEventListener("change", () => {
-      if (periodSelect) periodSelect.value = "custom"; // Set to custom if dates are manually changed
-      callback();
-    });
-  }
-  if (endDateFilterInput) {
-    endDateFilterInput.addEventListener("change", () => {
-      if (periodSelect) periodSelect.value = "custom"; // Set to custom if dates are manually changed
-      callback();
-    });
-  }
-
-  // Add event listeners for other filters
-  if (labSectionFilter) {
-    labSectionFilter.addEventListener("change", callback);
-  }
-  if (shiftFilter) {
-    shiftFilter.addEventListener("change", callback);
-  }
-  if (hospitalUnitFilter) {
-    hospitalUnitFilter.addEventListener("change", callback);
-  }
-
-  // Initial update for dates based on default 'thisMonth' or 'today' from tat.js
-  // This will ensure the inputs have values even before first data load.
-  if (periodSelect && periodSelect.value !== "custom") {
-    updateDatesForPeriod(periodSelect.value);
-  } else {
-    // If no period is set, or it's 'custom', ensure date inputs are correctly formatted Moment objects
-    // for initial load. This might be redundant if loadAndRender() sets them, but good for robustness.
-    if (startDateFilterInput && startDateFilterInput.value) {
-        startDateFilterInput.value = window.moment(startDateFilterInput.value).format("YYYY-MM-DD");
-    }
-    if (endDateFilterInput && endDateFilterInput.value) {
-        endDateFilterInput.value = window.moment(endDateFilterInput.value).format("YYYY-MM-DD");
-    }
-  }
-
-  // A slight delay to ensure all inputs are ready before the first callback.
-  // This is a common pattern for dashboards with many interlocking components.
-  setTimeout(callback, 50);
+  setupDateRangeControls();
+  initializeFilterListeners(callback);
+  // Initial render will be triggered by the DOMContentLoaded listener in tat.js/numbers.js
+  // which then calls loadAndRender, which in turn calls this callback.
+  // So, no immediate callback() here.
 }
 
-// Function to calculate the previous period based on the current filter dates
-export function calculatePreviousPeriod(startDate, endDate) {
-  const startMoment = window.moment.utc(startDate);
-  const endMoment = window.moment.utc(endDate);
+function setupDateRangeControls() {
+  const startDateInput = document.getElementById("startDateFilter");
+  const endDateInput = document.getElementById("endDateFilter");
 
-  if (!startMoment.isValid() || !endMoment.isValid()) {
-    console.error("Invalid dates provided for previous period calculation.");
-    return { prevStartDate: null, prevEndDate: null };
+  // Ensure elements exist before adding listeners
+  if (!startDateInput || !endDateInput) {
+    console.warn("Date filter inputs not found.");
+    return;
   }
 
-  const duration = endMoment.diff(startMoment, "days") + 1; // +1 to include the end date
-  const prevStartDate = startMoment.clone().subtract(duration, "days");
-  const prevEndDate = endMoment.clone().subtract(duration, "days");
+  endDateInput.disabled = true;
 
-  console.log(`[tat.js] Previous Period Calculated: Start=${prevStartDate.format()}, End=${prevEndDate.format()}`);
+  startDateInput.addEventListener("change", () => {
+    if (startDateInput.value) {
+      endDateInput.disabled = false;
+      endDateInput.min = startDateInput.value;
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = "";
+      }
+      document.getElementById("periodSelect").value = "custom";
+    } else {
+      endDateInput.disabled = true;
+      endDateInput.value = "";
+    }
+  });
+}
 
-  return { prevStartDate, prevEndDate };
+function initializeFilterListeners(callback) {
+  const debounceDelay = 300;
+  let debounceTimer;
+
+  const handleFilterChange = () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (callback) callback();
+    }, debounceDelay);
+  };
+
+  const filterIds = [
+    "periodSelect",
+    "startDateFilter",
+    "endDateFilter",
+    "labSectionFilter",
+    "shiftFilter",
+    "hospitalUnitFilter",
+  ];
+
+  filterIds.forEach((id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener("change", handleFilterChange);
+    }
+  });
+}
+
+export function updateDatesForPeriod(period) {
+  // All date calculations for periods should be based on EAT timezone,
+  // then format for the input fields.
+  const nowEAT = window.moment().tz("Africa/Nairobi");
+  let startDateEAT, endDateEAT;
+
+  switch (period) {
+    case "thisMonth":
+      startDateEAT = nowEAT.clone().startOf("month");
+      endDateEAT = nowEAT.clone().endOf("month");
+      break;
+    case "lastMonth":
+      startDateEAT = nowEAT.clone().subtract(1, "month").startOf("month");
+      endDateEAT = nowEAT.clone().subtract(1, "month").endOf("month");
+      break;
+    case "thisQuarter":
+      startDateEAT = nowEAT.clone().startOf("quarter");
+      endDateEAT = nowEAT.clone().endOf("quarter");
+      break;
+    case "lastQuarter":
+      startDateEAT = nowEAT.clone().subtract(1, "quarter").startOf("quarter");
+      endDateEAT = nowEAT.clone().subtract(1, "quarter").endOf("quarter");
+      break;
+    case "thisYear":
+      startDateEAT = nowEAT.clone().startOf("year");
+      endDateEAT = nowEAT.clone().endOf("year");
+      break;
+    case "lastYear":
+      startDateEAT = nowEAT.clone().subtract(1, "year").startOf("year");
+      endDateEAT = nowEAT.clone().subtract(1, "year").endOf("year");
+      break;
+    default:
+      return;
+  }
+
+  const startDateInput = document.getElementById("startDateFilter");
+  const endDateInput = document.getElementById("endDateFilter");
+
+  if (startDateInput) {
+    startDateInput.value = startDateEAT.format("YYYY-MM-DD");
+  }
+  if (endDateInput) {
+    endDateInput.value = endDateEAT.format("YYYY-MM-DD");
+    endDateInput.disabled = false;
+  }
 }

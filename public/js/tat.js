@@ -91,8 +91,8 @@ async function loadAndRender() {
       const processedRow = { ...row };
 
       // Parse 'date' field from DB (e.g., "Sun, 23 Feb 2025 00:00:00 GMT")
-      // Use moment.utc() for consistency with GMT timestamps from the database.
-      processedRow.parsedDate = row.date ? window.moment.utc(row.date) : null;
+      // Use parseTATDate from filters-tat.js to handle parsing as UTC.
+      processedRow.parsedDate = parseTATDate(row.date);
 
       // Use 'daily_tat' for minutesDelayed, convert to number
       processedRow.minutesDelayed = parseFloat(row.daily_tat) || 0;
@@ -106,10 +106,12 @@ async function loadAndRender() {
       }
 
       // Extract hour from 'request_time_in' for hourly charts
+      // The database provides 'request_time_in' as a GMT string. Parse it as UTC.
       if (row.request_time_in) {
-        // Parse 'request_time_in' using moment.utc() for consistency with 'date' field
-        const timeInMoment = window.moment.utc(row.request_time_in);
-        processedRow.timeInHour = timeInMoment.isValid() ? timeInMoment.hour() : null;
+        const timeInMomentUTC = window.moment.utc(row.request_time_in);
+        // We want the hour in EAT for hourly charts if the dashboard is EAT-centric.
+        // Convert to EAT, then get the hour.
+        processedRow.timeInHour = timeInMomentUTC.isValid() ? timeInMomentUTC.tz("Africa/Nairobi").hour() : null;
       } else {
         processedRow.timeInHour = null;
       }
@@ -135,71 +137,77 @@ async function loadAndRender() {
     // --- IMPORTANT: Ensure date inputs are updated BEFORE applying filters ---
     const periodSelect = document.getElementById("periodSelect");
     if (periodSelect && periodSelect.value !== "custom") {
-        // This ensures that startDateFilter and endDateFilter inputs reflect the chosen period
-        // before applyTATFilters reads them.
         updateDatesForPeriod(periodSelect.value);
     }
 
-    // Apply filters from UI for current data after loading all data
-    filteredData = applyTATFilters(allData);
-    console.log(`[tat.js] Filtered Data Length after applyTATFilters: ${filteredData.length}`);
+    // Use a small timeout to ensure DOM updates (from updateDatesForPeriod) have occurred
+    // before applyTATFilters reads the input values.
+    setTimeout(() => {
+        filteredData = applyTATFilters(allData);
+        console.log(`[tat.js] Filtered Data Length after applyTATFilters: ${filteredData.length}`);
 
-    // --- KPI Trend Calculation: Dynamically determine previous period based on current filter ---
-    let prevPeriodStartDate = null;
-    let prevPeriodEndDate = null;
+        // --- KPI Trend Calculation: Dynamically determine previous period based on current filter ---
+        let prevPeriodStartDate = null;
+        let prevPeriodEndDate = null;
 
-    if (periodSelect && periodSelect.value !== "custom") {
-        // Read the *currently displayed* filter dates, which should be correct after updateDatesForPeriod
-        // Parse these values as UTC to ensure consistency with parsedDate from allData
-        const currentStartDate = window.moment.utc(document.getElementById("startDateFilter").value);
-        const currentEndDate = window.moment.utc(document.getElementById("endDateFilter").value);
+        if (periodSelect && periodSelect.value !== "custom") {
+            // Read the *currently displayed* filter dates, which should be correct after updateDatesForPeriod
+            // Parse these values as EAT, then convert to UTC for comparison with parsedDate
+            const currentStartDateEAT = window.moment.tz(document.getElementById("startDateFilter").value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi");
+            const currentEndDateEAT = window.moment.tz(document.getElementById("endDateFilter").value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day');
 
-        switch (periodSelect.value) {
-            case "thisMonth":
-                prevPeriodStartDate = currentStartDate.clone().subtract(1, 'month').startOf('month');
-                prevPeriodEndDate = currentEndDate.clone().subtract(1, 'month').endOf('month');
-                break;
-            case "lastMonth": // If last month is selected, previous period is month before last month
-                prevPeriodStartDate = currentStartDate.clone().subtract(1, 'month').startOf('month');
-                prevPeriodEndDate = currentEndDate.clone().subtract(1, 'month').endOf('month');
-                break;
-            case "thisQuarter":
-                prevPeriodStartDate = currentStartDate.clone().subtract(1, 'quarter').startOf('quarter');
-                prevPeriodEndDate = currentEndDate.clone().subtract(1, 'quarter').endOf('quarter');
-                break;
-            case "lastQuarter": // If last quarter is selected, previous period is quarter before last quarter
-                prevPeriodStartDate = currentStartDate.clone().subtract(1, 'quarter').startOf('quarter');
-                prevPeriodEndDate = currentEndDate.clone().subtract(1, 'quarter').endOf('quarter');
-                break;
-            default:
-                console.warn("[tat.js] Custom period selected, previous period trend not dynamically calculated.");
-                break;
+
+            switch (periodSelect.value) {
+                case "thisMonth":
+                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
+                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
+                    break;
+                case "lastMonth":
+                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
+                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
+                    break;
+                case "thisQuarter":
+                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
+                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
+                    break;
+                case "lastQuarter":
+                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
+                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
+                    break;
+                default:
+                    console.warn("[tat.js] Custom period selected, previous period trend not dynamically calculated.");
+                    break;
+            }
+        } else {
+            console.warn("[tat.js] Custom date range selected, previous period data will be empty for trend comparison.");
         }
-    } else {
-        console.warn("[tat.js] Custom date range selected, previous period data will be empty for trend comparison.");
-    }
 
-    console.log(`[tat.js] Previous Period Calculated: Start=${prevPeriodStartDate ? prevPeriodStartDate.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}, End=${prevPeriodEndDate ? prevPeriodEndDate.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
+        // Convert previous period boundaries to UTC for filtering 'allData' (which has parsedDate in UTC)
+        const prevPeriodStartDateUTC = prevPeriodStartDate ? prevPeriodStartDate.utc() : null;
+        const prevPeriodEndDateUTC = prevPeriodEndDate ? prevPeriodEndDate.utc() : null;
 
-
-    const previousFilteredData = allData.filter(row => {
-        const rowDate = row.parsedDate;
-        return rowDate && rowDate.isValid() &&
-               prevPeriodStartDate && prevPeriodStartDate.isValid() &&
-               prevPeriodEndDate && prevPeriodEndDate.isValid() &&
-               rowDate.isBetween(prevPeriodStartDate, prevPeriodEndDate, "day", "[]");
-    });
-    console.log(`[tat.js] Previous Period Filtered Data Length: ${previousFilteredData.length}`);
+        console.log(`[tat.js] Previous Period Calculated (EAT): Start=${prevPeriodStartDate ? prevPeriodStartDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}, End=${prevPeriodEndDate ? prevPeriodEndDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}`);
+        console.log(`[tat.js] Previous Period Calculated (UTC for filtering): Start=${prevPeriodStartDateUTC ? prevPeriodStartDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}, End=${prevPeriodEndDateUTC ? prevPeriodEndDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
 
 
-    // Update KPIs and render all charts with the currently filtered data
-    updateKPI(filteredData, previousFilteredData);
-    renderSummaryChart(filteredData);
-    renderOnTimeSummaryChart(filteredData);
-    renderPieChart(filteredData);
-    renderLineChart(filteredData);
-    renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+        const previousFilteredData = allData.filter(row => {
+            const rowDate = row.parsedDate;
+            return rowDate && rowDate.isValid() &&
+                   prevPeriodStartDateUTC && prevPeriodStartDateUTC.isValid() &&
+                   prevPeriodEndDateUTC && prevPeriodEndDateUTC.isValid() &&
+                   rowDate.isBetween(prevPeriodStartDateUTC, prevPeriodEndDateUTC, "millisecond", "[]"); // Use millisecond for precise range
+        });
+        console.log(`[tat.js] Previous Period Filtered Data Length: ${previousFilteredData.length}`);
 
+
+        // Update KPIs and render all charts with the currently filtered data
+        updateKPI(filteredData, previousFilteredData);
+        renderSummaryChart(filteredData);
+        renderOnTimeSummaryChart(filteredData);
+        renderPieChart(filteredData);
+        renderLineChart(filteredData);
+        renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+    }, 50); // Small delay to allow DOM to update
   } catch (err) {
     console.error("Data load failed:", err);
     // Using a custom message box instead of alert() for better UX
@@ -259,7 +267,8 @@ function setTrendArrow(
     isNaN(currentValue) ||
     currentValue === null ||
     isNaN(previousValue) ||
-    previousValue === null
+    previousValue === null ||
+    previousValue === 0 && currentValue === 0 // If both are zero, no change
   ) {
     element.innerHTML = `-`;
     element.className = "kpi-trend"; // Reset class
@@ -271,10 +280,19 @@ function setTrendArrow(
 
   if (previousValue === 0) {
     if (currentValue > 0) {
-      trendText = "Increased from 0"; // Changed from "New"
+      trendText = "New"; // Signifies a new entry or increase from zero
+      // Determine color for "New" based on `type`
+      if (type === 'positiveIsGood') {
+          element.innerHTML = `<span class="positive">${trendText}</span>`;
+      } else { // negativeIsGood
+          element.innerHTML = `<span class="negative">${trendText}</span>`;
+      }
+      return;
     } else {
-      // currentValue is also 0
-      trendText = "-"; // No change from zero
+      trendText = "-"; // Should already be caught by the earlier 0,0 check
+      element.innerHTML = `-`;
+      element.className = "kpi-trend"; // Reset class
+      return;
     }
   } else {
     percentageChange = ((currentValue - previousValue) / previousValue) * 100;
@@ -300,20 +318,22 @@ function setTrendArrow(
     // e.g., Delayed Percentage, Average Daily Delays/Not Uploaded
     if (currentValue < previousValue) {
       // Lower is good (fewer delays/not uploaded)
-      arrowSymbol = "▲"; // Up arrow is good for decline (e.g. fewer delays)
+      arrowSymbol = "▼"; // Down arrow is good for decline (e.g. fewer delays)
       trendClass = "positive"; // Green
     } else if (currentValue > previousValue) {
       // Higher is bad (more delays/not uploaded)
-      arrowSymbol = "▼"; // Down arrow is bad for increase
+      arrowSymbol = "▲"; // Up arrow is bad for increase
       trendClass = "negative"; // Red
     } else {
       arrowSymbol = "-";
       trendClass = "";
     }
   }
+
   // Combine arrow and percentage text, only display percentage if it's meaningful
   element.innerHTML = `<span class="${trendClass}">${arrowSymbol} ${trendText}</span>`;
 }
+
 
 /**
  * Calculates and updates Key Performance Indicators (KPIs) in the dashboard.
@@ -321,8 +341,6 @@ function setTrendArrow(
  * @param {Array<Object>} previousData - The data for the previous period (for trend calculation).
  */
 function updateKPI(currentData, previousData) {
-  console.log(`[tat.js] updateKPI called. Current data length: ${currentData.length}, Previous data length: ${previousData.length}`);
-
   const total = currentData.length;
   const delayed = currentData.filter(
     (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
@@ -334,33 +352,36 @@ function updateKPI(currentData, previousData) {
     (r) => r.tat === "Not Uploaded"
   ).length;
 
-  // Group data by day for daily averages and most delayed day calculation
+  // Group data by day (8 AM EAT to 7:59 AM next day EAT) for daily averages and most delayed day calculation
   const groupedByDay = {};
   currentData.forEach((r) => {
-    const day = r.parsedDate?.format("YYYY-MM-DD");
-    if (!day) return;
-    if (!groupedByDay[day])
-      groupedByDay[day] = { total: 0, delayed: 0, data: [] };
-    groupedByDay[day].total++;
+    // Convert parsedDate (UTC) to EAT for "day" grouping starting at 8 AM
+    const dayEAT = r.parsedDate?.clone().tz("Africa/Nairobi");
+    if (!dayEAT?.isValid()) return;
+
+    // Adjust day for the 8 AM start. If time is before 8 AM EAT, it belongs to the previous "shift day".
+    const adjustedDayEAT = dayEAT.hour() < 8 ? dayEAT.clone().subtract(1, 'day') : dayEAT.clone();
+    const dayKey = adjustedDayEAT.format("YYYY-MM-DD"); // This is the date part of the EAT "shift day"
+
+    if (!groupedByDay[dayKey])
+      groupedByDay[dayKey] = { total: 0, delayed: 0, onTime: 0, notUploaded: 0, data: [] };
+    groupedByDay[dayKey].total++;
     if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
-      groupedByDay[day].delayed++;
+      groupedByDay[dayKey].delayed++;
     }
-    groupedByDay[day].data.push(r);
+    if (r.tat === "On Time" || r.tat === "Swift") {
+      groupedByDay[dayKey].onTime++;
+    }
+    if (r.tat === "Not Uploaded") {
+      groupedByDay[dayKey].notUploaded++;
+    }
+    groupedByDay[dayKey].data.push(r);
   });
 
-  const dailyDelayedCounts = Object.values(groupedByDay).map(
-    (rows) =>
-      rows.data.filter(
-        (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
-      ).length
-  );
-  const dailyOnTimeCounts = Object.values(groupedByDay).map(
-    (rows) =>
-      rows.data.filter((r) => r.tat === "On Time" || r.tat === "Swift").length
-  );
-  const dailyNotUploadedCounts = Object.values(groupedByDay).map(
-    (rows) => rows.data.filter((r) => r.tat === "Not Uploaded").length
-  );
+  const dailyDelayedCounts = Object.values(groupedByDay).map((rows) => rows.delayed);
+  const dailyOnTimeCounts = Object.values(groupedByDay).map((rows) => rows.onTime);
+  const dailyNotUploadedCounts = Object.values(groupedByDay).map((rows) => rows.notUploaded);
+
 
   // Calculate Most Delayed Day
   let mostDelayedDay = "N/A";
@@ -372,26 +393,27 @@ function updateKPI(currentData, previousData) {
       (a, b) => b[1].delayed - a[1].delayed
     );
     const mostDelayedDayData = sortedDays[0][1]; // Access the object for the day
-    mostDelayedDay = sortedDays[0][0]; // Date in YYYY-MM-DD format
+    const mostDelayedDayKey = sortedDays[0][0]; // Date in YYYY-MM-DD format
     maxDelayedCount = mostDelayedDayData.delayed;
     totalRequestsOnMostDelayedDay = mostDelayedDayData.total;
 
     // MODIFIED: Format mostDelayedDay with new line and "out of", shorter month format
-    mostDelayedDay = `${window.moment(mostDelayedDay).format(
+    mostDelayedDay = `${window.moment(mostDelayedDayKey).format(
       "MMM DD"
     )}<br>(${maxDelayedCount} delayed out of ${totalRequestsOnMostDelayedDay})`;
   }
 
-  // Calculate Most Delayed Hour
-  const hourlyCounts = Array(24).fill(0);
+  // Calculate Most Delayed Hour (based on EAT hour)
+  const hourlyCountsCurrent = Array(24).fill(0);
   currentData.forEach((r) => {
-    if (r.timeInHour !== null) hourlyCounts[r.timeInHour]++; // Use timeInHour
+    // r.timeInHour is already the EAT hour
+    if (r.timeInHour !== null) hourlyCountsCurrent[r.timeInHour]++;
   });
   let mostDelayedHour = "N/A";
-  if (hourlyCounts.length > 0) {
-    const maxHourCount = Math.max(...hourlyCounts);
+  if (hourlyCountsCurrent.length > 0) {
+    const maxHourCount = Math.max(...hourlyCountsCurrent);
     if (maxHourCount > 0) {
-      const hourIndex = hourlyCounts.indexOf(maxHourCount);
+      const hourIndex = hourlyCountsCurrent.indexOf(maxHourCount);
       // MODIFIED: Simplified text, put count on a new line
       mostDelayedHour = `${hourIndex}:00<br>(${maxHourCount} samples)`;
     }
@@ -409,27 +431,29 @@ function updateKPI(currentData, previousData) {
   const prevOnTime = previousData.filter(
     (r) => r.tat === "On Time" || r.tat === "Swift"
   ).length;
+  const prevNotUploaded = previousData.filter(
+    (r) => r.tat === "Not Uploaded"
+  ).length;
+
 
   const prevGroupedByDay = {};
   previousData.forEach((r) => {
-    const day = r.parsedDate?.format("YYYY-MM-DD");
-    if (!day) return;
-    if (!prevGroupedByDay[day]) prevGroupedByDay[day] = [];
-    prevGroupedByDay[day].push(r);
+    const dayEAT = r.parsedDate?.clone().tz("Africa/Nairobi");
+    if (!dayEAT?.isValid()) return;
+
+    const adjustedDayEAT = dayEAT.hour() < 8 ? dayEAT.clone().subtract(1, 'day') : dayEAT.clone();
+    const dayKey = adjustedDayEAT.format("YYYY-MM-DD");
+
+    if (!prevGroupedByDay[dayKey]) prevGroupedByDay[dayKey] = { delayed: 0, onTime: 0, notUploaded: 0 };
+    if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") prevGroupedByDay[dayKey].delayed++;
+    if (r.tat === "On Time" || r.tat === "Swift") prevGroupedByDay[dayKey].onTime++;
+    if (r.tat === "Not Uploaded") prevGroupedByDay[dayKey].notUploaded++;
   });
 
-  const prevDailyDelayedCounts = Object.values(prevGroupedByDay).map(
-    (rows) =>
-      rows.filter((r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min")
-        .length
-  );
-  const prevDailyOnTimeCounts = Object.values(prevGroupedByDay).map(
-    (rows) =>
-      rows.filter((r) => r.tat === "On Time" || r.tat === "Swift").length
-  );
-  const prevDailyNotUploadedCounts = Object.values(prevGroupedByDay).map(
-    (rows) => rows.filter((r) => r.tat === "Not Uploaded").length
-  );
+  const prevDailyDelayedCounts = Object.values(prevGroupedByDay).map((rows) => rows.delayed);
+  const prevDailyOnTimeCounts = Object.values(prevGroupedByDay).map((rows) => rows.onTime);
+  const prevDailyNotUploadedCounts = Object.values(prevGroupedByDay).map((rows) => rows.notUploaded);
+
 
   // --- Update Current KPI values in the DOM ---
   document.getElementById("delayedPercentageValue").textContent = total
@@ -496,12 +520,7 @@ function updateKPI(currentData, previousData) {
 
   // No specific trend for Most Delayed Day/Hour (as they are specific values, not averages)
 
-  // --- Render Charts ---
-  renderSummaryChart(filteredData); // Use filteredData
-  renderOnTimeSummaryChart(filteredData); // Use filteredData
-  renderPieChart(filteredData); // Use filteredData
-  renderLineChart(filteredData); // Use filteredData
-  renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+  // Charts are rendered in loadAndRender after filtering, so no need to call them here.
 }
 
 /**
@@ -665,15 +684,16 @@ function renderOnTimeSummaryChart(data) {
 }
 
 function renderPieChart(data) {
-  const ctx = document.getElementById("tatPieChart").getContext("2d");
+  const ctx = document.getElementById("tatPieChart")?.getContext("2d");
+  if (!ctx) return;
+
   if (tatPieChart) {
     tatPieChart.destroy();
   }
 
   const statusCounts = {};
   data.forEach((item) => {
-    // Use the standardized 'tat' field for pie chart
-    const status = item.tat;
+    const status = item.tat; // Access the 'tat' property
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
@@ -685,13 +705,13 @@ function renderPieChart(data) {
     switch (label) {
       case "On Time":
         return "#4CAF50"; // Green
-      case "Delayed <15min": // Updated label
+      case "Delayed <15min": // Changed to match standardized 'tat' value
         return "#FFC107"; // Amber
       case "Over Delayed":
         return "#F44336"; // Red
       case "Swift":
         return "#21336a"; // Blue
-      case "Not Uploaded": // Assuming this might appear if there's missing data
+      case "Not Uploaded":
         return "#9E9E9E"; // Grey
       default:
         return "#CCCCCC"; // Default grey for unknown statuses
@@ -706,7 +726,7 @@ function renderPieChart(data) {
         {
           data: dataValues,
           backgroundColor: backgroundColors,
-          borderColor: "#fff", // White border between segments
+          borderColor: "#fff",
           borderWidth: 1,
         },
       ],
@@ -745,26 +765,24 @@ function renderPieChart(data) {
           },
         },
         datalabels: {
-          // Add datalabels plugin for percentages
           formatter: (value, context) => {
-            //
             const total = context.dataset.data.reduce(
               (sum, val) => sum + val,
               0
-            ); //
-            const percentage = ((value / total) * 100).toFixed(1) + "%"; //
-            return percentage; //
+            );
+            const percentage = ((value / total) * 100).toFixed(1) + "%";
+            return percentage;
           },
-          color: "#fff", // White color for the percentage text
+          color: "#fff",
           font: {
-            weight: "bold", //
-            size: 12, //
+            weight: "bold",
+            size: 12,
           },
         },
       },
       cutout: "60%",
     },
-    plugins: [ChartDataLabels], // Enable ChartDataLabels plugin
+    plugins: [ChartDataLabels],
   });
 }
 
@@ -777,30 +795,28 @@ function renderLineChart(data) {
   if (!ctx) return;
   const dailyCounts = {};
   data.forEach((r) => {
-    // Use the UTC parsed date for consistency
-    const day = r.parsedDate?.format("YYYY-MM-DD");
-    if (!day) return;
+    // Convert parsedDate (UTC) to EAT for "day" grouping starting at 8 AM
+    const dayEAT = r.parsedDate?.clone().tz("Africa/Nairobi");
+    if (!dayEAT?.isValid()) return;
+
+    // Adjust day for the 8 AM start. If time is before 8 AM EAT, it belongs to the previous "shift day".
+    const adjustedDayEAT = dayEAT.hour() < 8 ? dayEAT.clone().subtract(1, 'day') : dayEAT.clone();
+    const dayKey = adjustedDayEAT.format("YYYY-MM-DD"); // This is the date part of the EAT "shift day"
+
     // Initialize for each day if not present
-    if (!dailyCounts[day])
-      dailyCounts[day] = { delayed: 0, onTime: 0, notUploaded: 0 };
+    if (!dailyCounts[dayKey])
+      dailyCounts[dayKey] = { delayed: 0, onTime: 0, notUploaded: 0 };
     if (r.tat === "Over Delayed" || r.tat === "Delayed <15min")
-      dailyCounts[day].delayed++;
-    if (r.tat === "On Time" || r.tat === "Swift") dailyCounts[day].onTime++;
+      dailyCounts[dayKey].delayed++;
+    if (r.tat === "On Time" || r.tat === "Swift") dailyCounts[dayKey].onTime++;
     // Add Not Uploaded count
-    if (r.tat === "Not Uploaded") dailyCounts[day].notUploaded++;
+    if (r.tat === "Not Uploaded") dailyCounts[dayKey].notUploaded++;
   });
 
   const labels = Object.keys(dailyCounts).sort();
   const delayedData = labels.map((d) => dailyCounts[d].delayed);
   const onTimeData = labels.map((d) => dailyCounts[d].onTime);
   const notUploadedData = labels.map((d) => dailyCounts[d].notUploaded); // New data array for Not Uploaded
-
-  console.log("[tat.js] Daily Line Chart Data:");
-  console.log("  Labels:", labels);
-  console.log("  Delayed Data:", delayedData);
-  console.log("  On Time Data:", onTimeData);
-  console.log("  Not Uploaded Data:", notUploadedData);
-
 
   tatLineChart?.destroy(); // Destroy existing chart
   tatLineChart = new Chart(ctx, {
@@ -854,14 +870,6 @@ function renderLineChart(data) {
       plugins: { legend: { position: "bottom" } },
       scales: {
         x: {
-          type: 'time', // Use time scale for dates
-          time: {
-            unit: 'day',
-            tooltipFormat: 'MMM DD, YYYY',
-            displayFormats: {
-              day: 'MMM DD'
-            }
-          },
           title: { display: true, text: "Date" },
           grid: { display: false },
         },
@@ -884,12 +892,12 @@ function renderHourlyLineChart(data) {
   const ctx = document.getElementById("tatHourlyLineChart")?.getContext("2d");
   if (!ctx) return;
 
-  // Aggregate delayed and on-time counts per hour (0-23)
+  // Aggregate delayed and on-time counts per hour (0-23) based on EAT hour
   const hourlyCounts = Array(24)
     .fill()
     .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 })); // Initialize with objects and notUploaded
   data.forEach((r) => {
-    // Use 'timeInHour' extracted from 'request_time_in'
+    // r.timeInHour is already the EAT hour
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
       if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
@@ -902,7 +910,7 @@ function renderHourlyLineChart(data) {
       if (r.tat === "Not Uploaded") {
         currentHourData.notUploaded++;
       }
-      // hourlyCounts[r.timeInHour] = currentHourData; // No need to reassign, object is mutated
+      hourlyCounts[r.timeInHour] = currentHourData; // Update the array element
     }
   });
 
@@ -910,13 +918,6 @@ function renderHourlyLineChart(data) {
   const delayedData = hourlyCounts.map((h) => h.delayed);
   const onTimeData = hourlyCounts.map((h) => h.onTime);
   const notUploadedData = hourlyCounts.map((h) => h.notUploaded); // New data array for Not Uploaded
-
-  console.log("[tat.js] Hourly Line Chart Data:");
-  console.log("  Labels:", labels);
-  console.log("  Delayed Data:", delayedData);
-  console.log("  On Time Data:", onTimeData);
-  console.log("  Not Uploaded Data:", notUploadedData);
-
 
   tatHourlyLineChart?.destroy(); // Destroy previous chart instance
   tatHourlyLineChart = new Chart(ctx, {
@@ -972,7 +973,7 @@ function renderHourlyLineChart(data) {
       },
       scales: {
         x: {
-          title: { display: true, text: "Hour of Day" }, // Horizontal axis label
+          title: { display: true, text: "Hour of Day (EAT)" }, // Horizontal axis label
           grid: { display: false },
         },
         y: {

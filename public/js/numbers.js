@@ -46,16 +46,17 @@ async function loadData() {
         const processedRow = { ...row };
 
         // Use 'date' field from the new schema for parsedDate
-        // parseTATDate from filters-tat.js already handles moment.js, timezone, and 8 AM start (for EAT perspective)
+        // parseTATDate from filters-tat.js already handles moment.js and parsing as UTC.
         processedRow.parsedDate = processedRow.date
           ? parseTATDate(processedRow.date)
           : null;
 
         // Changed: Parse timeInHour from 'request_time_in' using moment.utc() like tat.js does
+        // Then convert to EAT hour for consistency with TAT dashboard and KPI
         if (row.request_time_in) {
           try {
-            const timeInMoment = window.moment.utc(row.request_time_in);
-            processedRow.timeInHour = timeInMoment.isValid() ? timeInMoment.hour() : null;
+            const timeInMomentUTC = window.moment.utc(row.request_time_in);
+            processedRow.timeInHour = timeInMomentUTC.isValid() ? timeInMomentUTC.tz("Africa/Nairobi").hour() : null;
           } catch (e) {
             console.warn("Could not parse request_time_in hour:", row.request_time_in, e);
             processedRow.timeInHour = null;
@@ -97,25 +98,47 @@ function showError(message) {
   }
 }
 
+// Function to get date range from filters (moved here as per ChatGPT's suggestion)
+function getDateRangeFromFilters() {
+  const startDateInput = document.getElementById("startDateFilter");
+  const endDateInput = document.getElementById("endDateFilter");
+
+  const startDate = startDateInput?.value
+    ? moment.tz(startDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi")
+    : null;
+
+  const endDate = endDateInput?.value
+    ? moment.tz(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day')
+    : null;
+
+  return { startDate, endDate };
+}
+
+
 // Process data and update all visualizations
 function processNumbersData() {
   console.log("Processing numbers data...");
-  filteredData = applyTATFilters(allData); // filters-tat.js handles filtering based on common filters
+  // Use a small timeout to ensure DOM updates (from updateDatesForPeriod in initCommonDashboard) have occurred
+  // before applyTATFilters reads the input values.
+  setTimeout(() => {
+      filteredData = applyTATFilters(allData); // filters-tat.js handles filtering based on common filters
+      console.log(`[numbers.js] Filtered Data Length after applyTATFilters: ${filteredData.length}`);
 
-  // Only proceed to render charts and KPIs if there is data
-  if (filteredData.length === 0) {
-    console.warn("No data after filtering. Charts and KPIs will not be updated.");
-    // Clear existing charts if they exist
-    if (dailyNumbersBarChart) dailyNumbersBarChart.destroy();
-    if (hourlyNumbersLineChart) hourlyNumbersLineChart.destroy();
-    // Reset KPIs to default or 'N/A'
-    updateNumberKPIs(true); // Pass true to indicate resetting KPIs
-    return;
-  }
+      // Only proceed to render charts and KPIs if there is data
+      if (filteredData.length === 0) {
+        console.warn("No data after filtering. Charts and KPIs will not be updated.");
+        // Clear existing charts if they exist
+        if (dailyNumbersBarChart) dailyNumbersBarChart.destroy();
+        if (hourlyNumbersLineChart) hourlyNumbersLineChart.destroy();
+        // Reset KPIs to default or 'N/A'
+        updateNumberKPIs(true); // Pass true to indicate resetting KPIs
+        return;
+      }
 
-  updateNumberKPIs();
-  renderDailyNumbersBarChart();
-  renderHourlyNumbersLineChart();
+      updateNumberKPIs();
+      renderDailyNumbersBarChart();
+      renderHourlyNumbersLineChart();
+  }, 50); // Small delay to allow DOM to update
 }
 
 // Render daily numbers bar chart
@@ -125,10 +148,12 @@ function renderDailyNumbersBarChart() {
 
   const dailyCounts = {};
   filteredData.forEach((row) => {
-    const date = row.parsedDate;
+    const date = row.parsedDate; // This is UTC
     if (date && date.isValid()) {
-      // Use EAT for grouping and display
-      const dateKey = date.clone().tz("Africa/Nairobi").format("YYYY-MM-DD");
+      // Use EAT for grouping and display, adjusting for 8 AM day start
+      const dayEAT = date.clone().tz("Africa/Nairobi");
+      const adjustedDayEAT = dayEAT.hour() < 8 ? dayEAT.clone().subtract(1, 'day') : dayEAT.clone();
+      const dateKey = adjustedDayEAT.format("YYYY-MM-DD");
       dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
     }
   });
@@ -173,7 +198,7 @@ function renderDailyNumbersBarChart() {
             displayFormats: { day: "MMM D" },
           },
           grid: { display: false },
-          title: { display: true, text: "Date" },
+          title: { display: true, text: "Date (EAT 8 AM Day Start)" }, // Clarify axis label
         },
         y: {
           beginAtZero: true,
@@ -191,6 +216,7 @@ function renderHourlyNumbersLineChart() {
 
   const hourlyCounts = Array(24).fill(0);
   filteredData.forEach((row) => {
+    // row.timeInHour is already the EAT hour
     if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
       hourlyCounts[row.timeInHour]++;
     }
@@ -232,7 +258,7 @@ function renderHourlyNumbersLineChart() {
       },
       scales: {
         x: {
-          title: { display: true, text: "Hour of Day" },
+          title: { display: true, text: "Hour of Day (EAT)" },
           grid: { display: false },
         },
         y: {
@@ -278,33 +304,29 @@ function updateNumberKPIs(reset = false) {
   }
 
   // Average Daily Requests
-  const startDateFilterInput = document.getElementById("startDateFilter");
-  const endDateFilterInput = document.getElementById("endDateFilter");
+  const { startDate, endDate } = getDateRangeFromFilters();
 
-  const currentPeriodStartDateEAT = startDateFilterInput?.value ? window.moment.tz(startDateFilterInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi") : null;
-  const currentPeriodEndDateEAT = endDateFilterInput?.value ? window.moment.tz(endDateFilterInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day').subtract(1, 'millisecond') : null;
-
-  const currentPeriodStartDateUTC = currentPeriodStartDateEAT ? currentPeriodStartDateEAT.utc() : null;
-  const currentPeriodEndDateUTC = currentPeriodEndDateEAT ? currentPeriodEndDateEAT.utc() : null;
-
-  const getNumShiftDays = (startMomentUTC, endMomentUTC) => {
-    if (!startMomentUTC || !endMomentUTC || !startMomentUTC.isValid() || !endMomentUTC.isValid()) {
+  const getNumShiftDays = (startMomentEAT, endMomentEAT) => {
+    if (!startMomentEAT || !endMomentEAT || !startMomentEAT.isValid() || !endMomentEAT.isValid()) {
       return 0;
     }
-    const startEAT = startMomentUTC.clone().tz("Africa/Nairobi");
-    const endEAT = endMomentUTC.clone().tz("Africa/Nairobi");
+    let currentMoment = startMomentEAT.clone().startOf('day').hour(8); // Start from 8 AM of the start date
+    let endCompareMoment = endMomentEAT.clone().startOf('day').hour(8); // End comparison for the 8 AM "day"
 
-    let currentMoment = startEAT.clone();
+    if (endMomentEAT.hour() < 8) { // If end date is before 8 AM, it belongs to the previous "shift day"
+        endCompareMoment.subtract(1, 'day');
+    }
+
     let uniqueShiftDays = 0;
-    // Iterate day by day, 8 AM to 8 AM
-    while (currentMoment.isSameOrBefore(endEAT, 'day') && currentMoment.isBefore(endEAT.clone().add(1, 'day').startOf('day').add(8, 'hours'))) {
-      uniqueShiftDays++;
-      currentMoment.add(1, 'day'); // Move to the next "shift day"
+    // Iterate "shift days" (8 AM to 8 AM next day)
+    while (currentMoment.isSameOrBefore(endCompareMoment, 'day')) {
+        uniqueShiftDays++;
+        currentMoment.add(1, 'day');
     }
     return uniqueShiftDays || 1;
   };
 
-  const currentPeriodShiftDays = getNumShiftDays(currentPeriodStartDateUTC, currentPeriodEndDateUTC);
+  const currentPeriodShiftDays = getNumShiftDays(startDate, endDate);
   const avgDailyRequests = currentPeriodShiftDays > 0 ? totalRequests / currentPeriodShiftDays : 0;
 
   if (avgDailyRequestsEl) {
@@ -314,6 +336,7 @@ function updateNumberKPIs(reset = false) {
   // Busiest Hour
   const hourlyCounts = Array(24).fill(0);
   filteredData.forEach((row) => {
+    // row.timeInHour is already the EAT hour
     if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
       hourlyCounts[row.timeInHour]++;
     }
@@ -326,9 +349,12 @@ function updateNumberKPIs(reset = false) {
   // Busiest Day
   const dailyCounts = {};
   filteredData.forEach((row) => {
-    const date = row.parsedDate;
+    const date = row.parsedDate; // This is UTC
     if (date && date.isValid()) {
-      const dateKey = date.clone().tz("Africa/Nairobi").format("YYYY-MM-DD");
+      // Group by EAT day, respecting the 8 AM start
+      const dayEAT = date.clone().tz("Africa/Nairobi");
+      const adjustedDayEAT = dayEAT.hour() < 8 ? dayEAT.clone().subtract(1, 'day') : dayEAT.clone();
+      const dateKey = adjustedDayEAT.format("YYYY-MM-DD");
       dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
     }
   });
@@ -345,19 +371,55 @@ function updateNumberKPIs(reset = false) {
     busiestDayEl.textContent = busiestDay;
   }
 
-  // For trend calculation, use the local 'updateTrend' function
-  const previousTotalRequests = totalRequests * 0.9; // Example: 10% decrease for demo
-  const previousAvgDailyRequests = avgDailyRequests * 0.95; // Example: 5% decrease for demo
+  // --- Trend Calculation ---
+
+  // Clone and compute previous period (same length)
+  const periodDuration = endDate?.diff(startDate, 'days') || 0;
+  const previousStart = startDate?.clone().subtract(periodDuration + 1, 'days'); // +1 to match full range
+  const previousEnd = endDate?.clone().subtract(periodDuration + 1, 'days');
+
+  let previousPeriodFilteredData = [];
+  if (previousStart && previousEnd && previousStart.isValid() && previousEnd.isValid()) {
+      previousPeriodFilteredData = allData.filter(row => {
+          if (!row.parsedDate?.isValid()) return false;
+          // Ensure rowDate is considered in EAT for consistent comparison with filter dates
+          const rowDateEAT = row.parsedDate.clone().tz("Africa/Nairobi");
+          // Check if rowDateEAT falls within the previous period, inclusive of start and end
+          return rowDateEAT.isBetween(previousStart, previousEnd, null, '[]');
+      });
+  }
+
+  if (previousPeriodFilteredData.length === 0) {
+    console.warn("⚠️ No previous period data — trends for Total Requests and Avg Daily Requests will show as 0% or N/A.");
+  }
+
+
+  const previousTotalRequests = previousPeriodFilteredData.length;
+  const previousPeriodShiftDays = getNumShiftDays(previousStart, previousEnd);
+  const previousAvgDailyRequests = previousPeriodShiftDays > 0
+    ? previousTotalRequests / previousPeriodShiftDays
+    : 0;
 
   // Calculate percentage change for trends
-  const totalRequestsChange = previousTotalRequests !== 0 ? ((totalRequests - previousTotalRequests) / previousTotalRequests) * 100 : 0;
-  const avgDailyRequestsChange = previousAvgDailyRequests !== 0 ? ((avgDailyRequests - previousAvgDailyRequests) / previousAvgDailyRequests) * 100 : 0;
+  const totalRequestsChange = previousTotalRequests !== 0
+    ? ((totalRequests - previousTotalRequests) / previousTotalRequests) * 100
+    : 0;
+  const avgDailyRequestsChange = previousAvgDailyRequests !== 0
+    ? ((avgDailyRequests - previousAvgDailyRequests) / previousAvgDailyRequests) * 100
+    : 0;
+
+  console.log("totalRequests:", totalRequests);
+  console.log("previousTotalRequests (calculated):", previousTotalRequests);
+  console.log("totalRequestsChange (%):", totalRequestsChange);
+  console.log("avgDailyRequests:", avgDailyRequests);
+  console.log("previousAvgDailyRequests (calculated):", previousAvgDailyRequests);
+  console.log("avgDailyRequestsChange (%):", avgDailyRequestsChange);
 
   updateTrend("totalRequestsTrend", totalRequestsChange, true);
   updateTrend("avgDailyRequestsTrend", avgDailyRequestsChange, true);
   // No specific previous values for busiest hour/day trends, so they remain 'N/A' or simplified for now
-  updateTrend("busiestHourTrend", 0, false); // Example: Neutral or fixed
-  updateTrend("busiestDayTrend", 0, false); // Example: Neutral or fixed
+  updateTrend("busiestHourTrend", 0, true); // Assuming more requests is "good" for business volume
+  updateTrend("busiestDayTrend", 0, true); // Assuming more requests is "good" for business volume
 }
 
 // updateTrend function (from original numbers.js) - this is now the definitive trend function
@@ -369,10 +431,11 @@ function updateTrend(elementId, value, isPositiveGood) {
   let colorClass = "";
   let displayText = "";
 
-  if (isNaN(value) || !isFinite(value)) { // Handle NaN or Infinity results
+  if (isNaN(value) || !isFinite(value) || value === 0) { // Handle NaN or Infinity results or zero change
     arrow = "—";
     colorClass = "trend-neutral";
-    displayText = "N/A";
+    displayText = "0%"; // Or "N/A" if truly no comparison is possible
+    if (isNaN(value) || !isFinite(value)) displayText = "N/A"; // Explicitly N/A for invalid values
   } else {
     displayText = `${Math.abs(value).toFixed(1)}%`;
     if (value > 0) {
@@ -381,10 +444,6 @@ function updateTrend(elementId, value, isPositiveGood) {
     } else if (value < 0) {
       arrow = "▼";
       colorClass = isPositiveGood ? "trend-negative" : "trend-positive";
-    } else {
-      arrow = "—";
-      colorClass = "trend-neutral";
-      displayText = "0%";
     }
   }
   element.innerHTML = `<span class="${colorClass}">${arrow} ${displayText}</span>`;

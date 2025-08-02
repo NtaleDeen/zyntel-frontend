@@ -1,172 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script type="module" src="/@vite/client"></script>
-
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NHL Dashboard - Home</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-
-    <link rel="stylesheet" href="/styles/general.css" />
-    <link rel="stylesheet" href="/styles/main.css" />
-  </head>
-  <body>
-    <header>
-      <div class="header-container">
-        <div class="header-left">
-          <div class="logo">
-            <img src="/images/logo-nakasero.png" alt="logo" />
-          </div>
-          <h1>NHL Laboratory Dashboard</h1>
-        </div>
-        <div class="page">
-          <span>Home</span>
-          <button id="menuToggle">Show Filters</button>
-        </div>
-      </div>
-      <nav class="navbar">
-        <a href="index.html" class="active">Home</a>
-        <a href="reception.html">Reception</a>
-        <a href="progress.html">Progress</a>
-        <a href="revenue.html">Revenue</a>
-        <a href="numbers.html">Numbers</a>
-        <a href="tat.html">TAT</a>
-      </nav>
-      <div id="filters"></div>
-    </header>
-    <main>
-      <div class="tile">
-        <p class="tile-label">TAT</p>
-        <h2 class="tile-heading">Track Patients &amp; Tests</h2>
-
-        <div class="tile-tools">
-          <figure class="tile-tool">
-            <img
-              src="https://www.qodo.ai/wp-content/uploads/2025/02/get-started-visualstudio.svg"
-              alt="Visual Studio Icon"
-            />
-          </figure>
-          <figure class="tile-tool">
-            <img
-              src="https://www.qodo.ai/wp-content/uploads/2025/02/get-started-jetbrains.svg"
-              alt="JetBrains Icon"
-            />
-          </figure>
-        </div>
-
-        <div class="tile-ratings">
-          <span class="rating">662.2K</span>
-          <span class="rating">475.3K</span>
-        </div>
-
-        <div class="tile-button">
-          <button class="button-main install-btn">
-            Install <span class="arrow">&#9662;</span>
-          </button>
-          <ul class="button-dropdown">
-            <li>
-              <img
-                src="https://www.qodo.ai/wp-content/uploads/2025/01/visualstudio.svg"
-                alt="VS Code Icon"
-              />
-              VS Code
-            </li>
-            <li>
-              <img
-                src="https://www.qodo.ai/wp-content/uploads/2025/01/jetbrain.svg"
-                alt="JetBrains Icon"
-              />
-              JetBrains
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="tile">
-        <p class="tile-label">Dashboards</p>
-        <h2 class="tile-heading">Views KPIs &amp; Metrics</h2>
-
-        <div class="tile-tools">
-          <figure class="tile-tool">
-            <img
-              src="https://www.qodo.ai/wp-content/uploads/2025/02/get-started-visualstudio.svg"
-              alt="Visual Studio Icon"
-            />
-          </figure>
-          <figure class="tile-tool">
-            <img
-              src="https://www.qodo.ai/wp-content/uploads/2025/02/get-started-jetbrains.svg"
-              alt="JetBrains Icon"
-            />
-          </figure>
-        </div>
-
-        <div class="tile-ratings">
-          <span class="rating">662.2K</span>
-          <span class="rating">475.3K</span>
-        </div>
-
-        <div class="tile-button">
-          <button class="button-main install-btn">
-            Install <span class="arrow">&#9662;</span>
-          </button>
-          <ul class="button-dropdown">
-            <li>
-              <img
-                src="https://www.qodo.ai/wp-content/uploads/2025/01/visualstudio.svg"
-                alt="VS Code Icon"
-              />
-              VS Code
-            </li>
-            <li>
-              <img
-                src="https://www.qodo.ai/wp-content/uploads/2025/01/jetbrain.svg"
-                alt="JetBrains Icon"
-              />
-              JetBrains
-            </li>
-          </ul>
-        </div>
-      </div>
-    </main>
-    <div class="notice">
-      <p>Sorry!</p>
-      You need a wider screen to view the table.
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyntel - Login</title> <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+    <div class="image-column">
+        <img src="../images/zyntel_no_background.png" alt="Zyntel Icon" class="full-height-image">
     </div>
 
-    <footer>
-      <p>&copy;2025 Zyntel</p>
-      <div class="zyntel">
-        <img src="/images/zyntel_no_background.png" alt="logo" />
-      </div>
-    </footer>
+    <div class="login-column">
+        <div class="login-box">
+            <div class="logo-container">
+                <img id="pulsingIcon" src="../images/Green(7de19a).png" alt="Zyntel Icon">
+            </div>
+            <h1>Zyntel</h1>
+            <p>Data Analysis Experts</p>
 
-    <script type="module" src="/src/progress.js"></script>
-    <script>
-      const installButtons = document.querySelectorAll(".install-btn");
+            <form>
+                <div class="input-group">
+                    <input type="text" placeholder="Username" id="username"> </div>
+                <div class="input-group">
+                    <input type="password" placeholder="Password" id="password"> </div>
+                <div class="info-line">
+                    <span>Measured</span> | <span>Managed</span>
+                </div>
+                <button type="submit" class="login-button">Login</button>
+            </form>
 
-      installButtons.forEach((button) => {
-        const tileButton = button.closest(".tile-button");
+            <button class="buy-package-button">Visit Our Website</button>
 
-        button.addEventListener("click", (e) => {
-          e.stopPropagation(); // prevent bubbling to document
-          tileButton.classList.toggle("open");
-        });
-      });
-
-      // Click outside to close all open dropdowns
-      document.addEventListener("click", (e) => {
-        document.querySelectorAll(".tile-button.open").forEach((el) => {
-          if (!el.contains(e.target)) {
-            el.classList.remove("open");
-          }
-        });
-      });
-    </script>
-  </body>
+            <div class="help-info">
+                <p>For Data Analysis Call or Whatsapp</p>
+                <p>+2567864...</p> </div>
+        </div>
+    </div>
+    <script src="../js/index.js"></script>
+</body>
 </html>
