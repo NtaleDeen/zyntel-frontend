@@ -10,150 +10,74 @@
     </style>
     <!-- Moment.js CDN for robust date handling and parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-    <!-- Corrected path: relative to the served root (public/) -->
-    <link rel="stylesheet" href="../css/main.css" />
-    <style>
-      /* Add specific styles for the table and pagination if needed */
-      #revenueTableContainer {
-        overflow-x: auto; /* Enable horizontal scrolling for tables on small screens */
-        margin-top: 20px;
-      }
-      #revenueTable {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-      }
-      #revenueTable th, #revenueTable td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      #revenueTable th {
-        background-color: #f2f2f2;
-        font-weight: bold;
-      }
-      .pagination-controls {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-top: 20px;
-      }
-      .pagination-controls button {
-        padding: 8px 15px;
-        border: 1px solid #ddd;
-        background-color: #f9f9f9;
-        cursor: pointer;
-        border-radius: 4px;
-      }
-      .pagination-controls button:hover:not(:disabled) {
-        background-color: #e9e9e9;
-      }
-      .pagination-controls button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    </style>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
   </head>
   <body>
     <header>
       <div class="header-container">
         <div class="header-left">
-          <!-- Corrected path: relative to the served root (public/) -->
           <div class="logo">
-            <img src="../images/logo-nakasero.png" alt="logo" />
+            <img src="/images/logo-nakasero.png" alt="logo" />
           </div>
           <h1>NHL Laboratory Dashboard</h1>
         </div>
         <div class="page">
           <span>Revenue Table</span>
         </div>
+        <button id="logoutBtn" class="logout-btn">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
       </div>
       <nav class="navbar">
-        <!-- Corrected paths: relative to the current HTML file's directory (html/) -->
-        <a href="index.html">Home</a>
-        <a href="revenue.html">Revenue</a>
-        <a href="numbers.html">Numbers</a>
+        <a href="dashboard.html">Home</a>
+        <a href="reception.html">Reception</a>
+        <a href="progress.html">Progress</a>
+        <a href="tracker-table.html">Tracker</a>
+        <a href="revenue-table.html" class="active">Revenue</a>
         <a href="tat.html">TAT</a>
       </nav>
-      <!-- Container for dynamic filter elements (date range, hospital unit, etc.) -->
-      <!-- Filters will be re-initialized from URL params on this page -->
-      <div class="dashboard-filters">
-        <div class="filter-group">
-          <label for="startDateFilter">Start Date:</label>
-          <input type="date" id="startDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="endDateFilter">End Date:</label>
-          <input type="date" id="endDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="periodSelect">Period:</label>
-          <select id="periodSelect"></select>
-        </div>
-        <div class="filter-group">
-          <label for="labSectionFilter">Lab Section:</label>
-          <select id="labSectionFilter">
-            <option value="all">All Sections</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="shiftFilter">Shift:</label>
-          <select id="shiftFilter">
-            <option value="all">All Shifts</option>
-            <option value="Day">Day</option>
-            <option value="Night">Night</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="hospitalUnitFilter">Hospital Unit:</label>
-          <select id="hospitalUnitFilter">
-            <option value="all">All Units</option>
-          </select>
-        </div>
-        <div class="filter-group">
-            <button id="applyFiltersBtn" class="action-button">Apply Filters</button>
-        </div>
-      </div>
+      <div id="filters"></div>
     </header>
 
-    <main>
-      <h2>Revenue Data Table</h2>
-      <div id="loadingIndicator" style="display: none; text-align: center; margin-top: 20px;">Loading data...</div>
-      <div id="revenueTableContainer">
-        <table id="revenueTable">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Date</th>
-              <th>Shift</th>
-              <th>Lab Number</th>
-              <th>Unit</th>
-              <th>Lab Section</th>
-              <th>Test Name</th>
-              <th>Price (UGX)</th>
-            </tr>
-          </thead>
-          <tbody id="revenueTableBody">
-            <!-- Table rows will be dynamically generated by JavaScript -->
-          </tbody>
-        </table>
-      </div>
-      <div id="paginationControls" class="pagination-controls">
-        <button id="prevPageBtn" disabled>Previous</button>
-        <span id="pageInfo">Page 1 of 1</span>
-        <button id="nextPageBtn" disabled>Next</button>
+    <main class="dashboard-layout">
+      <div class="table-area">
+        <div id="revenueTableContainer" class="table-container">
+          <div id="message" class="message-container hidden"></div>
+          <table id="revenueTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Lab Number</th>
+                <th>Unit</th>
+                <th>Lab Section</th>
+                <th>Test Name</th>
+                <th>Price (UGX)</th>
+              </tr>
+            </thead>
+            <tbody id="revenueTableBody">
+              <!-- Table rows will be dynamically generated by JavaScript -->
+            </tbody>
+          </table>
+          <div id="paginationControls" class="pagination-controls"></div>
+        </div>
       </div>
     </main>
 
-    <footer>
-      <p>&copy;2025 Zyntel</p>
-      <div class="zyntel">
-        <!-- Corrected path: relative to the served root (public/) -->
-        <img src="../images/zyntel_no_background.png" alt="logo" />
-      </div>
-    </footer>
-
-    <!-- Corrected path: relative to the served root (public/) -->
-    <script type="module" src="../js/revenue-table.js"></script>
+    <!-- Custom Modal for user messages -->
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button" id="closeMessageModal">&times;</span>
+            <div id="modalMessageContent"></div>
+        </div>
+    </div>
+    
+    <script type="module" src="/src/revenue-table.js"></script>
+    <script type="module" src="/src/filters-tat.js"></script>
   </body>
 </html>

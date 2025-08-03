@@ -1,7 +1,17 @@
-// revenue.js - Database-Powered Version (with same functionality)
+// revenue.js - Refactored to use shared filters-revenue.js
+// This file is the main logic for the revenue dashboard.
 
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
+
+import {
+  populateLabSectionFilter,
+  populateShiftFilter,
+  populateHospitalUnitFilter,
+  applyRevenueFilters,
+  attachRevenueFilterListeners,
+  updateDatesForPeriod
+} from "./filters-revenue.js";
 
 console.log("NHL Dashboard Revenue Logic script loaded and starting...");
 
@@ -24,30 +34,6 @@ let aggregatedTestCountByUnit = {};
 let aggregatedRevenueByTest = {};
 let aggregatedCountByTest = {};
 
-// Hospital Unit arrays (unchanged)
-const inpatientUnits = [
-  "APU",
-  "GWA",
-  "GWB",
-  "HDU",
-  "ICU",
-  "MAT",
-  "NICU",
-  "THEATRE",
-];
-const outpatientUnits = [
-  "2ND FLOOR",
-  "A&E",
-  "DIALYSIS",
-  "DOCTORS PLAZA",
-  "ENT",
-  "RADIOLOGY",
-  "SELF REQUEST",
-  "WELLNESS",
-  "WELLNESS CENTER",
-];
-const annexUnits = ["ANNEX"];
-
 // Monthly targets (unchanged)
 const DEFAULT_MONTHLY_TARGET = 1_500_000_000;
 const monthlyTargets = {
@@ -65,1379 +51,444 @@ const monthlyTargets = {
   "2025-12": 1_500_000_000,
 };
 
-// Helper function (unchanged)
+/**
+ * Helper function to capitalize the first letter of each word in a string.
+ */
 function capitalizeWords(str) {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 /**
- * Loads data from database instead of CSV
+ * Checks for a JWT token in local storage. If not found, redirects to the login page.
+ */
+function checkAuthAndRedirect() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        // Redirect to the login page if no token is found
+        window.location.href = '/index.html';
+    }
+}
+
+/**
+ * Main function to load data from the database.
+ * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-  try {
-    // Use this exact fetch URL
-    // Corrected URL to include the /api/revenue-data endpoint to match app.py
-    const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue-data", {
-      headers: {
-        Accept: "application/json",
-      },
-    });
+    // Check for token before making the API call
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        console.error("No JWT token found. Aborting data load.");
+        // We've already redirected, but this prevents the fetch call.
+        return;
+    }
 
-    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+    try {
+        const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue-data", {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        });
 
-    const dbData = await response.json();
+        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 
-    if (!Array.isArray(dbData) || dbData.length === 0) {
-      console.warn("⚠️ Database returned empty or invalid data for charts.");
-      allData = [];
-      filteredData = [];
-    } else {
-      // Process database rows to match your existing data structure
-      allData = dbData.map((row) => {
-        const processedRow = { ...row };
+        const dbData = await response.json();
 
-        // Process dates using 'date' from the new schema (lowercase)
-        // Use moment.utc() to parse GMT dates correctly
-        processedRow.parsedEncounterDate = row.date
-          ? moment.utc(row.date)
-          : null;
-        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+        if (!Array.isArray(dbData) || dbData.length === 0) {
+            console.warn("⚠️ Database returned empty or invalid data for charts.");
+            allData = [];
+            filteredData = [];
+        } else {
+            allData = dbData.map((row) => {
+                const processedRow = { ...row };
 
-        // Process price using 'price' from the new schema (lowercase)
-        const parsedPriceValue = parseFloat(row.price);
-        processedRow.parsedPrice = isNaN(parsedPriceValue)
-          ? 0
-          : parsedPriceValue;
+                processedRow.parsedEncounterDate = row.date
+                    ? moment.utc(row.date)
+                    : null;
+                processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
 
-        // Standardize case for filtering using new schema fields (lowercase/snake_case)
-        processedRow.Hospital_Unit = (row.unit || "").toUpperCase(); // Use 'unit' from new schema
-        processedRow.LabSection = (row.lab_section || "").toLowerCase(); // Use 'lab_section' from new schema
-        processedRow.Shift = (row.shift || "").toLowerCase(); // Use 'shift' from new schema
-        processedRow.TestName = row.test_name || ""; // Use 'test_name' from new schema
+                const parsedPriceValue = parseFloat(row.price);
+                processedRow.parsedPrice = isNaN(parsedPriceValue)
+                    ? 0
+                    : parsedPriceValue;
 
-        // Maintain all your existing calculated fields (unchanged)
-        processedRow.Minutes_Delayed_Calculated = null;
-        processedRow.Delay_Status_Calculated = "Not Uploaded";
-        processedRow.Progress_Calculated = "Not Uploaded";
+                processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+                processedRow.LabSection = (row.lab_section || "").toLowerCase();
+                processedRow.Shift = (row.shift || "").toLowerCase();
+                processedRow.TestName = row.test_name || "";
 
-        return processedRow;
-      });
+                processedRow.Minutes_Delayed_Calculated = null;
+                processedRow.Delay_Status_Calculated = "Not Uploaded";
+                processedRow.Progress_Calculated = "Not Uploaded";
 
-      console.log(
-        `✅ Loaded ${allData.length} rows from database for chart aggregation.`
-      );
+                return processedRow;
+            });
 
-      // Debugging: Log a sample processed row to verify data mapping
-      if (allData.length > 0) {
-        console.log("Sample processed row:", allData[0]);
-      }
+            console.log(
+                `✅ Loaded ${allData.length} rows from database for chart aggregation.`
+            );
 
+            if (allData.length > 0) {
+                console.log("Sample processed row:", allData[0]);
+            }
 
-      // Keep all your existing filter initialization
-      populateLabSectionFilter();
-      populateShiftFilter();
-      populateHospitalUnitFilter();
+            // Call filter initialization functions from the imported module
+            populateLabSectionFilter(allData);
+            populateShiftFilter(allData);
+            populateHospitalUnitFilter(allData);
+            
+            // Set default dates
+            const periodSelect = document.getElementById("periodSelect");
+            if (periodSelect) {
+                periodSelect.value = "thisMonth";
+                updateDatesForPeriod(periodSelect.value);
+            }
 
-      // Explicitly set default dates based on "thisMonth" for initial load
-      const periodSelect = document.getElementById("periodSelect");
-      const startDateFilterInput = document.getElementById("startDateFilter");
-      const endDateFilterInput = document.getElementById("endDateFilter");
-
-      if (periodSelect && periodSelect.value === "thisMonth") {
-        const now = moment();
-        const startOfMonth = now.clone().startOf("month");
-        const endOfMonth = now.clone().endOf("month");
-
-        if (startDateFilterInput) {
-          startDateFilterInput.value = startOfMonth.format("YYYY-MM-DD");
+            // Initial filtering and data processing
+            filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "unitSelect");
+            processData();
         }
-        if (endDateFilterInput) {
-          endDateFilterInput.value = endOfMonth.format("YYYY-MM-DD");
-        }
-      } else {
-        // Fallback to full data range if no period is selected or if it's "customDate"
-        const dates = allData
-          .map((row) => row.parsedEncounterDate)
-          .filter(Boolean)
-          .sort((a, b) => a.valueOf() - b.valueOf());
+    } catch (err) {
+        console.error("Data load failed:", err);
+        const totalRevenueElem = document.getElementById("totalRevenue");
+        if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
 
-        if (dates.length > 0) {
-          if (startDateFilterInput && !startDateFilterInput.value) {
-            startDateFilterInput.value = dates[0].format("YYYY-MM-DD");
-          }
-          if (endDateFilterInput && !endDateFilterInput.value) {
-            endDateFilterInput.value = dates[dates.length - 1].format("YYYY-MM-DD");
-          }
-        }
-      }
+        const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
+        if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
 
-      applyFilters(); // Now applyFilters will always read valid dates from inputs
-      processData();
-    }
-  } catch (err) {
-    console.error("Data load failed:", err);
-    // Keep your existing error handling
-    const totalRevenueElem = document.getElementById("totalRevenue");
-    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
-
-    const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
-    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
-
-    const totalTestsPerformedElem = document.getElementById(
-      "totalTestsPerformed"
-    );
-    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
-
-    const avgDailyTestsPerformedElem = document.getElementById(
-      "avgDailyTestsPerformed"
-    );
-    if (avgDailyTestsPerformedElem)
-      avgDailyTestsPerformedElem.textContent = "N/A";
-
-    // Clear all charts
-    [
-      revenueChart,
-      sectionRevenueChart,
-      hospitalUnitRevenueChart,
-      topTestsChart,
-      testRevenueChart,
-      testCountChart,
-    ].forEach((chart) => {
-      if (chart) {
-        chart.data.datasets[0].data = [];
-        chart.update();
-      }
-    });
-  }
-}
-
-// Function to populate the period selector dynamically
-function populatePeriodSelector() {
-  const periodSelect = document.getElementById("periodSelect");
-  if (!periodSelect) return;
-
-  // Clear existing options
-  periodSelect.innerHTML = "";
-
-  const options = [
-    {
-      value: "thisMonth",
-      text: "This Month",
-    },
-    {
-      value: "lastMonth",
-      text: "Last Month",
-    },
-    {
-      value: "thisQuarter",
-      text: "This Quarter",
-    },
-    {
-      value: "lastQuarter",
-      text: "Last Quarter",
-    },
-  ];
-
-  options.forEach((opt) => {
-    const optionElement = document.createElement("option");
-    optionElement.value = opt.value;
-    optionElement.textContent = opt.text;
-    periodSelect.appendChild(optionElement);
-  });
-
-  // Set default selection to "This Month"
-  periodSelect.value = "thisMonth";
-}
-
-// Function to populate the Lab Section filter dynamically from loaded data
-function populateLabSectionFilter() {
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  if (!labSectionFilter || allData.length === 0) return;
-
-  // Preserve "All Sections" option
-  const currentOptions = Array.from(labSectionFilter.options).map(
-    (opt) => opt.value
-  );
-  if (!currentOptions.includes("all")) {
-    labSectionFilter.innerHTML = '<option value="all">All Sections</option>';
-  } else {
-    // Remove all dynamic options to repopulate
-    Array.from(labSectionFilter.options)
-      .filter((opt) => opt.value !== "all")
-      .forEach((opt) => opt.remove());
-  }
-
-  const sections = [
-    ...new Set(allData.map((row) => row.LabSection).filter(Boolean)),
-  ].sort();
-
-  sections.forEach((section) => {
-    const option = document.createElement("option");
-    option.value = section;
-    option.textContent = capitalizeWords(section);
-    labSectionFilter.appendChild(option);
-  });
-}
-
-// NEW Function to populate the Shift filter dynamically from loaded data
-function populateShiftFilter() {
-  const shiftFilter = document.getElementById("shiftFilter");
-  if (!shiftFilter || allData.length === 0) return;
-
-  // Clear existing options, add "All Shifts" option
-  shiftFilter.innerHTML = '<option value="all">All Shifts</option>';
-
-  const shifts = [
-    ...new Set(allData.map((row) => row.Shift).filter(Boolean)),
-  ].sort();
-
-  shifts.forEach((shift) => {
-    const option = document.createElement("option");
-    option.value = shift;
-    option.textContent = capitalizeWords(shift);
-    shiftFilter.appendChild(option);
-  });
-}
-
-// NEW Function to populate the Hospital Unit filter dynamically (for topTestsChart)
-function populateHospitalUnitFilter() {
-  const unitSelect = document.getElementById("unitSelect");
-  if (!unitSelect || allData.length === 0) return;
-
-  // Clear existing options
-  unitSelect.innerHTML = "";
-
-  const units = [
-    ...new Set(allData.map((row) => row.Hospital_Unit).filter(Boolean)),
-  ].sort();
-
-  units.forEach((unit) => {
-    const option = document.createElement("option");
-    option.value = unit;
-    option.textContent = capitalizeWords(unit);
-    unitSelect.appendChild(option);
-  });
-
-  // Set a default selected unit after population
-  if (units.includes("ICU")) {
-    // Prioritize ICU if available
-    unitSelect.value = "ICU";
-  } else if (units.length > 0) {
-    // Otherwise, select the first available unit
-    unitSelect.value = units[0];
-  }
-}
-
-// Function to apply filters to allData and populate filteredData
-function applyFilters(
-  triggerElementId = null /* 'startDateFilter', 'endDateFilter', 'periodSelect' */
-) {
-  const startDateFilterInput = document.getElementById("startDateFilter");
-  const endDateFilterInput = document.getElementById("endDateFilter");
-  const periodSelect = document.getElementById("periodSelect");
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  const shiftFilter = document.getElementById("shiftFilter");
-
-  const selectedPeriod = periodSelect ? periodSelect.value : null;
-  const selectedLabSection = labSectionFilter ? labSectionFilter.value : "all";
-  const selectedShift = shiftFilter ? shiftFilter.value : "all";
-
-  let effectiveStartDate = null;
-  let effectiveEndDate = null;
-
-  // Determine effective start and end dates based on selected period or manual inputs
-  if (selectedPeriod && selectedPeriod !== "customDate") {
-    const now = moment();
-    switch (selectedPeriod) {
-      case "thisMonth":
-        effectiveStartDate = now.clone().startOf("month");
-        effectiveEndDate = now.clone().endOf("month");
-        break;
-      case "lastMonth":
-        const lastMonthMoment = now.clone().subtract(1, "month");
-        effectiveStartDate = lastMonthMoment.clone().startOf("month");
-        effectiveEndDate = lastMonthMoment.clone().endOf("month");
-        break;
-      case "thisQuarter":
-        effectiveStartDate = now.clone().startOf("quarter");
-        effectiveEndDate = now.clone().endOf("quarter");
-        break;
-      case "lastQuarter":
-        const lastQuarterMoment = now.clone().subtract(1, "quarter");
-        effectiveStartDate = lastQuarterMoment.clone().startOf("quarter");
-        effectiveEndDate = lastQuarterMoment.clone().endOf("quarter");
-        break;
-    }
-    // Update date inputs to reflect the selected period (for display)
-    if (startDateFilterInput && effectiveStartDate) {
-      startDateFilterInput.value = effectiveStartDate.format("YYYY-MM-DD");
-    }
-    if (endDateFilterInput && effectiveEndDate) {
-      endDateFilterInput.value = effectiveEndDate.format("YYYY-MM-DD");
-    }
-  } else {
-    // If no period selected or "customDate", use manual date inputs
-    const manualStartDate = startDateFilterInput ? moment(startDateFilterInput.value, "YYYY-MM-DD") : null;
-    const manualEndDate = endDateFilterInput ? moment(endDateFilterInput.value, "YYYY-MM-DD") : null;
-
-    if (manualStartDate && manualStartDate.isValid()) {
-      effectiveStartDate = manualStartDate.startOf("day");
-    }
-    if (manualEndDate && manualEndDate.isValid()) {
-      effectiveEndDate = manualEndDate.endOf("day");
-    }
-
-    // Special case: if only start date is selected manually, filter for that day only
-    if (triggerElementId === "startDateFilter" && effectiveStartDate && !effectiveEndDate) {
-      effectiveEndDate = effectiveStartDate.clone().endOf("day");
-    }
-  }
-
-  // Fallback to full data range if no valid effective dates could be determined yet
-  if (!effectiveStartDate || !effectiveEndDate || !effectiveStartDate.isValid() || !effectiveEndDate.isValid()) {
-    const allDates = allData
-      .map((row) => row.parsedEncounterDate)
-      .filter(Boolean)
-      .sort((a, b) => a.valueOf() - b.valueOf());
-
-    if (allDates.length > 0) {
-      effectiveStartDate = allDates[0].clone().startOf('day');
-      effectiveEndDate = allDates[allDates.length - 1].clone().endOf('day');
-    } else {
-      // If no data at all in allData, then no dates to filter by.
-      filteredData = [];
-      console.log("No data available to apply date filters.");
-      return; // Exit early as there's nothing to filter
-    }
-  }
-
-  // Ensure date inputs always reflect the *final* effective dates
-  if (startDateFilterInput && effectiveStartDate && effectiveStartDate.isValid()) {
-    startDateFilterInput.value = effectiveStartDate.format("YYYY-MM-DD");
-  }
-  if (endDateFilterInput && effectiveEndDate && effectiveEndDate.isValid()) {
-    endDateFilterInput.value = effectiveEndDate.format("YYYY-MM-DD");
-  }
-
-  console.log(`Effective Start Date for filter: ${effectiveStartDate ? effectiveStartDate.format('YYYY-MM-DD') : 'N/A'}`);
-  console.log(`Effective End Date for filter: ${effectiveEndDate ? effectiveEndDate.format('YYYY-MM-DD') : 'N/A'}`);
-
-
-  filteredData = allData.filter((row) => {
-    const rowDate = row.parsedEncounterDate;
-
-    // Ensure rowDate is a valid moment object before comparison
-    if (!rowDate || !moment.isMoment(rowDate) || !rowDate.isValid()) {
-      return false; // Skip rows with invalid dates
-    }
-
-    // Date range filter: rowDate must be within effectiveStartDate and effectiveEndDate (inclusive)
-    if (!rowDate.isBetween(effectiveStartDate, effectiveEndDate, "day", "[]")) {
-      return false;
-    }
-
-    // Lab section filter
-    if (selectedLabSection !== "all" && row.LabSection !== selectedLabSection) {
-      return false;
-    }
-
-    // Shift filter
-    if (selectedShift !== "all" && row.Shift !== selectedShift) {
-      return false;
-    }
-
-    return true;
-  });
-}
-
-// Process data and update charts
-function processData() {
-  console.log("--- Starting processData() ---");
-  console.log(
-    `Filtered Data Length before aggregation: ${filteredData.length}`
-  );
-  getAggregatedData();
-  console.log("Aggregated Data for Charts:");
-  console.log(
-    "  Revenue by Date (entries):",
-    Object.keys(aggregatedRevenueByDate).length
-  );
-  console.log(
-    "  Revenue by Section (entries):",
-    Object.keys(aggregatedRevenueBySection).length
-  );
-  console.log(
-    "  Revenue by Unit (entries):",
-    Object.keys(aggregatedRevenueByUnit).length
-  );
-  console.log(
-    "  Test Count by Unit (entries):",
-    Object.keys(aggregatedTestCountByUnit).length
-  );
-  console.log(
-    "  Revenue by Test (entries):",
-    Object.keys(aggregatedRevenueByTest).length
-  );
-  console.log(
-    "  Count by Test (entries):",
-    Object.keys(aggregatedCountByTest).length
-  );
-
-  updateTotalRevenue();
-  updateKPIs();
-  updateAllCharts();
-  console.log("--- Finished processData() ---");
-}
-
-// Consolidate chart rendering calls
-function updateAllCharts(unit = "ICU") {
-  renderChart();
-  renderSectionRevenueChart();
-  renderHospitalUnitRevenueChart();
-  const unitSelect = document.getElementById("unitSelect");
-  if (unitSelect) {
-    const currentUnitSelected = unitSelect.value; // Get the currently selected unit
-    renderTopTestsChart(currentUnitSelected);
-  } else {
-    console.warn(
-      "Unit select (#unitSelect) not found. Skipping Top Tests chart render with specific unit."
-    );
-    // If unitSelect doesn't exist, we can't get a specific unit.
-    // For safety, pass the first unit from the data if available.
-    const firstUnit = Object.keys(aggregatedTestCountByUnit)[0];
-    renderTopTestsChart(firstUnit || unit); // Fallback to 'ICU' if no units found
-  }
-  renderTestRevenueChart();
-  renderTestCountChart();
-}
-
-/**
- * Performs all necessary data aggregations on filteredData once.
- * Stores results in global aggregated variables.
- */
-function getAggregatedData() {
-  console.log("Starting data aggregation...");
-  aggregatedRevenueByDate = {};
-  aggregatedRevenueBySection = {};
-  aggregatedRevenueByUnit = {};
-  aggregatedTestCountByUnit = {};
-  aggregatedRevenueByTest = {};
-  aggregatedCountByTest = {};
-
-  filteredData.forEach((row) => {
-    // Daily Revenue aggregation - use parsedEncounterDate
-    const dateToUse = row.parsedEncounterDate;
-    if (dateToUse && moment.isMoment(dateToUse) && dateToUse.isValid()) {
-      const dateLabel = dateToUse.format("YYYY-MM-DD");
-      aggregatedRevenueByDate[dateLabel] =
-        (aggregatedRevenueByDate[dateLabel] || 0) + row.parsedPrice;
-    }
-
-    // Revenue by Lab Section aggregation - use 'LabSection'
-    const section = row.LabSection || "Unknown";
-    aggregatedRevenueBySection[section] =
-      (aggregatedRevenueBySection[section] || 0) + row.parsedPrice;
-
-    // Revenue by Hospital Unit aggregation - use 'Hospital_Unit'
-    const unit = row.Hospital_Unit || "UNKNOWN";
-    aggregatedRevenueByUnit[unit] =
-      (aggregatedRevenueByUnit[unit] || 0) + row.parsedPrice;
-
-    // Top Tests by Unit
-    const testName = (row.TestName || "").trim() || "UNKNOWN"; // Use TestName from processed row
-    if (!aggregatedTestCountByUnit[unit]) {
-      aggregatedTestCountByUnit[unit] = {};
-    }
-    aggregatedTestCountByUnit[unit][testName] =
-      (aggregatedTestCountByUnit[unit][testName] || 0) + 1;
-
-    // Revenue by Test aggregation
-    aggregatedRevenueByTest[testName] =
-      (aggregatedRevenueByTest[testName] || 0) + row.parsedPrice;
-    // Test Volume aggregation
-    aggregatedCountByTest[testName] =
-      (aggregatedCountByTest[testName] || 0) + 1;
-  });
-  console.log("Data aggregation complete.");
-}
-
-/**
- * Updates the total revenue display and the small progress bar chart.
- */
-function updateTotalRevenue() {
-  const total = filteredData.reduce((sum, row) => sum + row.parsedPrice, 0);
-
-  const DAILY_TARGET_FROM_MONTHLY = DEFAULT_MONTHLY_TARGET / 30.4375; // Average days in a month
-
-  let dynamicTarget = DEFAULT_MONTHLY_TARGET; // Default target
-
-  const startDateInput = document.getElementById("startDateFilter")?.value;
-  const endDateInput = document.getElementById("endDateFilter")?.value;
-  const periodSelect = document.getElementById("periodSelect")?.value;
-
-  const getMonthlyTarget = (year, month) => {
-    const key = `${year}-${String(month).padStart(2, "0")}`;
-    return monthlyTargets[key] || DEFAULT_MONTHLY_TARGET;
-  };
-
-  // Determine dynamic target based on selected period or date range
-  let targetCalculationSuccessful = false;
-
-  if (startDateInput && endDateInput) {
-    const startMoment = moment(startDateInput);
-    const endMoment = moment(endDateInput);
-
-    if (startMoment.isValid() && endMoment.isValid()) {
-      const daysDiff = endMoment.diff(startMoment, "days") + 1; // Include both start and end day
-      if (daysDiff > 0) {
-        // Calculate target based on the number of days in the selected range
-        let totalTargetForRange = 0;
-        let currentDay = startMoment.clone();
-        while (currentDay.isSameOrBefore(endMoment, "day")) {
-          const monthTarget = getMonthlyTarget(
-            currentDay.year(),
-            currentDay.month() + 1
-          );
-          const daysInMonth = currentDay.daysInMonth();
-          totalTargetForRange += monthTarget / daysInMonth;
-          currentDay.add(1, "day");
-        }
-        dynamicTarget = totalTargetForRange;
-        targetCalculationSuccessful = true;
-      }
-    }
-  } else if (periodSelect) {
-    const now = moment();
-    switch (periodSelect) {
-      case "thisMonth":
-        dynamicTarget = getMonthlyTarget(now.year(), now.month() + 1);
-        targetCalculationSuccessful = true;
-        break;
-      case "lastMonth":
-        const lastMonthMoment = now.clone().subtract(1, "month");
-        dynamicTarget = getMonthlyTarget(
-          lastMonthMoment.year(),
-          lastMonthMoment.month() + 1
+        const totalTestsPerformedElem = document.getElementById(
+            "totalTestsPerformed"
         );
-        targetCalculationSuccessful = true;
-        break;
-      case "thisQuarter":
-        dynamicTarget = 0;
-        for (let i = 0; i < 3; i++) {
-          const monthInQuarter = now
-            .clone()
-            .startOf("quarter")
-            .add(i, "months");
-          dynamicTarget += getMonthlyTarget(
-            monthInQuarter.year(),
-            monthInQuarter.month() + 1
-          );
-        }
-        targetCalculationSuccessful = true;
-        break;
-      case "lastQuarter":
-        dynamicTarget = 0;
-        const lastQuarterMoment = now.clone().subtract(1, "quarter");
-        for (let i = 0; i < 3; i++) {
-          const monthInLastQuarter = lastQuarterMoment
-            .clone()
-            .startOf("quarter")
-            .add(i, "months");
-          dynamicTarget += getMonthlyTarget(
-            monthInLastQuarter.year(),
-            monthInLastQuarter.month() + 1
-          );
-        }
-        targetCalculationSuccessful = true;
-        break;
+        if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
+
+        const avgDailyTestsPerformedElem = document.getElementById(
+            "avgDailyTestsPerformed"
+        );
+        if (avgDailyTestsPerformedElem)
+            avgDailyTestsPerformedElem.textContent = "N/A";
+
+        [
+            revenueChart,
+            sectionRevenueChart,
+            hospitalUnitRevenueChart,
+            topTestsChart,
+            testRevenueChart,
+            testCountChart,
+        ].forEach((chart) => {
+            if (chart) {
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+        });
     }
-  }
+}
 
-  // If no specific date range or period target could be calculated, use a default monthly target or a larger fallback
-  if (!targetCalculationSuccessful) {
-    dynamicTarget = DEFAULT_MONTHLY_TARGET; // Fallback
-    console.warn(
-      "Could not determine specific target for selected period/dates, using default monthly target."
-    );
-  }
+// Function to process data after filtering (replaces the old inline logic)
+function processData() {
+    // Re-filter the data just in case a filter was changed after initial load
+    filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "unitSelect");
 
-  const percentage = (total / dynamicTarget) * 100;
+    // Clear previous aggregations
+    aggregatedRevenueByDate = {};
+    aggregatedRevenueBySection = {};
+    aggregatedRevenueByUnit = {};
+    aggregatedTestCountByUnit = {};
+    aggregatedRevenueByTest = {};
+    aggregatedCountByTest = {};
 
-  const percentageValueElement = document.getElementById("percentageValue");
-  const currentAmountElement = document.getElementById("currentAmount");
-  const targetElement = document.querySelector(".target");
+    // Check if filteredData is not empty
+    if (!filteredData || filteredData.length === 0) {
+        console.warn("No data after filtering. Not processing charts.");
+        updateRevenueKPIs();
+        // Destroy existing charts and re-render empty ones
+        renderAllCharts(); 
+        return;
+    }
 
-  if (percentageValueElement) {
-    percentageValueElement.textContent = `${percentage.toFixed(2)}%`;
-  }
-  if (currentAmountElement) {
-    currentAmountElement.textContent = `UGX ${total.toLocaleString()}`;
-  }
-  if (targetElement) {
-    targetElement.textContent = `of UGX ${dynamicTarget.toLocaleString()}`;
-  }
+    // Perform all your data aggregations here using filteredData
+    filteredData.forEach(row => {
+        // Aggregate by Date
+        const dateKey = row.parsedEncounterDate.format("YYYY-MM-DD");
+        aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
 
-  // Update the revenue bar chart
-  if (revenueBarChart) {
-    revenueBarChart.data.datasets[0].data = [total];
-    revenueBarChart.options.scales.x.max = dynamicTarget;
-    revenueBarChart.update();
-  } else {
-    const ctx = document.getElementById("revenueBarChart").getContext("2d");
-    revenueBarChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: [""],
-        datasets: [
-          {
-            label: "Revenue",
-            data: [percentage],
-            backgroundColor: "#deab5f",
-            borderRadius: 5,
-            barPercentage: 1.0,
-            categoryPercentage: 1.0,
-            borderColor: "#6b7280", // Added border color
-            borderWidth: 1, // Added border width
-          },
-        ],
-      },
-      options: {
-        indexAxis: "y",
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: false },
-          datalabels: {
-            // Explicitly disable datalabels for this chart
-            display: false,
-          },
-        },
-        scales: {
-          x: {
-            display: false,
-            max: 100,
-          },
-          y: {
-            display: false,
-          },
-        },
-      },
+        // Aggregate by Lab Section
+        const sectionKey = row.LabSection;
+        aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
+
+        // Aggregate by Hospital Unit
+        const unitKey = row.Hospital_Unit;
+        aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
+        aggregatedTestCountByUnit[unitKey] = (aggregatedTestCountByUnit[unitKey] || 0) + 1;
+
+        // Aggregate by Test Name
+        const testNameKey = row.TestName;
+        aggregatedRevenueByTest[testNameKey] = (aggregatedRevenueByTest[testNameKey] || 0) + row.parsedPrice;
+        aggregatedCountByTest[testNameKey] = (aggregatedCountByTest[testNameKey] || 0) + 1;
     });
-  }
+
+    updateRevenueKPIs();
+    renderAllCharts();
 }
 
-/**
- * Updates the Key Performance Indicators (KPIs) displayed on the dashboard.
- */
-function updateKPIs() {
-  const totalRevenue = filteredData.reduce(
-    (sum, row) => sum + row.parsedPrice,
-    0
-  );
-  const totalTests = filteredData.length;
+// Function to update the KPIs (Key Performance Indicators)
+function updateRevenueKPIs() {
+    const totalRevenue = Object.values(aggregatedRevenueByDate).reduce((sum, revenue) => sum + revenue, 0);
+    const dateRangeStart = filteredData.length > 0 ? moment.utc(filteredData[0].parsedEncounterDate).startOf('day') : null;
+    const dateRangeEnd = filteredData.length > 0 ? moment.utc(filteredData[filteredData.length - 1].parsedEncounterDate).endOf('day') : null;
 
-  const uniqueDates = new Set(
-    filteredData
-      .map((row) => row.parsedEncounterDate?.format("YYYY-MM-DD"))
-      .filter(Boolean)
-  );
-  const numberOfDays = uniqueDates.size || 1; // Avoid division by zero
-
-  const avgDailyRevenue = totalRevenue / numberOfDays;
-  const avgDailyTests = totalTests / numberOfDays;
-
-  // --- Generate distinct previous period values with random variation ---
-  // This is crucial to make the percentages different and dynamic.
-
-  // Previous total revenue (for overall revenue growth rate)
-  const previousPeriodTotalRevenue = totalRevenue * (0.7 + Math.random() * 0.6); // Varies between 70% and 130% of current total revenue
-  // Previous average daily revenue
-  const previousPeriodAvgDailyRevenue =
-    avgDailyRevenue * (0.7 + Math.random() * 0.6); // Varies between 70% and 130% of current avg daily revenue
-  // Previous total tests
-  const previousPeriodTotalTests = totalTests * (0.7 + Math.random() * 0.6); // Varies between 70% and 130% of current total tests
-  // Previous average daily tests
-  const previousPeriodAvgDailyTests =
-    avgDailyTests * (0.7 + Math.random() * 0.6); // Varies between 70% and 130% of current avg daily tests
-
-  // --- Calculations for Percentage Growth Rates for Trends ---
-
-  // 1. Revenue Growth Rate Percentage (for revenueGrowthRateTrend)
-  let revenueGrowthRatePercentage =
-    previousPeriodTotalRevenue !== 0
-      ? ((totalRevenue - previousPeriodTotalRevenue) /
-          previousPeriodTotalRevenue) *
-        100
-      : 0;
-  revenueGrowthRatePercentage =
-    isNaN(revenueGrowthRatePercentage) || !isFinite(revenueGrowthRatePercentage)
-      ? 0
-      : revenueGrowthRatePercentage;
-
-  // 2. Average Daily Revenue Percentage Change (for avgDailyRevenueTrend)
-  let avgDailyRevenuePercentageChange =
-    previousPeriodAvgDailyRevenue !== 0
-      ? ((avgDailyRevenue - previousPeriodAvgDailyRevenue) /
-          previousPeriodAvgDailyRevenue) *
-        100
-      : 0;
-  avgDailyRevenuePercentageChange =
-    isNaN(avgDailyRevenuePercentageChange) ||
-    !isFinite(avgDailyRevenuePercentageChange)
-      ? 0
-      : avgDailyRevenuePercentageChange;
-
-  // 3. Total Tests Performed Percentage (for totalTestsPerformedTrend)
-  let totalTestsPercentageChange =
-    previousPeriodTotalTests !== 0
-      ? ((totalTests - previousPeriodTotalTests) / previousPeriodTotalTests) *
-        100
-      : 0;
-  totalTestsPercentageChange =
-    isNaN(totalTestsPercentageChange) || !isFinite(totalTestsPercentageChange)
-      ? 0
-      : totalTestsPercentageChange;
-
-  // 4. Average Daily Tests Percentage Change (for avgDailyTestsPerformedTrend)
-  let avgDailyTestsPercentageChange =
-    previousPeriodAvgDailyTests !== 0
-      ? ((avgDailyTests - previousPeriodAvgDailyTests) /
-          previousPeriodAvgDailyTests) *
-        100
-      : 0;
-  avgDailyTestsPercentageChange =
-    isNaN(avgDailyTestsPercentageChange) ||
-    !isFinite(avgDailyTestsPercentageChange)
-      ? 0
-      : avgDailyTestsPercentageChange;
-
-  // --- Money Value for main KPI: Revenue Growth Rate (figure itself) ---
-  // This uses previousPeriodTotalRevenue for consistency.
-  let revenueGrowthRateMoneyValue = totalRevenue - previousPeriodTotalRevenue;
-  revenueGrowthRateMoneyValue =
-    isNaN(revenueGrowthRateMoneyValue) || !isFinite(revenueGrowthRateMoneyValue)
-      ? 0
-      : revenueGrowthRateMoneyValue;
-
-  // --- Update Main KPI Displays ---
-  document.getElementById(
-    "avgDailyRevenue"
-  ).textContent = `UGX ${avgDailyRevenue.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-
-  document.getElementById(
-    "revenueGrowthRate"
-  ).textContent = `UGX ${revenueGrowthRateMoneyValue.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })}`;
-
-  document.getElementById("avgDailyTestsPerformed").textContent =
-    avgDailyTests.toFixed(0);
-  document.getElementById("totalTestsPerformed").textContent =
-    totalTests.toLocaleString();
-
-  // Implement trend indicators (with arrows, percentage, and colors)
-  // All trend arrows will now display percentages based on the latest request.
-  const updateTrend = (elementId, value, isPositiveGood) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      let arrow = "";
-      let colorClass = "";
-      let displayText = `${Math.abs(value).toFixed(2)}%`; // Always percentage now
-
-      if (value > 0) {
-        arrow = "▲";
-        // CORRECTED: Using vanilla CSS classes
-        colorClass = isPositiveGood ? "trend-positive" : "trend-negative";
-      } else if (value < 0) {
-        arrow = "▼";
-        // CORRECTED: Using vanilla CSS classes
-        colorClass = isPositiveGood ? "trend-negative" : "trend-positive";
-      } else {
-        arrow = "—";
-        // CORRECTED: Using vanilla CSS classes
-        colorClass = "trend-neutral";
-        displayText = `0.00%`; // Explicitly show 0.00% for no change
-      }
-      element.innerHTML = `<span class="${colorClass}">${arrow} ${displayText}</span>`;
+    let daysInPeriod = 0;
+    if (dateRangeStart && dateRangeEnd) {
+        daysInPeriod = dateRangeEnd.diff(dateRangeStart, 'days') + 1;
     }
-  };
+    const avgDailyRevenue = daysInPeriod > 0 ? totalRevenue / daysInPeriod : 0;
+    const totalTestsPerformed = filteredData.length;
+    const avgDailyTestsPerformed = daysInPeriod > 0 ? totalTestsPerformed / daysInPeriod : 0;
 
-  // --- Update Trend Indicators with Correct Percentage Values ---
-  updateTrend("avgDailyRevenueTrend", avgDailyRevenuePercentageChange, true);
-  updateTrend("revenueGrowthRateTrend", revenueGrowthRatePercentage, true);
-  updateTrend(
-    "avgDailyTestsPerformedTrend",
-    avgDailyTestsPercentageChange,
-    true
-  );
-  updateTrend("totalTestsPerformedTrend", totalTestsPercentageChange, true);
+    // Display the values on the page
+    document.getElementById("totalRevenue").textContent = `UGX ${totalRevenue.toLocaleString()}`;
+    document.getElementById("avgDailyRevenue").textContent = `UGX ${avgDailyRevenue.toFixed(0).toLocaleString()}`;
+    document.getElementById("totalTestsPerformed").textContent = totalTestsPerformed.toLocaleString();
+    document.getElementById("avgDailyTestsPerformed").textContent = avgDailyTestsPerformed.toFixed(0).toLocaleString();
+}
+
+// Function to render all charts
+function renderAllCharts() {
+    // Destroy existing charts to prevent memory leaks and rendering issues
+    if (revenueChart) revenueChart.destroy();
+    if (sectionRevenueChart) sectionRevenueChart.destroy();
+    if (hospitalUnitRevenueChart) hospitalUnitRevenueChart.destroy();
+    if (topTestsChart) topTestsChart.destroy();
+    if (testRevenueChart) testRevenueChart.destroy();
+    if (testCountChart) testCountChart.destroy();
+
+    // Now, render the charts with the new aggregated data
+    renderRevenueOverTimeChart();
+    renderSectionRevenueChart();
+    renderUnitRevenueChart();
+    renderTopTestsChart();
+}
+
+
+/**
+ * Render Revenue Over Time Chart.
+ */
+function renderRevenueOverTimeChart() {
+    const ctx = document.getElementById("revenueOverTimeChart").getContext("2d");
+    const dates = Object.keys(aggregatedRevenueByDate).sort();
+    const revenues = dates.map(date => aggregatedRevenueByDate[date]);
+    
+    revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Total Revenue',
+                data: revenues,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (UGX)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
 }
 
 /**
- * Renders the Revenue by Lab Section Chart (Doughnut Chart).
+ * Render Revenue by Section Chart.
  */
 function renderSectionRevenueChart() {
-  console.log("Attempting to render Revenue by Lab Section Chart...");
-  const ctx = document.getElementById("sectionRevenueChart");
-  if (!ctx) {
-    console.warn("Canvas for sectionRevenueChart not found.");
-    return;
-  }
+    const ctx = document.getElementById("sectionRevenueChart").getContext("2d");
+    const sections = Object.keys(aggregatedRevenueBySection);
+    const revenues = sections.map(section => aggregatedRevenueBySection[section]);
 
-  const sections = Object.keys(aggregatedRevenueBySection);
-  const revenues = sections.map(
-    (section) => aggregatedRevenueBySection[section]
-  );
-
-  const totalRevenueAllSections = revenues.reduce(
-    (sum, current) => sum + current,
-    0
-  );
-
-  // Labels should be capitalized
-  const chartLabels = sections.map((section) => capitalizeWords(section));
-  const chartData = revenues;
-
-  const data = {
-    labels: chartLabels,
-    datasets: [
-      {
-        data: chartData,
-        backgroundColor: [
-          "#21336a",
-          " #4CAF50",
-          " #795548",
-          " #9C27B0",
-          "rgb(250, 39, 11)",
-          " #00BCD4",
-          " #607D8B",
-          " #deab5f",
-          " #E91E63",
-          " #FFC107",
-        ],
-        hoverOffset: 4,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "right",
-        labels: {
-          boxWidth: 20,
-          padding: 10,
-          font: {
-            size: 12,
-          },
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            let label = context.label || "";
-            if (label) {
-              label += ": ";
-            }
-            if (context.parsed !== null) {
-              const value = context.parsed;
-              const percentage =
-                totalRevenueAllSections > 0
-                  ? (value / totalRevenueAllSections) * 100
-                  : 0;
-              label += `UGX ${value.toLocaleString()} (${percentage.toFixed(
-                2
-              )}%)`;
-            }
-            return label;
-          },
-        },
-      },
-      datalabels: {
-        formatter: (value, context) => {
-          const percentage =
-            totalRevenueAllSections > 0
-              ? (value / totalRevenueAllSections) * 100
-              : 0;
-          return percentage > 0 ? `${percentage.toFixed(1)}%` : "";
-        },
-        color: "#fff", // White color for better contrast on colored segments
-        font: {
-          weight: "bold",
-          size: 12,
-        },
-        display: "auto", // Display only if there's enough space
-      },
-    },
-    cutout: "60%",
-  };
-
-  if (sectionRevenueChart) {
-    sectionRevenueChart.data = data;
-    sectionRevenueChart.options = options;
-    sectionRevenueChart.update();
-  } else {
     sectionRevenueChart = new Chart(ctx, {
-      type: "doughnut",
-      data: data,
-      options: options,
+        type: 'bar',
+        data: {
+            labels: sections,
+            datasets: [{
+                label: 'Revenue by Lab Section',
+                data: revenues,
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (UGX)'
+                    }
+                }
+            }
+        }
     });
-  }
-  console.log("Revenue by Lab Section Chart rendered.");
 }
 
 /**
- * Renders or updates the Daily Revenue chart.
- * Changed to a bar chart.
+ * Render Revenue by Hospital Unit Chart.
  */
-function renderChart() {
-  const canvas = document.getElementById("revenueChart");
-  if (!canvas) {
-    console.warn("revenueChart canvas not found. Cannot render chart.");
-    return;
-  }
-  const ctx = canvas.getContext("2d");
+function renderUnitRevenueChart() {
+    const ctx = document.getElementById("unitRevenueChart").getContext("2d");
+    const units = Object.keys(aggregatedRevenueByUnit);
+    const revenues = units.map(unit => aggregatedRevenueByUnit[unit]);
+    const counts = units.map(unit => aggregatedTestCountByUnit[unit]);
 
-  let labels = Object.keys(aggregatedRevenueByDate).sort();
-  // Limit to max 31 columns (last 31 days) for daily chart visibility
-  if (labels.length > 31) {
-    labels = labels.slice(-31);
-  }
-  const data = labels.map((date) => aggregatedRevenueByDate[date]);
-
-  if (revenueChart) {
-    revenueChart.data.labels = labels;
-    revenueChart.data.datasets[0].data = data;
-    revenueChart.update();
-  } else {
-    revenueChart = new Chart(ctx, {
-      type: "bar", // Changed back to bar type
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Revenue (UGX)",
-            data,
-            backgroundColor: "#21336a",
-            // Removed fill, tension, pointRadius, pointBackgroundColor, pointBorderColor, pointBorderWidth
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                const value = context.parsed.y;
-                return `UGX ${value.toLocaleString()}`;
-              },
-            },
-          },
-          legend: { display: false }, // Changed back to false for bar chart consistency
-          datalabels: {
-            // Explicitly disable datalabels for this chart
-            display: false,
-          },
-        },
-        scales: {
-          y: {
-            ticks: {
-              callback: function (value) {
-                return `UGX ${value.toLocaleString()}`;
-              },
-            },
-          },
-          x: {
-            ticks: {
-              maxRotation: 45,
-              minRotation: 45,
-            },
-          },
-        },
-      },
-    });
-  }
-  console.log("Daily Revenue Chart updated/rendered.");
-}
-
-/**
- * Renders or updates the Revenue by Hospital Unit chart.
- * Changed to an area chart with blue theme color and 20% opacity.
- */
-function renderHospitalUnitRevenueChart() {
-  const canvas = document.getElementById("hospitalUnitRevenueChart");
-  if (!canvas) {
-    console.warn(
-      "hospitalUnitRevenueChart canvas not found. Cannot render chart."
-    );
-    return;
-  }
-  const ctx = canvas.getContext("2d");
-
-  const sorted = Object.entries(aggregatedRevenueByUnit).sort(
-    (a, b) => b[1] - a[1]
-  );
-
-  const labels = sorted.map(([unit]) => unit);
-  const data = sorted.map(([_, val]) => val);
-
-  if (hospitalUnitRevenueChart) {
-    hospitalUnitRevenueChart.data.labels = labels;
-    hospitalUnitRevenueChart.data.datasets[0].data = data;
-    hospitalUnitRevenueChart.update();
-  } else {
     hospitalUnitRevenueChart = new Chart(ctx, {
-      type: "line", // Still type 'line' but fill will make it area
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Revenue by Hospital Unit (UGX)",
-            data,
-            fill: true, // Changed to true for area chart
-            borderColor: "#21336a", // Main theme blue color
-            backgroundColor: "rgba(33, 51, 106, 0.2)", // Blue with 20% opacity for fill
-            tension: 0.4,
-            pointRadius: 3, // Added point styling for visibility
-            pointBackgroundColor: "#21336a",
-            pointBorderColor: "#fff",
-            pointBorderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        scales: {
-          y: {
-            ticks: {
-              callback: (value) => `UGX ${value.toLocaleString()}`,
-            },
-          },
+        type: 'bar',
+        data: {
+            labels: units,
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: revenues,
+                    backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y-revenue'
+                },
+                {
+                    label: 'Test Count',
+                    data: counts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y-count'
+                }
+            ]
         },
-        plugins: {
-          datalabels: {
-            // Explicitly disable datalabels for this chart
-            display: false,
-          },
-        },
-      },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                'y-revenue': {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (UGX)'
+                    }
+                },
+                'y-count': {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Test Count'
+                    },
+                    grid: {
+                        drawOnChartArea: false // Only draw the grid for the primary Y-axis
+                    }
+                }
+            }
+        }
     });
-  }
-  console.log("Hospital Unit Revenue Chart updated/rendered.");
 }
 
 /**
- * Renders or updates the Top Tests chart for a specific hospital unit.
- * @param {string} unit The hospital unit to filter by.
+ * Render Top 10 Tests by Revenue and Count.
  */
-function renderTopTestsChart(unit = "ICU") {
-  const canvas = document.getElementById("topTestsChart");
-  if (!canvas) {
-    console.warn("topTestsChart canvas not found. Cannot render chart.");
-    return;
-  }
-  const ctx = canvas.getContext("2d");
+function renderTopTestsChart() {
+    const ctxRevenue = document.getElementById("topTestsRevenueChart").getContext("2d");
+    const ctxCount = document.getElementById("topTestsCountChart").getContext("2d");
 
-  const testCountForUnit = aggregatedTestCountByUnit[unit] || {};
+    // Sort data for top 10
+    const topRevenueTests = Object.entries(aggregatedRevenueByTest)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10);
+    const topCountTests = Object.entries(aggregatedCountByTest)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 10);
 
-  const sorted = Object.entries(testCountForUnit)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 15);
-
-  const labels = sorted.map(([test]) => test);
-  const data = sorted.map(([_, count]) => count);
-
-  const total = data.reduce((a, b) => a + b, 0);
-  const percentageLabels = data.map(
-    (val) => (total > 0 ? `${((val / total) * 100).toFixed(0)}%` : "0%") // Removed decimals
-  );
-
-  if (topTestsChart) {
-    topTestsChart.data.labels = labels;
-    topTestsChart.data.datasets[0].data = data;
-    topTestsChart.data.datasets[0].label = `Top Tests in ${unit}`;
-    topTestsChart.data.datasets[0].datalabels.formatter = (value, context) => {
-      return percentageLabels[context.dataIndex];
-    };
-    topTestsChart.update();
-  } else {
-    topTestsChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: `Top Tests in ${unit}`,
-            data,
-            backgroundColor: "#4CAF50",
-            datalabels: {
-              anchor: "start",
-              align: "end",
-              color: "#21336a",
-              font: {
-                weight: "bold",
-                size: 10,
-              },
-              formatter: (value, context) =>
-                percentageLabels[context.dataIndex],
-            },
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        indexAxis: "y",
-        maintainAspectRatio: true,
-        scales: {
-          x: {
-            position: "top",
-            beginAtZero: true,
-          },
+    // Render Top Revenue Chart
+    testRevenueChart = new Chart(ctxRevenue, {
+        type: 'bar',
+        data: {
+            labels: topRevenueTests.map(([test]) => test),
+            datasets: [{
+                label: 'Revenue',
+                data: topRevenueTests.map(([, revenue]) => revenue),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
         },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (context) => `${context.parsed.x.toLocaleString()} tests`,
-            },
-          },
-          datalabels: {
-            display: true, // Explicitly enable for this chart
-          },
-        },
-      },
-      plugins: [ChartDataLabels],
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bars
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (UGX)'
+                    }
+                }
+            }
+        }
     });
-  }
-  console.log(`Top Tests Chart for unit ${unit} updated/rendered.`);
+
+    // Render Top Count Chart
+    testCountChart = new Chart(ctxCount, {
+        type: 'bar',
+        data: {
+            labels: topCountTests.map(([test]) => test),
+            datasets: [{
+                label: 'Test Count',
+                data: topCountTests.map(([, count]) => count),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', // Horizontal bars
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Test Count'
+                    }
+                }
+            }
+        }
+    });
 }
 
-/**
- * Renders or updates the Revenue by Test chart.
- */
-function renderTestRevenueChart() {
-  const canvas = document.getElementById("testRevenueChart");
-  if (!canvas) {
-    console.warn("testRevenueChart canvas not found. Cannot render chart.");
-    return;
-  }
-  const ctx = canvas.getContext("2d");
-
-  const sorted = Object.entries(aggregatedRevenueByTest)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 15);
-
-  const labels = sorted.map(([test]) => test);
-  const data = sorted.map(([_, value]) => value);
-
-  const total = data.reduce((a, b) => a + b, 0);
-  const percentageLabels = data.map(
-    (val) => (total > 0 ? `${((val / total) * 100).toFixed(0)}%` : "0%") // Removed decimals
-  );
-
-  if (testRevenueChart) {
-    testRevenueChart.data.labels = labels;
-    testRevenueChart.data.datasets[0].data = data;
-    testRevenueChart.data.datasets[0].datalabels.formatter = (
-      value,
-      context
-    ) => {
-      return percentageLabels[context.dataIndex];
-    };
-    testRevenueChart.update();
-  } else {
-    testRevenueChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Revenue by Test (UGX)",
-            data,
-            backgroundColor: "#4CAF50",
-            datalabels: {
-              anchor: "start",
-              align: "end",
-              color: "#21336a",
-              font: {
-                weight: "bold",
-                size: 10,
-              },
-              formatter: (value, context) =>
-                percentageLabels[context.dataIndex],
-            },
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        indexAxis: "y",
-        maintainAspectRatio: true,
-        scales: {
-          x: {
-            position: "top",
-            beginAtZero: true,
-            ticks: {
-              callback: (value) => `UGX ${value.toLocaleString()}`,
-            },
-          },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (context) => `UGX ${context.parsed.x.toLocaleString()}`,
-            },
-          },
-          datalabels: {
-            display: true, // Explicitly enable for this chart
-          },
-        },
-      },
-      plugins: [ChartDataLabels],
-    });
-  }
-  console.log("Test Revenue Chart updated/rendered.");
-}
-
-/**
- * Renders or updates the Test Volume chart.
- */
-function renderTestCountChart() {
-  const canvas = document.getElementById("testCountChart");
-  if (!canvas) {
-    console.warn("testCountChart canvas not found. Cannot render chart.");
-    return;
-  }
-  const ctx = canvas.getContext("2d");
-
-  const sorted = Object.entries(aggregatedCountByTest)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 15);
-
-  const labels = sorted.map(([test]) => test);
-  const data = sorted.map(([_, count]) => count);
-
-  if (testCountChart) {
-    testCountChart.data.labels = labels;
-    testCountChart.data.datasets[0].data = data;
-    testCountChart.data.datasets[0].datalabels.formatter = (value) => {
-      return value.toLocaleString(); // Display actual value
-    };
-    testCountChart.update();
-  } else {
-    testCountChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Test Count",
-            data,
-            backgroundColor: "#4CAF50",
-            datalabels: {
-              anchor: "start",
-              align: "end",
-              color: "#21336a",
-              font: {
-                weight: "bold",
-                size: 10,
-              },
-              formatter: (value) => value.toLocaleString(), // Display actual value
-            },
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        indexAxis: "y",
-        maintainAspectRatio: true,
-        scales: {
-          x: {
-            position: "top",
-            beginAtZero: true,
-          },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (context) => `${context.parsed.x.toLocaleString()} tests`,
-            },
-          },
-          datalabels: {
-            display: true, // Explicitly enable for this chart
-          },
-        },
-      },
-      plugins: [ChartDataLabels],
-    });
-  }
-  console.log("Test Count Chart updated/rendered.");
-}
-
-// Event Listeners for Filters (unchanged)
-window.addEventListener("DOMContentLoaded", () => {
-  populatePeriodSelector();
-
-  const startDateFilterInput = document.getElementById("startDateFilter");
-  const endDateFilterInput = document.getElementById("endDateFilter");
-  const periodSelect = document.getElementById("periodSelect");
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  const shiftFilter = document.getElementById("shiftFilter");
-  const unitSelect = document.getElementById("unitSelect");
-
-  if (startDateFilterInput) {
-    startDateFilterInput.addEventListener("change", () => {
-      applyFilters("startDateFilter");
-      processData();
-      if (periodSelect) periodSelect.value = "";
-    });
-  }
-
-  if (endDateFilterInput) {
-    endDateFilterInput.addEventListener("change", () => {
-      applyFilters("endDateFilter");
-      processData();
-      if (periodSelect) periodSelect.value = "";
-    });
-  }
-
-  if (periodSelect) {
-    periodSelect.addEventListener("change", () => {
-      applyFilters("periodSelect");
-      processData();
-    });
-    periodSelect.value = "thisMonth";
-  }
-
-  if (labSectionFilter) {
-    labSectionFilter.addEventListener("change", () => {
-      applyFilters();
-      processData();
-    });
-  }
-
-  if (shiftFilter) {
-    shiftFilter.addEventListener("change", () => {
-      applyFilters();
-      processData();
-    });
-  }
-
-  if (unitSelect) {
-    unitSelect.addEventListener("change", (e) => {
-      renderTopTestsChart(e.target.value);
-    });
-  }
-
-  // Change this line from loadCSVData() to loadDatabaseData()
-  loadDatabaseData();
+// Add the event listener to trigger the logic once the page is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial setup
+    checkAuthAndRedirect();
+    loadDatabaseData();
+    // Attach event listeners for the filters
+    attachRevenueFilterListeners(processData);
 });

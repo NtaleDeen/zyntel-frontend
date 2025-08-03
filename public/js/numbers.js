@@ -1,7 +1,4 @@
 // numbers.js - Complete version sharing filters with TAT page
-// Removed 'import Chart from "chart.js/auto";' and 'import "chartjs-adapter-moment";'
-// as they are loaded globally via CDN in numbers.html
-
 import {
   initCommonDashboard,
   applyTATFilters,
@@ -16,25 +13,49 @@ let filteredData = [];
 // Changed: Use the same API endpoint as tat.js
 const API_URL = "https://zyntel-data-updater.onrender.com/api/performance-data";
 
+// Add this function at the top, before the event listener
+function checkAuthAndRedirect() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        // Redirect to the login page if no token is found
+        window.location.href = '/index.html';
+    }
+}
+
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", async () => {
+  // Add the check here as the very first action
+  checkAuthAndRedirect();
+  
   console.log("Numbers Dashboard initializing...");
   await loadData();
   // Call initCommonDashboard passing processNumbersData as the callback
   initCommonDashboard(processNumbersData);
 });
 
-// Load data from database API instead of CSV
+// Load data from database API
 async function loadData() {
+  // In the `loadData` function, you will need to add the JWT token to the fetch request headers
+  const token = localStorage.getItem('jwtToken');
+  if (!token) {
+      // This case is already handled by checkAuthAndRedirect(), but this is a good
+      // defensive measure to prevent an unauthenticated request.
+      console.error("No token found for API request.");
+      return;
+  }
+
   try {
-    // Use the same API endpoint as tat.js
     const response = await fetch(API_URL, {
+      method: 'GET',
       headers: {
-        Accept: "application/json",
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}` // Add the JWT token here
       },
     });
 
-    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! ${response.status}`);
+    }
 
     const dbData = await response.json();
 
@@ -45,14 +66,10 @@ async function loadData() {
       allData = dbData.map((row) => {
         const processedRow = { ...row };
 
-        // Use 'date' field from the new schema for parsedDate
-        // parseTATDate from filters-tat.js already handles moment.js and parsing as UTC.
         processedRow.parsedDate = processedRow.date
           ? parseTATDate(processedRow.date)
           : null;
 
-        // Changed: Parse timeInHour from 'request_time_in' using moment.utc() like tat.js does
-        // Then convert to EAT hour for consistency with TAT dashboard and KPI
         if (row.request_time_in) {
           try {
             const timeInMomentUTC = window.moment.utc(row.request_time_in);
@@ -65,11 +82,10 @@ async function loadData() {
           processedRow.timeInHour = null;
         }
 
-        // Standardize case for filtering using new schema fields (lowercase/snake_case)
-        processedRow.Hospital_Unit = (row.unit || "").toUpperCase(); // Use 'unit' from new schema
-        processedRow.LabSection = (row.lab_section || "").toLowerCase(); // Use 'lab_section' from new schema
-        processedRow.Shift = (row.shift || "").toLowerCase(); // Use 'shift' from new schema
-        processedRow.TestName = row.test_name || ""; // Use 'test_name' from new schema
+        processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+        processedRow.LabSection = (row.lab_section || "").toLowerCase();
+        processedRow.Shift = (row.shift || "").toLowerCase();
+        processedRow.TestName = row.test_name || "";
 
         return processedRow;
       });
@@ -78,7 +94,6 @@ async function loadData() {
         `✅ Loaded ${allData.length} rows from database for numbers dashboard.`
       );
 
-      // Debugging: Log a sample processed row to verify data mapping
       if (allData.length > 0) {
         console.log("Sample processed row for numbers:", allData[0]);
       }
@@ -86,16 +101,21 @@ async function loadData() {
   } catch (error) {
     console.error("Error loading data:", error);
     showError("Failed to load data. Please check the API endpoint and try again.");
-    allData = []; // Ensure allData is empty on error
+    allData = [];
   }
 }
 
 // Helper function to display errors
 function showError(message) {
-  const main = document.querySelector("main");
-  if (main) {
-    main.innerHTML = `<div class="error-message" style="text-align: center; padding: 20px; color: red;">${message}</div>`;
-  }
+    // This function needs to be defined to be used. I am assuming it exists
+    // on your page. If not, you should create a simple function to handle it.
+    console.error(message);
+    // e.g.
+    // const errorDiv = document.getElementById('error-message');
+    // if (errorDiv) {
+    //   errorDiv.textContent = message;
+    //   errorDiv.style.display = 'block';
+    // }
 }
 
 // Function to get date range from filters (moved here as per ChatGPT's suggestion)

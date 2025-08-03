@@ -1,427 +1,249 @@
-// receive-table.js - Logic for the Receive Table Page
-import { initCommonDashboard } from "./filters-tat.js";
+// reception.js - Logic for the Reception Table Page
 
+import { initCommonDashboard, checkAuthAndRedirect, showMessageModal } from "./filters-tat.js";
+
+// Global variables
 let filteredData = []; // Holds the data for the current page, fetched from the backend
 let currentPage = 1; // Current page for pagination
 const rowsPerPage = 25; // Number of rows to display per page
 
-window.addEventListener("DOMContentLoaded", () => {
-  // Initialize common dashboard filters and trigger data load
-  initCommonDashboard(loadAndRenderReceiveTable);
+// IMPORTANT: REPLACE WITH YOUR ACTUAL RENDER SERVICE URL for the backend API
+const API_RECEPTION_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/reception-data";
 
-  // Set the default value for 'Period' filter to 'all' and trigger change event
-  const dateRangeSelect = document.getElementById("dateRange");
-  if (dateRangeSelect) {
-    dateRangeSelect.value = "all"; // Default to 'all'
-    const event = new Event("change", { bubbles: true });
-    dateRangeSelect.dispatchEvent(event);
-  } else {
-    console.warn(
-      "Date range select element not found. Initial data load might not apply date filter."
-    );
-    loadAndRenderReceiveTable(); // Still try to load data
-  }
+window.addEventListener("DOMContentLoaded", () => {
+    // Check for authentication and redirect if not logged in
+    checkAuthAndRedirect();
+
+    // Initialize common dashboard filters and trigger data load
+    initCommonDashboard(loadAndRenderReceptionTable);
 });
 
 /**
- * Fetches data for the Receive table from the backend API.
- * This will use the /api/lab-tests endpoint which provides transactional details
- * suitable for the receive table.
+ * Fetches data for the Reception table from the backend API.
  */
-async function loadAndRenderReceiveTable() {
-  console.log("loadAndRenderReceiveTable: Initiated data fetch from backend.");
+async function loadAndRenderReceptionTable() {
+    console.log("loadAndRenderReceptionTable: Initiated data fetch from backend.");
+    const token = localStorage.getItem('token');
+    const loadingIndicator = document.getElementById('loadingIndicator');
 
-  const dateRange = document.getElementById("dateRange")?.value || "all";
-  const startDate = document.getElementById("startDate")?.value || "";
-  const endDate = document.getElementById("endDate")?.value || "";
-  const shift = document.getElementById("shift")?.value || "all";
-  const hospitalUnit = document.getElementById("hospital")?.value || "all";
-  const section = document.getElementById("labSection")?.value || "all";
-
-  const queryParams = new URLSearchParams({
-    dateRange,
-    startDate,
-    endDate,
-    shift,
-    hospitalUnit,
-    section,
-    page: currentPage,
-    limit: rowsPerPage,
-  }).toString();
-
-  try {
-    const response = await fetch(`/api/lab-tests?${queryParams}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    console.log("Receive Table Backend response received:", result);
-
-    // Map the incoming data to relevant columns for the receive table
-    filteredData = result.data.map((row) => ({
-      Date: row.Date,
-      Shift: row.Shift,
-      LabNo: row.LabNo,
-      InvoiceNo: row.InvoiceNo,
-      PNo: row.PNo, // Patient_Number
-      Patient: row.Patient,
-      Contact: row.Tel, // Patient Tel
-      TestName: row.TestName, // Mapping to Tests
-      Hospital_Unit: row.Hospital_Unit,
-      LabSection: row.LabSection,
-      Urgency: row.Urgent_Test, // Derived from Urgent_Test column
-      Lab_Department: row.Lab_Department,
-      Result_In: row.Result_In,
-      Status: row.Status,
-      TestCode: row.TestCode, // Crucial for unique updates
-    }));
-
-    const totalRecords = result.totalCount;
-
-    renderReceiveTable();
-    renderPagination(totalRecords);
-  } catch (error) {
-    console.error("loadAndRenderReceiveTable: Error fetching data:", error);
-    const tableBody = document.getElementById("receiveTableBody");
-    if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="14" style="text-align:center; color: red;">Failed to load data. Please ensure the backend server is running and the database is populated. Error: ${error.message}</td></tr>`;
-    }
-    const paginationContainer = document.getElementById("paginationControls");
-    if (paginationContainer) paginationContainer.innerHTML = "";
-  }
-}
-
-/**
- * Handles clicks on the interactive buttons within the table.
- * Sends update request to the backend.
- * @param {string} labNo The Lab Number of the record.
- * @param {string} testCode The Test Code of the specific test within the record.
- * @param {string} field The database field to update (e.g., 'Lab_Department', 'Status', 'Urgent_Test').
- * @param {string} currentValue The current value displayed on the button.
- * @param {HTMLElement} buttonElement The button HTML element that was clicked.
- */
-async function handleReceiveButtonClick(
-  labNo,
-  testCode,
-  field,
-  currentValue,
-  buttonElement
-) {
-  console.log(
-    `Button clicked: LabNo=${labNo}, TestCode=${testCode}, Field=${field}, CurrentValue=${currentValue}`
-  );
-
-  let newValue = currentValue; // Default to current value
-  let disableButton = true; // Most buttons disable after click
-
-  // Determine the new value based on the field
-  switch (field) {
-    case "Lab_Department":
-      newValue = "Received by Lab";
-      break;
-    case "Status":
-      newValue = "Resulted";
-      break;
-    case "Urgent_Test":
-      newValue = currentValue === "Urgent" ? "Not Urgent" : "Urgent"; // Toggle Urgent status
-      disableButton = false; // Urgent button can be toggled multiple times
-      break;
-    default:
-      console.warn(`Unhandled button field: ${field}`);
-      return; // Exit if field is not recognized
-  }
-
-  try {
-    const response = await fetch("/api/update-test-status", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        labNo,
-        testCode,
-        field,
-        value: newValue,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        `HTTP error! status: ${response.status}, message: ${errorData.error}`
-      );
+    if (!token) {
+        console.error("No authentication token found. Cannot fetch data.");
+        return;
     }
 
-    const result = await response.json();
-    console.log("Update successful:", result.message);
+    // Get filter values from the DOM
+    const startDate = document.getElementById("startDateFilter")?.value || "";
+    const endDate = document.getElementById("endDateFilter")?.value || "";
+    const labSection = document.getElementById("labSectionFilter")?.value || "all";
+    const shift = document.getElementById("shiftFilter")?.value || "all";
+    const unit = document.getElementById("unitSelect")?.value || "all";
 
-    // Update UI immediately (button text, disable state, style)
-    // Adjust button text based on new value for persistent display
-    if (field === "Lab_Department") {
-      buttonElement.textContent =
-        newValue === "Received by Lab" ? "Received" : "Receive";
-    } else if (field === "Status") {
-      buttonElement.textContent =
-        newValue === "Resulted" ? "Resulted" : "Result";
-    } else if (field === "Urgent_Test") {
-      buttonElement.textContent = "Urgent"; // Always show 'Urgent' as the button label
-    }
+    // Show loading indicator
+    if (loadingIndicator) loadingIndicator.style.display = 'block';
 
-    buttonElement.disabled = disableButton;
-    if (disableButton) {
-      buttonElement.style.backgroundColor = "#cccccc"; // Simple gray background
-      buttonElement.style.cursor = "not-allowed";
-    } else {
-      // For urgent button, toggle style based on status
-      if (newValue === "Urgent") {
-        buttonElement.style.backgroundColor = "red";
-      } else {
-        buttonElement.style.backgroundColor = "green";
-      }
-      buttonElement.style.cursor = "pointer";
-    }
-  } catch (error) {
-    console.error("Error updating status:", error);
-    alert(`Failed to update status: ${error.message}`); // Use custom modal in production
-  }
-}
+    try {
+        const queryParams = new URLSearchParams({
+            startDate: startDate,
+            endDate: endDate,
+            labSection: labSection,
+            shift: shift,
+            unit: unit,
+        });
 
-/**
- * Renders the Receive data table.
- */
-function renderReceiveTable() {
-  const tableBody = document.getElementById("receiveTableBody");
-  const tableHead = document.querySelector("#receiveTable thead");
-  if (!tableBody || !tableHead) {
-    console.error("renderReceiveTable: Table body or head element not found.");
-    return;
-  }
-  tableBody.innerHTML = "";
+        const response = await fetch(`${API_RECEPTION_ENDPOINT}?${queryParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-  const displayColumns = [
-    {
-      header: "Date",
-      key: "Date",
-      format: (val) => (val ? moment(val).format("ddd, MMM D,YYYY") : "N/A"),
-    },
-    { header: "Shift", key: "Shift" },
-    { header: "Lab Number", key: "LabNo" },
-    { header: "Invoice Number", key: "InvoiceNo" },
-    { header: "Patient Number", key: "PNo" },
-    { header: "Patient", key: "Patient" },
-    { header: "Contact", key: "Contact" },
-    { header: "Tests", key: "TestName" }, // Mapped from TestName
-    { header: "Hospital Unit", key: "Hospital_Unit" },
-    { header: "Lab Section", key: "LabSection" },
-    {
-      header: "Urgency",
-      key: "Urgency", // This key maps to Urgent_Test in DB, but displayed as Urgency
-      isButton: true,
-      buttonField: "Urgent_Test", // The actual DB field to update
-      buttonText: () => "Urgent", // Always show "Urgent" as button label
-      buttonClass: (val) => (val === "Urgent" ? "" : ""), // No special styling, just text and disabled
-      isDisabled: (val) => false, // Urgent button is always clickable
-    },
-    {
-      header: "Lab Department",
-      key: "Lab_Department",
-      isButton: true,
-      buttonField: "Lab_Department",
-      buttonText: (val) => (val === "Pending" ? "Receive" : "Received"), // "Receive" button
-      buttonClass: (val) => (val === "Pending" ? "" : ""), // No special styling, just text and disabled
-      isDisabled: (val) => val !== "Pending", // Disable if not pending
-    },
-    { header: "Result In", key: "Result_In" },
-    {
-      header: "Status",
-      key: "Status",
-      isButton: true,
-      buttonField: "Status",
-      buttonText: (val) => (val === "Pending" ? "Result" : "Resulted"), // "Result" button
-      buttonClass: (val) => (val === "Pending" ? "" : ""), // No special styling, just text and disabled
-      isDisabled: (val) => val !== "Pending", // Disable if not pending
-    },
-  ];
-
-  tableHead.innerHTML = `
-    <tr>
-      ${displayColumns
-        .map(
-          (col) =>
-            `<th style="padding: 8px; border: 1px solid #ddd; background-color: #f2f2f2; text-align: left;">${col.header}</th>`
-        )
-        .join("")}
-    </tr>
-  `;
-
-  if (filteredData.length === 0) {
-    const noDataRow = document.createElement("tr");
-    const noDataCell = document.createElement("td");
-    noDataCell.colSpan = displayColumns.length;
-    noDataCell.textContent = "No data available for the selected filters.";
-    noDataCell.style.textAlign = "center";
-    noDataRow.appendChild(noDataCell);
-    tableBody.appendChild(noDataRow);
-    return;
-  }
-
-  filteredData.forEach((row) => {
-    const tr = document.createElement("tr");
-    tr.style.cssText = "hover:background-color: #f9f9f9;"; // Simple hover for non-Tailwind
-    displayColumns.forEach((col) => {
-      const td = document.createElement("td");
-      td.style.cssText = "padding: 8px; border: 1px solid #ddd;";
-
-      if (col.isButton) {
-        const button = document.createElement("button");
-        button.textContent =
-          typeof col.buttonText === "function"
-            ? col.buttonText(row[col.key])
-            : col.buttonText;
-        // Apply no special styles for buttons as requested, just basic button structure
-        button.style.cssText =
-          "background-color: #e0e0e0; border: 1px solid #bbb; padding: 5px 10px; cursor: pointer;";
-
-        // Apply initial state styling based on current value
-        if (col.buttonField === "Lab_Department") {
-          if (row[col.key] === "Pending") {
-            button.textContent = "Receive";
-            button.style.backgroundColor = ""; // Revert to default, user will style
-          } else {
-            button.textContent = "Received";
-            button.style.backgroundColor = "#cccccc"; // Gray for disabled/completed
-            button.style.cursor = "not-allowed";
-          }
-        } else if (col.buttonField === "Status") {
-          if (row[col.key] === "Pending") {
-            button.textContent = "Result";
-            button.style.backgroundColor = ""; // Revert to default, user will style
-          } else {
-            button.textContent = "Resulted";
-            button.style.backgroundColor = "#cccccc"; // Gray for disabled/completed
-            button.style.cursor = "not-allowed";
-          }
-        } else if (col.buttonField === "Urgent_Test") {
-          button.textContent = "Urgent"; // Always show 'Urgent' as button text
-          if (row[col.key] === "Urgent") {
-            button.style.backgroundColor = "red"; // Example red for Urgent
-          } else {
-            button.style.backgroundColor = "green"; // Example green for Not Urgent
-          }
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        button.disabled = col.isDisabled ? col.isDisabled(row[col.key]) : false;
+        const data = await response.json();
+        filteredData = data;
+        currentPage = 1; // Reset to first page on new data
+        renderReceptionTable();
 
-        // Add event listener for button clicks
-        button.addEventListener("click", () => {
-          handleReceiveButtonClick(
-            row.LabNo,
-            row.TestCode,
-            col.buttonField,
-            row[col.key],
-            button
-          );
-        });
-        td.appendChild(button);
-      } else {
-        td.textContent = col.format
-          ? col.format(row[col.key])
-          : row[col.key] || "N/A";
-      }
-      tr.appendChild(td);
+    } catch (error) {
+        console.error("Error fetching reception data:", error);
+        showMessageModal(`Failed to load data. Please check your network connection.`, 'error');
+    } finally {
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+    }
+}
+
+/**
+ * Renders the data to the reception table with pagination.
+ */
+function renderReceptionTable() {
+    const receptionTableBody = document.getElementById("receptionTableBody");
+    const paginationControls = document.getElementById("paginationControls");
+    receptionTableBody.innerHTML = ""; // Clear existing rows
+    paginationControls.innerHTML = ""; // Clear existing pagination
+
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginatedData = filteredData.slice(start, end);
+
+    if (paginatedData.length === 0) {
+        receptionTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No data available for the selected filters.</td></tr>';
+        return;
+    }
+
+    paginatedData.forEach(item => {
+        const row = receptionTableBody.insertRow();
+        row.insertCell().textContent = item.id;
+        row.insertCell().textContent = item.Lab_Number || 'N/A';
+        row.insertCell().textContent = item.Lab_Section || 'N/A';
+        row.insertCell().textContent = item.Time_In || 'N/A';
+
+        // Urgency Button Cell
+        const urgencyCell = row.insertCell();
+        const urgencyButton = document.createElement("button");
+        urgencyButton.textContent = item.Urgency_Status || "Not Urgent";
+        urgencyButton.className = "action-button urgency-btn";
+        urgencyButton.classList.toggle('urgent', item.Urgency_Status === "Urgent");
+        urgencyButton.disabled = item.Urgency_Status === "Urgent";
+        urgencyButton.onclick = () => handleUrgencyUpdate(item.id, urgencyButton);
+        urgencyCell.appendChild(urgencyButton);
+
+        // Receive Button Cell
+        const receiveCell = row.insertCell();
+        const receiveButton = document.createElement("button");
+        receiveButton.textContent = item.Time_Received ? "Received" : "Receive";
+        receiveButton.className = "action-button receive-btn";
+        receiveButton.disabled = !!item.Time_Received; // Disable if already received
+        receiveButton.onclick = () => handleTimestampUpdate(item.id, 'Time_Received', receiveButton);
+        receiveCell.appendChild(receiveButton);
+
+        // Result Button Cell
+        const resultCell = row.insertCell();
+        const resultButton = document.createElement("button");
+        resultButton.textContent = item.Test_Result_Time ? "Done" : "Result";
+        resultButton.className = "action-button result-btn";
+        resultButton.disabled = !!item.Test_Result_Time; // Disable if already completed
+        resultButton.onclick = () => handleTimestampUpdate(item.id, 'Test_Result_Time', resultButton);
+        resultCell.appendChild(resultButton);
     });
-    tableBody.appendChild(tr);
-  });
+
+    renderPagination(totalPages);
 }
 
 /**
- * Renders the pagination controls based on totalRecords.
- * @param {number} totalRecords - The total number of records available.
+ * Renders pagination controls.
+ * @param {number} totalPages - Total number of pages.
  */
-function renderPagination(totalRecords) {
-  const paginationContainer = document.getElementById("paginationControls");
-  if (!paginationContainer) {
-    console.error("renderPagination: Pagination container not found.");
-    return;
-  }
-  paginationContainer.innerHTML = "";
+function renderPagination(totalPages) {
+    const paginationControls = document.getElementById("paginationControls");
+    paginationControls.innerHTML = "";
+    if (totalPages <= 1) return;
 
-  const totalPages = Math.ceil(totalRecords / rowsPerPage);
-  if (totalPages <= 1) return;
+    const prevButton = document.createElement("button");
+    prevButton.textContent = "Previous";
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener("click", () => {
+        currentPage--;
+        renderReceptionTable();
+    });
+    paginationControls.appendChild(prevButton);
 
-  const prevButton = document.createElement("button");
-  prevButton.id = "prevPage";
-  prevButton.textContent = "Previous";
-  prevButton.disabled = currentPage === 1;
-  paginationContainer.appendChild(prevButton);
+    const pageInfo = document.createElement("span");
+    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    paginationControls.appendChild(pageInfo);
 
-  let startPage = Math.max(1, currentPage - 2);
-  let endPage = Math.min(totalPages, currentPage + 2);
-
-  if (endPage - startPage < 4) {
-    if (startPage === 1) {
-      endPage = Math.min(totalPages, startPage + 4);
-    } else if (endPage === totalPages) {
-      startPage = Math.max(1, totalPages - 4);
-    }
-  }
-
-  if (startPage > 1) {
-    const firstPageButton = document.createElement("button");
-    firstPageButton.textContent = "1";
-    firstPageButton.dataset.page = 1;
-    paginationContainer.appendChild(firstPageButton);
-    if (startPage > 2) {
-      const ellipsis = document.createElement("span");
-      ellipsis.textContent = "... ";
-      paginationContainer.appendChild(ellipsis);
-    }
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    const pageButton = document.createElement("button");
-    pageButton.textContent = i;
-    pageButton.dataset.page = i;
-    if (i === currentPage) {
-      pageButton.classList.add("current-page");
-    }
-    paginationContainer.appendChild(pageButton);
-  }
-
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) {
-      const ellipsis = document.createElement("span");
-      ellipsis.textContent = "... ";
-      paginationContainer.appendChild(ellipsis);
-    }
-    const lastPageButton = document.createElement("button");
-    lastPageButton.textContent = totalPages;
-    lastPageButton.dataset.page = totalPages;
-    paginationContainer.appendChild(lastPageButton);
-  }
-
-  const nextButton = document.createElement("button");
-  nextButton.id = "nextPage";
-  nextButton.textContent = "Next";
-  nextButton.disabled = currentPage === totalPages;
-  paginationContainer.appendChild(nextButton);
+    const nextButton = document.createElement("button");
+    nextButton.textContent = "Next";
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener("click", () => {
+        currentPage++;
+        renderReceptionTable();
+    });
+    paginationControls.appendChild(nextButton);
 }
 
 /**
- * Changes the current page and re-fetches data.
- * @param {number} pageNumber - The page number to navigate to.
+ * Handles the update for urgency status.
+ * @param {string} id - The unique ID of the record.
+ * @param {HTMLButtonElement} button - The button element that was clicked.
  */
-function goToPage(pageNumber) {
-  currentPage = pageNumber;
-  loadAndRenderReceiveTable();
+async function handleUrgencyUpdate(id, button) {
+    const originalText = button.textContent;
+    button.textContent = "Updating...";
+    button.disabled = true;
+
+    const token = localStorage.getItem('token');
+    const endpoint = `${API_RECEPTION_ENDPOINT}/update-urgency`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id, urgency_status: "Urgent" })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to update urgency status.');
+        }
+
+        showMessageModal("Urgency status updated successfully!", 'success');
+        button.textContent = "Urgent";
+        button.classList.add('urgent');
+    } catch (error) {
+        console.error("Error updating urgency:", error);
+        showMessageModal(`Error: ${error.message}`, 'error');
+        button.textContent = originalText;
+        button.disabled = false;
+    }
 }
 
-document.addEventListener("click", (event) => {
-  if (event.target.id === "prevPage") {
-    goToPage(currentPage - 1);
-  } else if (event.target.id === "nextPage") {
-    goToPage(currentPage + 1);
-  } else if (event.target.dataset.page) {
-    goToPage(parseInt(event.target.dataset.page, 10));
-  }
-});
+/**
+ * Handles the update for a timestamp field (Time_Received or Test_Result_Time).
+ * @param {string} id - The unique ID of the record.
+ * @param {string} fieldName - The name of the field to update ('Time_Received' or 'Test_Result_Time').
+ * @param {HTMLButtonElement} button - The button element that was clicked.
+ */
+async function handleTimestampUpdate(id, fieldName, button) {
+    const originalText = button.textContent;
+    button.textContent = "Saving...";
+    button.disabled = true;
+
+    const token = localStorage.getItem('token');
+    const endpoint = `${API_RECEPTION_ENDPOINT}/update-timestamp`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id, fieldName, timestamp: new Date().toISOString() })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to update ${fieldName}.`);
+        }
+
+        showMessageModal(`${fieldName.replace('_', ' ')} updated successfully!`, 'success');
+        // Update the button text to reflect the new state
+        if (fieldName === 'Time_Received') {
+            button.textContent = "Received";
+        } else if (fieldName === 'Test_Result_Time') {
+            button.textContent = "Done";
+        }
+    } catch (error) {
+        console.error("Error updating timestamp:", error);
+        showMessageModal(`Error: ${error.message}`, 'error');
+        button.textContent = originalText;
+        button.disabled = false;
+    }
+}

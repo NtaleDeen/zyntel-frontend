@@ -16,18 +16,34 @@ let tatHourlyLineChart = null; // Renamed for line chart
 let tatSummaryChart = null; // Global variable for tatSummaryChart
 let tatOnTimeSummaryChart = null; // Global variable for tatOnTimeSummaryChart
 
-window.addEventListener("DOMContentLoaded", () => {
-  // Set default period to 'thisMonth' and update date inputs before initCommonDashboard
-  const periodSelect = document.getElementById("periodSelect");
-  if (periodSelect) {
-    periodSelect.value = "thisMonth";
-    updateDatesForPeriod("thisMonth"); // Explicitly set dates for 'thisMonth'
-  }
 
-  // Initialize common dashboard elements, including rendering filters.
-  // The loadAndRender function will be called as a callback once filters are set up.
-  // initCommonDashboard will also set default values and trigger initial filtering.
-  initCommonDashboard(loadAndRender);
+/**
+ * Checks for a JWT token in local storage. If not found, redirects to the login page.
+ */
+function checkAuthAndRedirect() {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        // Redirect to the login page if no token is found
+        window.location.href = '/index.html';
+    }
+}
+
+
+window.addEventListener("DOMContentLoaded", () => {
+    // Add the check here as the very first action
+    checkAuthAndRedirect();
+
+    // Set default period to 'thisMonth' and update date inputs before initCommonDashboard
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth"); // Explicitly set dates for 'thisMonth'
+    }
+
+    // Initialize common dashboard elements, including rendering filters.
+    // The loadAndRender function will be called as a callback once filters are set up.
+    // initCommonDashboard will also set default values and trigger initial filtering.
+    initCommonDashboard(loadAndRender);
 });
 
 /**
@@ -35,213 +51,226 @@ window.addEventListener("DOMContentLoaded", () => {
  * This function is called initially and whenever filters change.
  */
 async function loadAndRender() {
-  console.log("[tat.js] loadAndRender called.");
-  try {
-    const response = await fetch(API_URL, {
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    // Retrieve the JWT token from local storage
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+        // This should not happen if checkAuthAndRedirect() works, but it's a good
+        // defensive check.
+        console.error("No JWT token found for API request.");
+        return;
     }
+    
+    console.log("[tat.js] loadAndRender called.");
+    try {
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                // CRUCIAL: Pass the token for authentication
+                'Authorization': `Bearer ${token}`
+            },
+        });
 
-    const dbData = await response.json();
-
-    if (!Array.isArray(dbData) || dbData.length === 0) {
-      console.warn("⚠️ API returned empty or invalid data for TAT charts.");
-      allData = [];
-      filteredData = [];
-      // Optionally, display a message to the user about no data
-      const messageBox = document.createElement("div");
-      messageBox.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 10000;
-        text-align: center;
-        font-family: sans-serif;
-      `;
-      messageBox.innerHTML = `
-        <p style="font-weight: bold;">No Data Available!</p>
-        <p>The TAT dashboard currently has no data to display based on the selected filters.</p>
-        <button onclick="this.parentNode.remove()" style="margin-top: 15px; padding: 8px 15px; background-color: #ffc107; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
-      `;
-      document.body.appendChild(messageBox);
-
-      // Clear all charts and KPIs if no data
-      updateKPI([], []); // Pass empty arrays to clear KPIs
-      renderSummaryChart([]);
-      renderOnTimeSummaryChart([]);
-      renderPieChart([]);
-      renderLineChart([]);
-      renderHourlyLineChart([]);
-      return;
-    }
-
-    allData = dbData.map((row) => {
-      const processedRow = { ...row };
-
-      // Parse 'date' field from DB (e.g., "Sun, 23 Feb 2025 00:00:00 GMT")
-      // Use parseTATDate from filters-tat.js to handle parsing as UTC.
-      processedRow.parsedDate = parseTATDate(row.date);
-
-      // Use 'daily_tat' for minutesDelayed, convert to number
-      processedRow.minutesDelayed = parseFloat(row.daily_tat) || 0;
-
-      // Map 'request_delay_status' to 'tat'
-      processedRow.tat = row.request_delay_status || "Not Uploaded";
-
-      // Standardize 'tat' status string for consistency with chart labels
-      if (processedRow.tat === "Delayed for less than 15 minutes") {
-        processedRow.tat = "Delayed <15min";
-      }
-
-      // Extract hour from 'request_time_in' for hourly charts
-      // The database provides 'request_time_in' as a GMT string. Parse it as UTC.
-      if (row.request_time_in) {
-        const timeInMomentUTC = window.moment.utc(row.request_time_in);
-        // We want the hour in EAT for hourly charts if the dashboard is EAT-centric.
-        // Convert to EAT, then get the hour.
-        processedRow.timeInHour = timeInMomentUTC.isValid() ? timeInMomentUTC.tz("Africa/Nairobi").hour() : null;
-      } else {
-        processedRow.timeInHour = null;
-      }
-      // Log for debugging hourly chart
-      // console.log(`[tat.js] Raw request_time_in: ${row.request_time_in}, Parsed timeInMoment valid: ${processedRow.timeInHour !== null}, Extracted Hour: ${processedRow.timeInHour}`);
-
-
-      // Map other fields to expected names for filters and aggregations
-      processedRow.LabSection = (row.lab_section || "").toLowerCase();
-      processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
-      processedRow.Shift = (row.shift || "").toLowerCase();
-
-      return processedRow;
-    });
-
-    console.log(`✅ Loaded ${allData.length} rows from API for TAT charts.`);
-
-    // Debugging: Log a sample processed row to verify data mapping
-    if (allData.length > 0) {
-      console.log("Sample processed row:", allData[0]);
-    }
-
-    // --- IMPORTANT: Ensure date inputs are updated BEFORE applying filters ---
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect && periodSelect.value !== "custom") {
-        updateDatesForPeriod(periodSelect.value);
-    }
-
-    // Use a small timeout to ensure DOM updates (from updateDatesForPeriod) have occurred
-    // before applyTATFilters reads the input values.
-    setTimeout(() => {
-        filteredData = applyTATFilters(allData);
-        console.log(`[tat.js] Filtered Data Length after applyTATFilters: ${filteredData.length}`);
-
-        // --- KPI Trend Calculation: Dynamically determine previous period based on current filter ---
-        let prevPeriodStartDate = null;
-        let prevPeriodEndDate = null;
-
-        if (periodSelect && periodSelect.value !== "custom") {
-            // Read the *currently displayed* filter dates, which should be correct after updateDatesForPeriod
-            // Parse these values as EAT, then convert to UTC for comparison with parsedDate
-            const currentStartDateEAT = window.moment.tz(document.getElementById("startDateFilter").value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi");
-            const currentEndDateEAT = window.moment.tz(document.getElementById("endDateFilter").value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day');
-
-
-            switch (periodSelect.value) {
-                case "thisMonth":
-                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
-                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
-                    break;
-                case "lastMonth":
-                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
-                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
-                    break;
-                case "thisQuarter":
-                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
-                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
-                    break;
-                case "lastQuarter":
-                    prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
-                    prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
-                    break;
-                default:
-                    console.warn("[tat.js] Custom period selected, previous period trend not dynamically calculated.");
-                    break;
-            }
-        } else {
-            console.warn("[tat.js] Custom date range selected, previous period data will be empty for trend comparison.");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        // Convert previous period boundaries to UTC for filtering 'allData' (which has parsedDate in UTC)
-        const prevPeriodStartDateUTC = prevPeriodStartDate ? prevPeriodStartDate.utc() : null;
-        const prevPeriodEndDateUTC = prevPeriodEndDate ? prevPeriodEndDate.utc() : null;
+        const dbData = await response.json();
 
-        console.log(`[tat.js] Previous Period Calculated (EAT): Start=${prevPeriodStartDate ? prevPeriodStartDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}, End=${prevPeriodEndDate ? prevPeriodEndDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}`);
-        console.log(`[tat.js] Previous Period Calculated (UTC for filtering): Start=${prevPeriodStartDateUTC ? prevPeriodStartDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}, End=${prevPeriodEndDateUTC ? prevPeriodEndDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
+        if (!Array.isArray(dbData) || dbData.length === 0) {
+            console.warn("⚠️ API returned empty or invalid data for TAT charts.");
+            allData = [];
+            filteredData = [];
+            // Optionally, display a message to the user about no data
+            const messageBox = document.createElement("div");
+            messageBox.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: #fff3cd;
+                color: #856404;
+                border: 1px solid #ffeeba;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                text-align: center;
+                font-family: sans-serif;
+            `;
+            messageBox.innerHTML = `
+                <p style="font-weight: bold;">No Data Available!</p>
+                <p>The TAT dashboard currently has no data to display based on the selected filters.</p>
+                <button onclick="this.parentNode.remove()" style="margin-top: 15px; padding: 8px 15px; background-color: #ffc107; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+            `;
+            document.body.appendChild(messageBox);
+
+            // Clear all charts and KPIs if no data
+            updateKPI([], []); // Pass empty arrays to clear KPIs
+            renderSummaryChart([]);
+            renderOnTimeSummaryChart([]);
+            renderPieChart([]);
+            renderLineChart([]);
+            renderHourlyLineChart([]);
+            return;
+        }
+
+        allData = dbData.map((row) => {
+            const processedRow = { ...row
+            };
+
+            // Parse 'date' field from DB (e.g., "Sun, 23 Feb 2025 00:00:00 GMT")
+            // Use parseTATDate from filters-tat.js to handle parsing as UTC.
+            processedRow.parsedDate = parseTATDate(row.date);
+
+            // Use 'daily_tat' for minutesDelayed, convert to number
+            processedRow.minutesDelayed = parseFloat(row.daily_tat) || 0;
+
+            // Map 'request_delay_status' to 'tat'
+            processedRow.tat = row.request_delay_status || "Not Uploaded";
+
+            // Standardize 'tat' status string for consistency with chart labels
+            if (processedRow.tat === "Delayed for less than 15 minutes") {
+                processedRow.tat = "Delayed <15min";
+            }
+
+            // Extract hour from 'request_time_in' for hourly charts
+            // The database provides 'request_time_in' as a GMT string. Parse it as UTC.
+            if (row.request_time_in) {
+                const timeInMomentUTC = window.moment.utc(row.request_time_in);
+                // We want the hour in EAT for hourly charts if the dashboard is EAT-centric.
+                // Convert to EAT, then get the hour.
+                processedRow.timeInHour = timeInMomentUTC.isValid() ? timeInMomentUTC.tz("Africa/Nairobi").hour() : null;
+            } else {
+                processedRow.timeInHour = null;
+            }
+            // Log for debugging hourly chart
+            // console.log(`[tat.js] Raw request_time_in: ${row.request_time_in}, Parsed timeInMoment valid: ${processedRow.timeInHour !== null}, Extracted Hour: ${processedRow.timeInHour}`);
 
 
-        const previousFilteredData = allData.filter(row => {
-            const rowDate = row.parsedDate;
-            return rowDate && rowDate.isValid() &&
-                   prevPeriodStartDateUTC && prevPeriodStartDateUTC.isValid() &&
-                   prevPeriodEndDateUTC && prevPeriodEndDateUTC.isValid() &&
-                   rowDate.isBetween(prevPeriodStartDateUTC, prevPeriodEndDateUTC, "millisecond", "[]"); // Use millisecond for precise range
+            // Map other fields to expected names for filters and aggregations
+            processedRow.LabSection = (row.lab_section || "").toLowerCase();
+            processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+            processedRow.Shift = (row.shift || "").toLowerCase();
+
+            return processedRow;
         });
-        console.log(`[tat.js] Previous Period Filtered Data Length: ${previousFilteredData.length}`);
+
+        console.log(`✅ Loaded ${allData.length} rows from API for TAT charts.`);
+
+        // Debugging: Log a sample processed row to verify data mapping
+        if (allData.length > 0) {
+            console.log("Sample processed row:", allData[0]);
+        }
+
+        // --- IMPORTANT: Ensure date inputs are updated BEFORE applying filters ---
+        const periodSelect = document.getElementById("periodSelect");
+        if (periodSelect && periodSelect.value !== "custom") {
+            updateDatesForPeriod(periodSelect.value);
+        }
+
+        // Use a small timeout to ensure DOM updates (from updateDatesForPeriod) have occurred
+        // before applyTATFilters reads the input values.
+        setTimeout(() => {
+            filteredData = applyTATFilters(allData);
+            console.log(`[tat.js] Filtered Data Length after applyTATFilters: ${filteredData.length}`);
+
+            // --- KPI Trend Calculation: Dynamically determine previous period based on current filter ---
+            let prevPeriodStartDate = null;
+            let prevPeriodEndDate = null;
+
+            if (periodSelect && periodSelect.value !== "custom") {
+                // Read the *currently displayed* filter dates, which should be correct after updateDatesForPeriod
+                // Parse these values as EAT, then convert to UTC for comparison with parsedDate
+                const currentStartDateEAT = window.moment.tz(document.getElementById("startDateFilter").value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi");
+                const currentEndDateEAT = window.moment.tz(document.getElementById("endDateFilter").value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day');
 
 
-        // Update KPIs and render all charts with the currently filtered data
-        updateKPI(filteredData, previousFilteredData);
-        renderSummaryChart(filteredData);
-        renderOnTimeSummaryChart(filteredData);
-        renderPieChart(filteredData);
-        renderLineChart(filteredData);
-        renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
-    }, 50); // Small delay to allow DOM to update
-  } catch (err) {
-    console.error("Data load failed:", err);
-    // Using a custom message box instead of alert() for better UX
-    const messageBox = document.createElement("div");
-    messageBox.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        z-index: 10000;
-        text-align: center;
-        font-family: sans-serif;
-    `;
-    messageBox.innerHTML = `
-        <p style="font-weight: bold;">Error Loading Data!</p>
-        <p>Failed to load TAT data from the API. Please check the network connection or API endpoint.</p>
-        <button onclick="this.parentNode.remove()" style="margin-top: 15px; padding: 8px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
-    `;
-    document.body.appendChild(messageBox);
+                switch (periodSelect.value) {
+                    case "thisMonth":
+                        prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
+                        prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
+                        break;
+                    case "lastMonth":
+                        prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'month').startOf('month').hour(8);
+                        prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'month').endOf('month').hour(7).minute(59).second(59).add(1, 'day');
+                        break;
+                    case "thisQuarter":
+                        prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
+                        prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
+                        break;
+                    case "lastQuarter":
+                        prevPeriodStartDate = currentStartDateEAT.clone().subtract(1, 'quarter').startOf('quarter').hour(8);
+                        prevPeriodEndDate = currentEndDateEAT.clone().subtract(1, 'quarter').endOf('quarter').hour(7).minute(59).second(59).add(1, 'day');
+                        break;
+                    default:
+                        console.warn("[tat.js] Custom period selected, previous period trend not dynamically calculated.");
+                        break;
+                }
+            } else {
+                console.warn("[tat.js] Custom date range selected, previous period data will be empty for trend comparison.");
+            }
 
-    // Clear all charts and KPIs on error
-    updateKPI([], []); // Pass empty arrays to clear KPIs
-    renderSummaryChart([]);
-    renderOnTimeSummaryChart([]);
-    renderPieChart([]);
-    renderLineChart([]);
-    renderHourlyLineChart([]);
-  }
+            // Convert previous period boundaries to UTC for filtering 'allData' (which has parsedDate in UTC)
+            const prevPeriodStartDateUTC = prevPeriodStartDate ? prevPeriodStartDate.utc() : null;
+            const prevPeriodEndDateUTC = prevPeriodEndDate ? prevPeriodEndDate.utc() : null;
+
+            console.log(`[tat.js] Previous Period Calculated (EAT): Start=${prevPeriodStartDate ? prevPeriodStartDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}, End=${prevPeriodEndDate ? prevPeriodEndDate.format('YYYY-MM-DD HH:mm:ss [EAT]') : 'N/A'}`);
+            console.log(`[tat.js] Previous Period Calculated (UTC for filtering): Start=${prevPeriodStartDateUTC ? prevPeriodStartDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}, End=${prevPeriodEndDateUTC ? prevPeriodEndDateUTC.format('YYYY-MM-DD HH:mm:ss [UTC]') : 'N/A'}`);
+
+
+            const previousFilteredData = allData.filter(row => {
+                const rowDate = row.parsedDate;
+                return rowDate && rowDate.isValid() &&
+                    prevPeriodStartDateUTC && prevPeriodStartDateUTC.isValid() &&
+                    prevPeriodEndDateUTC && prevPeriodEndDateUTC.isValid() &&
+                    rowDate.isBetween(prevPeriodStartDateUTC, prevPeriodEndDateUTC, "millisecond", "[]"); // Use millisecond for precise range
+            });
+            console.log(`[tat.js] Previous Period Filtered Data Length: ${previousFilteredData.length}`);
+
+
+            // Update KPIs and render all charts with the currently filtered data
+            updateKPI(filteredData, previousFilteredData);
+            renderSummaryChart(filteredData);
+            renderOnTimeSummaryChart(filteredData);
+            renderPieChart(filteredData);
+            renderLineChart(filteredData);
+            renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+        }, 50); // Small delay to allow DOM to update
+    } catch (err) {
+        console.error("Data load failed:", err);
+        // Using a custom message box instead of alert() for better UX
+        const messageBox = document.createElement("div");
+        messageBox.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            text-align: center;
+            font-family: sans-serif;
+        `;
+        messageBox.innerHTML = `
+            <p style="font-weight: bold;">Error Loading Data!</p>
+            <p>Failed to load TAT data from the API. Please check the network connection or API endpoint.</p>
+            <button onclick="this.parentNode.remove()" style="margin-top: 15px; padding: 8px 15px; background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+        `;
+        document.body.appendChild(messageBox);
+
+        // Clear all charts and KPIs on error
+        updateKPI([], []); // Pass empty arrays to clear KPIs
+        renderSummaryChart([]);
+        renderOnTimeSummaryChart([]);
+        renderPieChart([]);
+        renderLineChart([]);
+        renderHourlyLineChart([]);
+    }
 }
 
 /**
