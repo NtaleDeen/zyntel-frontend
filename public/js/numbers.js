@@ -11,7 +11,7 @@ let hourlyNumbersLineChart = null;
 let allData = [];
 let filteredData = [];
 // Changed: Use the same API endpoint as tat.js
-const API_URL = "https://zyntel-data-updater.onrender.com/api/performance-data";
+const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
 // Add this function at the top, before the event listener
 function checkAuthAndRedirect() {

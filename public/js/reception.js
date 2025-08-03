@@ -8,7 +8,7 @@ let currentPage = 1; // Current page for pagination
 const rowsPerPage = 25; // Number of rows to display per page
 
 // IMPORTANT: REPLACE WITH YOUR ACTUAL RENDER SERVICE URL for the backend API
-const API_RECEPTION_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/reception-data";
+const API_RECEPTION_ENDPOINT = "https://zyntel-data-updater.onrender.com/api/reception";
 
 window.addEventListener("DOMContentLoaded", () => {
     // Check for authentication and redirect if not logged in

@@ -1,7 +1,7 @@
 // tracker.js - Logic for the Tracker Page Table
 
 // This is the API endpoint for fetching all lab test transactional data
-const API_URL = "https://zyntel-data-updater.onrender.com/api/lab-tests";
+const API_URL = "https://zyntel-data-updater.onrender.com/api/tracker";
 
 let allData = []; // Holds all fetched data
 let currentPage = 1; // Current page for pagination

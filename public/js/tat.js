@@ -9,7 +9,7 @@ import {
 // Global chart instances to ensure they can be destroyed and recreated
 let allData = [];
 let filteredData = [];
-const API_URL = "https://zyntel-data-updater.onrender.com/api/performance-data"; // Changed: New API endpoint for TAT data
+const API_URL = "https://zyntel-data-updater.onrender.com/api/performance"; // Changed: New API endpoint for TAT data
 let tatPieChart = null;
 let tatLineChart = null;
 let tatHourlyLineChart = null; // Renamed for line chart

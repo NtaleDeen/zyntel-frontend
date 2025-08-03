@@ -83,7 +83,7 @@ async function loadDatabaseData() {
     }
 
     try {
-        const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue-data", {
+        const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
