@@ -2,7 +2,7 @@
 
 // Add this function at the top
 function checkAuthAndRole() {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         // Redirect to the login page if no token is found
         window.location.href = '/index.html';
@@ -60,8 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Use the consistent 'jwtToken' key
-        const token = localStorage.getItem('jwtToken');
+        // Use the consistent 'token' key
+        const token = localStorage.getItem('token');
 
         try {
             const response = await fetch(`${BACKEND_URL}/admin/clients`, {

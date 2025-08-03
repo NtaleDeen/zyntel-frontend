@@ -62,7 +62,7 @@ function capitalizeWords(str) {
  * Checks for a JWT token in local storage. If not found, redirects to the login page.
  */
 function checkAuthAndRedirect() {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         // Redirect to the login page if no token is found
         window.location.href = '/index.html';
@@ -75,7 +75,7 @@ function checkAuthAndRedirect() {
  */
 async function loadDatabaseData() {
     // Check for token before making the API call
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         console.error("No JWT token found. Aborting data load.");
         // We've already redirected, but this prevents the fetch call.

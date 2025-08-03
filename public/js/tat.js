@@ -21,7 +21,7 @@ let tatOnTimeSummaryChart = null; // Global variable for tatOnTimeSummaryChart
  * Checks for a JWT token in local storage. If not found, redirects to the login page.
  */
 function checkAuthAndRedirect() {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         // Redirect to the login page if no token is found
         window.location.href = '/index.html';
@@ -52,7 +52,7 @@ window.addEventListener("DOMContentLoaded", () => {
  */
 async function loadAndRender() {
     // Retrieve the JWT token from local storage
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         // This should not happen if checkAuthAndRedirect() works, but it's a good
         // defensive check.

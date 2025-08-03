@@ -4,7 +4,7 @@
 
 // Function to handle logout
 function logout() {
-    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('token');
     console.log("Token removed. Redirecting to login.");
     // Make sure your login page path is correct
     window.location.href = '/index.html'; 
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
 
     // --- Single, comprehensive authentication and token check ---
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     let userPayload = null;
 
     if (!token) {

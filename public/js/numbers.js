@@ -15,7 +15,7 @@ const API_URL = "https://zyntel-data-updater.onrender.com/api/performance-data";
 
 // Add this function at the top, before the event listener
 function checkAuthAndRedirect() {
-    const token = localStorage.getItem('jwtToken');
+    const token = localStorage.getItem('token');
     if (!token) {
         // Redirect to the login page if no token is found
         window.location.href = '/index.html';
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Load data from database API
 async function loadData() {
   // In the `loadData` function, you will need to add the JWT token to the fetch request headers
-  const token = localStorage.getItem('jwtToken');
+  const token = localStorage.getItem('token');
   if (!token) {
       // This case is already handled by checkAuthAndRedirect(), but this is a good
       // defensive measure to prevent an unauthenticated request.
