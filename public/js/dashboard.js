@@ -7,7 +7,7 @@ function logout() {
     localStorage.removeItem('token');
     console.log("Token removed. Redirecting to login.");
     // Make sure your login page path is correct
-    window.location.href = '/'; 
+    window.location.href = '/html/index.html'; 
 }
 
 document.addEventListener('DOMContentLoaded', () => {
