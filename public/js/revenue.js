@@ -146,7 +146,7 @@ async function loadDatabaseData() {
             }
 
             // Initial filtering and data processing
-            filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "unitSelect");
+            filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter"); // Changed from "unitSelect"
             processData();
         }
     } catch (err) {
@@ -187,7 +187,7 @@ async function loadDatabaseData() {
 // Function to process data after filtering (replaces the old inline logic)
 function processData() {
     // Re-filter the data just in case a filter was changed after initial load
-    filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "unitSelect");
+    filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter"); // Changed from "unitSelect"
 
     // Clear previous aggregations
     aggregatedRevenueByDate = {};

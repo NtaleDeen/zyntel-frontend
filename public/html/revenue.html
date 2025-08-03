@@ -46,18 +46,38 @@
         </div>
         <div class="filter-group">
           <label for="periodSelect">Period:</label>
-          <select id="periodSelect"></select>
+          <select id="periodSelect">
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisQuarter">This Quarter</option>
+            <option value="lastQuarter">Last Quarter</option>
+          </select>
         </div>
         <div class="filter-group">
           <label for="labSectionFilter">Lab Section:</label>
           <select id="labSectionFilter">
-            <option value="all">All Sections</option>
+            <option value="all">All</option>
+            <option value="chemistry">Chemistry</option>
+            <option value="heamatology">Heamatology</option>
+            <option value="microbiology">Microbiology</option>
+            <option value="serology">Serology</option>
+            <option value="referral">Referral</option>
           </select>
         </div>
         <div class="filter-group">
           <label for="shiftFilter">Shift:</label>
           <select id="shiftFilter">
-            <option value="all">All Shifts</option>
+            <option value="all">All</option>
+            <option value="day shift">Day Shift</option>
+            <option value="night shift">Night Shift</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="hospitalUnitFilter">Laboratory:</label>
+          <select id="hospitalUnitFilter">
+            <option value="all">All</option>
+            <option value="mainLab">Main Laboratory</option>
+            <option value="annex">Annex</option>
           </select>
         </div>
       </div>
