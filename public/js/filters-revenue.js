@@ -166,10 +166,8 @@ export function populateShiftFilter(allData) {
 }
 
 export function populateHospitalUnitFilter(allData) {
-    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter"); // Corrected ID
-    const unitSelect = document.getElementById("unitSelect"); // The existing unitSelect for charts
-
-    if (!hospitalUnitFilter || !unitSelect || !allData) return;
+    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
+    if (!hospitalUnitFilter || !allData) return;
 
     // Clear existing options for hospitalUnitFilter
     hospitalUnitFilter.innerHTML = `
@@ -178,15 +176,7 @@ export function populateHospitalUnitFilter(allData) {
         <option value="annex">Annex</option>
     `;
 
-    // Populate the existing unitSelect for charts dynamically as well
-    unitSelect.innerHTML = `<option value="all">All Units</option>`;
-    const units = [...new Set(allData.map(row => row.Hospital_Unit).filter(Boolean))].sort();
-    units.forEach(unit => {
-        const option = document.createElement("option");
-        option.value = unit;
-        option.textContent = unit;
-        unitSelect.appendChild(option);
-    });
+    // No need to populate unitSelect here. It's handled by populateChartUnitSelect in revenue.js
 }
 
 

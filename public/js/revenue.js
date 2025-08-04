@@ -209,24 +209,22 @@ async function loadDatabaseData() {
 
 // Function to process data after filtering (replaces the old inline logic)
 function processData() {
-    // Re-filter the data just in case a filter was changed after initial load
     filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
 
     // Clear previous aggregations
     aggregatedRevenueByDate = {};
     aggregatedRevenueBySection = {};
     aggregatedRevenueByUnit = {};
-    aggregatedTestCountByUnit = {}; // Reset this to ensure clean aggregation
+    aggregatedTestCountByUnit = {};
     aggregatedRevenueByTest = {};
     aggregatedCountByTest = {};
 
-    // Check if filteredData is not empty
+    // If filteredData is empty, update KPIs and render empty charts
     if (!filteredData || filteredData.length === 0) {
-        console.warn("No data after filtering. Not processing charts.");
-        updateTotalRevenue(); // Update KPIs with zeros/N/A
-        updateKPIs(); // Update KPIs with zeros/N/A
-        // Destroy existing charts and re-render empty ones
-        renderAllCharts();
+        console.warn("No data after filtering. Updating KPIs and rendering empty charts.");
+        updateTotalRevenue();
+        updateKPIs();
+        renderAllCharts(); // Call renderAllCharts to destroy existing and ensure empty display
         return;
     }
 
@@ -258,7 +256,7 @@ function processData() {
 
     updateTotalRevenue();
     updateKPIs();
-    renderAllCharts();
+    renderAllCharts(); // Now this will be called only if there's data to render
 }
 
 // Function to populate the 'unitSelect' dropdown for the charts
@@ -607,28 +605,35 @@ function updateKPIs() {
 // Function to render all charts
 function renderAllCharts() {
     // Destroy existing charts to prevent memory leaks and rendering issues
-    if (revenueBarChart) revenueBarChart.destroy();
-    if (revenueChart) revenueChart.destroy();
-    if (sectionRevenueChart) sectionRevenueChart.destroy();
-    if (hospitalUnitRevenueChart) hospitalUnitRevenueChart.destroy();
-    if (topTestsChart) topTestsChart.destroy();
-    if (testRevenueChart) testRevenueChart.destroy();
-    if (testCountChart) testCountChart.destroy();
+    if (revenueBarChart) { revenueBarChart.destroy(); revenueBarChart = null; }
+    if (revenueChart) { revenueChart.destroy(); revenueChart = null; }
+    if (sectionRevenueChart) { sectionRevenueChart.destroy(); sectionRevenueChart = null; }
+    if (hospitalUnitRevenueChart) { hospitalUnitRevenueChart.destroy(); hospitalUnitRevenueChart = null; }
+    if (topTestsChart) { topTestsChart.destroy(); topTestsChart = null; }
+    if (testRevenueChart) { testRevenueChart.destroy(); testRevenueChart = null; }
+    if (testCountChart) { testCountChart.destroy(); testCountChart = null; }
+
+    // If no data, update KPIs and return early
+    if (!filteredData || filteredData.length === 0) {
+        console.warn("No filtered data available to render charts.");
+        updateTotalRevenue(); // This will show 0 or N/A
+        updateKPIs(); // This will show 0 or N/A
+        return; // Exit without trying to render charts
+    }
 
     // Now, render the charts with the new aggregated data
-    // Call updateTotalRevenue and updateKPIs again to ensure charts are drawn after destroy
     updateTotalRevenue();
-    updateKPIs(); // Ensure KPIs are updated with potentially new filtered data
+    updateKPIs();
 
-    renderChart(); // Daily Revenue Chart (formerly renderRevenueOverTimeChart)
-    renderSectionRevenueChart(); // Revenue by Lab Section Chart (Doughnut)
-    renderHospitalUnitRevenueChart(); // Revenue by Hospital Unit Chart (Area)
+    renderChart();
+    renderSectionRevenueChart();
+    renderHospitalUnitRevenueChart();
 
     const selectedUnit = document.getElementById("unitSelect")?.value;
-    renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit); // Top Tests chart for the selected unit, default to ICU if "All Units"
+    renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit);
 
-    renderTestRevenueChart(); // Revenue by Test Chart
-    renderTestCountChart(); // Test Volume Chart
+    renderTestRevenueChart();
+    renderTestCountChart();
 }
 
 
