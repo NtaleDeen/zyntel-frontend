@@ -37,22 +37,21 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
     const period = document.getElementById(periodSelectId)?.value;
     const labSection = document.getElementById(labSectionFilterId)?.value;
     const shift = document.getElementById(shiftFilterId)?.value;
-    const hospitalUnit = document.getElementById(hospitalUnitFilterId)?.value; // Corrected ID
+    const hospitalUnit = document.getElementById(hospitalUnitFilterId)?.value;
     let filteredData = [...allData];
 
-    // Filter by date range
+    // Filter by date range (keep as is, assuming parsedEncounterDate is correctly set in revenue.js)
     if (startDateStr && endDateStr) {
         const startDate = moment.utc(startDateStr).startOf('day');
         const endDate = moment.utc(endDateStr).endOf('day');
 
         filteredData = filteredData.filter(row => {
             if (!row.parsedEncounterDate) return false;
-            // Ensure the date is within the selected range (inclusive)
             return row.parsedEncounterDate.isBetween(startDate, endDate, null, '[]');
         });
     }
 
-    // Filter by period (this will already be handled by the date inputs, but this is a good fallback)
+    // Filter by period (keep as is)
     if (period) {
         const now = moment.utc();
         let startDate, endDate;
@@ -79,10 +78,9 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
                 break;
             case "lastYear":
                 startDate = now.clone().subtract(1, "year").startOf("year");
-                endDate = now.clone().subtract(1, "year").endOf("year");
+                endDate = now.clone().endOf("year");
                 break;
             default:
-                // Custom dates or no period selected
                 break;
         }
 
@@ -94,33 +92,36 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
         }
     }
 
-    // Filter by lab section
+    // Filter by lab section - Convert to uppercase for consistent comparison
     if (labSection && labSection !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.LabSection === labSection
+            row.LabSection.toUpperCase() === labSection.toUpperCase()
         );
     }
 
-    // Filter by shift
+    // Filter by shift - Convert to uppercase for consistent comparison
     if (shift && shift !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.Shift === shift
+            row.Shift.toUpperCase() === shift.toUpperCase()
         );
     }
 
-    // Filter by hospital unit (using the correct ID)
+    // Filter by hospital unit - Convert to uppercase for consistent comparison
     if (hospitalUnit && hospitalUnit !== 'all') {
-        if (hospitalUnit === "mainLab") {
+        const rowUnit = row.Hospital_Unit ? row.Hospital_Unit.toUpperCase() : '';
+        const filterUnit = hospitalUnit.toUpperCase();
+
+        if (filterUnit === "MAINLAB") {
             filteredData = filteredData.filter(row =>
-                mainLaboratoryUnits.includes(row.Hospital_Unit)
+                mainLaboratoryUnits.map(u => u.toUpperCase()).includes(rowUnit)
             );
-        } else if (hospitalUnit === "annex") {
+        } else if (filterUnit === "ANNEX") {
             filteredData = filteredData.filter(row =>
-                annexUnits.includes(row.Hospital_Unit)
+                annexUnits.map(u => u.toUpperCase()).includes(rowUnit)
             );
         } else {
             filteredData = filteredData.filter(row =>
-                row.Hospital_Unit === hospitalUnit
+                rowUnit === filterUnit
             );
         }
     }
