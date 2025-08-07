@@ -54,18 +54,9 @@ body {
     width: 90%;
     max-width: 400px;
     box-shadow: 0 0 20px var(--glow-color, #00f0ffb3); /* Use variable for color */
-    border: 1px solid #00f0ff4d;
+    border: 1px solid #00eeff20;
     margin-bottom: 50px;
-
-    /* New: Smooth transition for box-shadow (including its color) */
-    transition: box-shadow 1s ease-in-out; /* Adjust time for desired smoothness */
-    /* Removed animation: glowPulse */
 }
-
-/* Your original .logo-container (commented out) */
-/* .logo-container {
-    margin-bottom: 20px;
-} */
 
 /* Your existing #pulsingIcon styles */
 #pulsingIcon {
@@ -97,16 +88,37 @@ p {
     margin-bottom: 15px;
 }
 
+.input-group:hover {
+    border: 1px solid rgb(37, 239, 44);
+    border-radius: 5px;
+}
+
 /* Your existing input styles */
 input[type="text"], input[type="password"] {
     width: calc(100% - 20px);
     padding: 10px;
-    border: 1px solid #4CAF50;
+    border: 1px solid #4caf4f4d;
     border-radius: 5px;
     background: rgba(255, 255, 255, 0.1);
     color: white;
     font-size: 16px;
     outline: none;
+}
+
+
+/* Position eye icon inside password field */
+.password-group {
+    position: relative;
+    width: 100%;
+}
+
+.password-group i {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
 }
 
 /* Your existing input placeholder styles */
@@ -130,7 +142,7 @@ button {
     border-radius: 5px;
     font-size: 18px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
     margin-bottom: 15px;
 }
 
@@ -142,7 +154,9 @@ button {
 }
 
 .login-button:hover {
-    background-color: rgba(76, 175, 80, 0.2);
+    background: none;
+    border: 1px solid rgb(37, 239, 44);
+    border-radius: 5px;
 }
 
 .login-button:active {
@@ -150,16 +164,22 @@ button {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
-
-/* Your existing .buy-package-button styles */
-.buy-package-button {
+/* Your existing .visit-website-button styles */
+.visit-website-button {
     background: none;
-    border: 1px solid #4CAF50;
-    color: #4CAF50;
+    border: 1px solid #036e06;
+    color: white;
 }
 
-.buy-package-button:hover {
-    background-color: rgba(76, 175, 80, 0.2);
+.visit-website-button:hover {
+    border: 1px solid rgb(37, 239, 44);
+    border-radius: 5px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.visit-website-button:active {
+    transform: scale(0.96);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .help-info {

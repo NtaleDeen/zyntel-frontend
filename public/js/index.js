@@ -1,5 +1,18 @@
 // frontend/js/index.js
 
+// Enforce session-bound user consistency
+document.addEventListener('DOMContentLoaded', () => {
+    const session = JSON.parse(sessionStorage.getItem('session'));
+    const lastUser = localStorage.getItem('zyntelUser');
+
+    if (session && lastUser && session.username !== lastUser) {
+        // Another user logged in in a different tab or after browser relaunch
+        sessionStorage.clear();
+        localStorage.removeItem('zyntelUser');
+        window.location.href = '/index.html'; // Redirect to login
+    }
+});
+
 // --- Pulsing Icon Animation Logic ---
 const icon = document.getElementById('pulsingIcon');
 const loginBox = document.querySelector('.login-box');
@@ -42,11 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
     messageDiv.style.color = 'red'; // Default to red for errors
     loginForm.appendChild(messageDiv);
 
-document.getElementById("togglePassword").addEventListener("click", function () {
-    const password = document.getElementById("password");
-    const type = password.type === "password" ? "text" : "password";
-    password.type = type;
-    this.classList.toggle("fa-eye-slash");
+document.getElementById('togglePassword').addEventListener('click', function () {
+    const passwordField = document.getElementById('password');
+    const type = passwordField.type === 'password' ? 'text' : 'password';
+    passwordField.type = type;
+
+    // Toggle the icon
+    this.classList.toggle('fa-eye');
+    this.classList.toggle('fa-eye-slash');
 });
 
     // IMPORTANT: Replace with your actual Render backend URL
