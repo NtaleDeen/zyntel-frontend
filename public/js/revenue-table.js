@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Session invalid or belongs to another user
         sessionStorage.clear();
         localStorage.removeItem('zyntelUser');
-        window.location.href = '/html/index.html'; // Redirect to login
+        window.location.href = '/index.html'; // Redirect to login
     }
 });
 
@@ -19,7 +19,7 @@ import { checkAuthAndRedirect } from "./revenue.js"; // Re-use auth check
     const storedUser = localStorage.getItem('zyntelUser');
 
     if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/html/index.html'; // force re-login
+        window.location.href = '/index.html'; // force re-login
     }
 })();
 
