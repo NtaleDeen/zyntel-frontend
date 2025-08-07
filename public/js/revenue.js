@@ -1,6 +1,39 @@
 // revenue.js - Refactored to use shared filters-revenue.js
 // This file is the main logic for the revenue dashboard.
 
+// Check session validity and user match
+document.addEventListener('DOMContentLoaded', () => {
+    const session = JSON.parse(sessionStorage.getItem('session'));
+    const currentUser = localStorage.getItem('zyntelUser');
+
+    if (!session || !session.token || session.username !== currentUser) {
+        // Session invalid or belongs to another user
+        sessionStorage.clear();
+        localStorage.removeItem('zyntelUser');
+        window.location.href = '/html/index.html'; // Redirect to login
+    }
+});
+
+// Check token session and user validity
+(function checkSession() {
+    const session = JSON.parse(sessionStorage.getItem('session'));
+    const storedUser = localStorage.getItem('zyntelUser');
+
+    if (!session || !session.token || session.username !== storedUser) {
+        window.location.href = '/html/index.html'; // force re-login
+    }
+})();
+
+// Check token session and user validity
+(function checkSession() {
+    const session = JSON.parse(sessionStorage.getItem('session'));
+    const storedUser = localStorage.getItem('zyntelUser');
+
+    if (!session || !session.token || session.username !== storedUser) {
+        window.location.href = '/html/index.html'; // force re-login
+    }
+})();
+
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
 

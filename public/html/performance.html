@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Reception Data</title>
+    <title>Zyntel TAT Data Table</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -71,42 +71,41 @@
 <body class="min-h-screen flex flex-col">
     <header class="bg-blue-700 text-white p-4 shadow-md">
         <div class="header-container flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Zyntel Reception Data</h1>
+            <h1 class="text-2xl font-bold">Zyntel TAT Data</h1>
             <nav>
-                <a href="revenue.html" class="text-white hover:text-blue-200 mx-2">Revenue</a>
-                <a href="tat.html" class="text-white hover:text-blue-200 mx-2">TAT</a>
-                <a href="progress.html" class="text-white hover:text-blue-200 mx-2">Progress</a>
-                <a href="reception.html" class="text-white hover:text-blue-200 mx-2">Reception</a>
-                <a href="tracker.html" class="text-white hover:text-blue-200 mx-2">Tracker</a>
+                <button onclick="window.location.href='tat.html'" class="btn-back">Back to TAT Dashboard</button>
             </nav>
         </div>
     </header>
 
     <main class="flex-grow container py-8">
         <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Test Reception</h2>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Raw TAT Data</h2>
             <div class="card">
                 <div class="table-container">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Date</th>
                                 <th>Shift</th>
                                 <th>Lab Number</th>
                                 <th>Unit</th>
-                                <th>Lab Section</th>
-                                <th>Test Name</th>
+                                <th>Request Time In</th>
+                                <th>Daily TAT</th>
+                                <th>Request Time Expected</th>
+                                <th>Request Time Out</th>
+                                <th>Delay Status</th>
+                                <th>Time Range</th>
                             </tr>
                         </thead>
-                        <tbody id="receptionTableBody">
+                        <tbody id="tatTableBody">
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-gray-500">Loading data...</td>
+                                <td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div id="receptionTableMessage" class="message-box hidden"></div>
+                <div id="tatTableMessage" class="message-box hidden"></div>
             </div>
         </section>
     </main>
@@ -117,6 +116,6 @@
         </div>
     </footer>
 
-    <script type="module" src="../js/reception.js"></script>
+    <script type="module" src="../js/tat_table.js"></script>
 </body>
 </html>

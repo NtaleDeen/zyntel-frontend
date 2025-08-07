@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Reception Data</title>
+    <title>Zyntel Tracker Data</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
 <body class="min-h-screen flex flex-col">
     <header class="bg-blue-700 text-white p-4 shadow-md">
         <div class="header-container flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Zyntel Reception Data</h1>
+            <h1 class="text-2xl font-bold">Zyntel Tracker Data</h1>
             <nav>
                 <a href="revenue.html" class="text-white hover:text-blue-200 mx-2">Revenue</a>
                 <a href="tat.html" class="text-white hover:text-blue-200 mx-2">TAT</a>
@@ -84,7 +84,7 @@
 
     <main class="flex-grow container py-8">
         <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Test Reception</h2>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Test Tracker</h2>
             <div class="card">
                 <div class="table-container">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -97,16 +97,25 @@
                                 <th>Unit</th>
                                 <th>Lab Section</th>
                                 <th>Test Name</th>
+                                <th>Test Time In</th>
+                                <th>Urgency</th>
+                                <th>Time Received</th>
+                                <th>TAT</th>
+                                <th>Test Time Expected</th>
+                                <th>Test Progress</th>
+                                <th>Test Time Out</th>
+                                <th>Test Delay Status</th>
+                                <th>Test Time Range</th>
                             </tr>
                         </thead>
-                        <tbody id="receptionTableBody">
+                        <tbody id="trackerTableBody">
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-gray-500">Loading data...</td>
+                                <td colspan="16" class="text-center py-4 text-gray-500">Loading data...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                <div id="receptionTableMessage" class="message-box hidden"></div>
+                <div id="trackerTableMessage" class="message-box hidden"></div>
             </div>
         </section>
     </main>
@@ -117,6 +126,6 @@
         </div>
     </footer>
 
-    <script type="module" src="../js/reception.js"></script>
+    <script type="module" src="../js/tracker.js"></script>
 </body>
 </html>

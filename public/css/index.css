@@ -138,11 +138,18 @@ button {
 .login-button {
     background-color: #4CAF50;
     color: white;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .login-button:hover {
     background-color: rgba(76, 175, 80, 0.2);
 }
+
+.login-button:active {
+    transform: scale(0.96);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
 
 /* Your existing .buy-package-button styles */
 .buy-package-button {

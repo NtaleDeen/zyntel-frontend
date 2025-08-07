@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyntel Manager User Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .input-field {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #2563eb; /* blue-600 */
+        }
+        .btn-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* green-100 */
+            color: #065f46; /* green-800 */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-800 */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-blue-700 text-white p-4 shadow-md">
+        <div class="container flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Zyntel User Management</h1>
+            <nav>
+                <a href="developer_ui.html" class="text-white hover:text-blue-200 mx-2">Clients (Developer UI)</a>
+                <a href="manager_ui.html" class="text-white hover:text-blue-200 mx-2">Users</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container py-8">
+        <section>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Add New User for Client ID: <span id="clientIdDisplay">Loading...</span></h2>
+            <div class="card">
+                <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Username:</label>
+                        <input type="text" id="username" name="username" class="input-field" placeholder="e.g., john.doe" required>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-gray-700 text-sm font-medium mb-2">Password:</label>
+                        <input type="password" id="password" name="password" class="input-field" required>
+                    </div>
+                    <div class="md:col-span-2"> <!-- Role field now spans two columns for better layout -->
+                        <label for="role" class="block text-gray-700 text-sm font-medium mb-2">Role:</label>
+                        <select id="role" name="role" class="input-field" required>
+                            <option value="technician">Technician</option>
+                            <option value="viewer">Viewer</option>
+                            <!-- Managers should not add other managers directly from this UI -->
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-primary">Add User</button>
+                    </div>
+                </form>
+                <div id="addUserMessage" class="message-box hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <div class="container">
+            &copy; 2025 Zyntel Data Agent. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="manager_ui.js"></script>
+</body>
+</html>

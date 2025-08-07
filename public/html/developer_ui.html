@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zyntel Developer Client Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .input-field {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #2563eb; /* blue-600 */
+        }
+        .btn-primary {
+            background-color: #2563eb; /* blue-600 */
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 600;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8; /* blue-700 */
+        }
+        .message-box {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+        .message-box.success {
+            background-color: #d1fae5; /* green-100 */
+            color: #065f46; /* green-800 */
+        }
+        .message-box.error {
+            background-color: #fee2e2; /* red-100 */
+            color: #991b1b; /* red-800 */
+        }
+        .table-header th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            background-color: #e5e7eb; /* gray-200 */
+            border-bottom: 2px solid #d1d5db;
+        }
+        .table-row td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .table-row:nth-child(even) {
+            background-color: #f9fafb; /* gray-50 */
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-blue-700 text-white p-4 shadow-md">
+        <div class="container flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Zyntel Client Management</h1>
+            <nav>
+                <a href="developer_ui.html" class="text-white hover:text-blue-200 mx-2">Clients</a>
+                <a href="manager_ui.html" class="text-white hover:text-blue-200 mx-2">Users (Manager UI)</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container py-8">
+        <section class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Add New Client</h2>
+            <div class="card">
+                <form id="addClientForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="clientName" class="block text-gray-700 text-sm font-medium mb-2">Client Name:</label>
+                        <input type="text" id="clientName" name="name" class="input-field" placeholder="e.g., Nakasero Hospital" required>
+                    </div>
+                    <div>
+                        <label for="clientIdentifier" class="block text-gray-700 text-sm font-medium mb-2">Identifier (Unique):</label>
+                        <input type="text" id="clientIdentifier" name="identifier" class="input-field" placeholder="e.g., nakasero" required>
+                    </div>
+                    <div>
+                        <label for="contactEmail" class="block text-gray-700 text-sm font-medium mb-2">Contact Email:</label>
+                        <input type="email" id="contactEmail" name="contact_email" class="input-field" placeholder="e.g., contact@nakasero.com">
+                    </div>
+                    <div>
+                        <label for="subscriptionTier" class="block text-gray-700 text-sm font-medium mb-2">Subscription Tier:</label>
+                        <select id="subscriptionTier" name="tier" class="input-field" required>
+                            <option value="basic">Basic</option>
+                            <option value="standard">Standard</option>
+                            <option value="premium">Premium</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end">
+                        <button type="submit" class="btn-primary">Add Client</button>
+                    </div>
+                </form>
+                <div id="addClientMessage" class="message-box hidden"></div>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Existing Clients</h2>
+            <div class="card overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr class="table-header">
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Identifier</th>
+                            <th>Email</th>
+                            <th>Tier</th>
+                            <th>Active</th>
+                            <th>Created At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Client rows will be inserted here by JavaScript -->
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-gray-500">Loading clients...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div id="clientsMessage" class="message-box hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <div class="container">
+            &copy; 2025 Zyntel Data Agent. All rights reserved.
+        </div>
+    </footer>
+
+    <script src="developer_ui.js"></script>
+</body>
+</html>

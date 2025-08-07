@@ -42,6 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     messageDiv.style.color = 'red'; // Default to red for errors
     loginForm.appendChild(messageDiv);
 
+document.getElementById("togglePassword").addEventListener("click", function () {
+    const password = document.getElementById("password");
+    const type = password.type === "password" ? "text" : "password";
+    password.type = type;
+    this.classList.toggle("fa-eye-slash");
+});
+
     // IMPORTANT: Replace with your actual Render backend URL
     const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
 
@@ -65,15 +72,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('token', data.token);
+                const existingUser = localStorage.getItem('zyntelUser');
+                if (existingUser && existingUser !== username) {
+                    sessionStorage.clear(); // Kill old session if new user logs in
+                }
+
+                const sessionData = {
+                    token: data.token,
+                    username,
+                    timestamp: Date.now()
+                };
+
+                sessionStorage.setItem('session', JSON.stringify(sessionData));
+                localStorage.setItem('zyntelUser', username);
+                
                 messageDiv.style.color = 'green';
                 messageDiv.textContent = data.message + ". Redirecting...";
-                // Redirect to your main dashboard page upon successful login
-                window.location.href = '/html/dashboard.html'; // Adjust this path if different
-            } else {
-                messageDiv.style.color = 'red';
-                messageDiv.textContent = data.message || 'Login failed. Please try again.';
+                window.location.href = '/html/dashboard.html';
             }
+            
         } catch (error) {
             console.error('Login error:', error);
             messageDiv.style.color = 'red';

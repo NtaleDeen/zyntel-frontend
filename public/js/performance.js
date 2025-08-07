@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-import { checkAuthAndRedirect } from "./revenue.js"; // Re-use auth check from an existing dashboard page
+import { checkAuthAndRedirect } from "./tat.js"; // Re-use auth check
 
 // Check token session and user validity
 (function checkSession() {
@@ -26,25 +26,26 @@ import { checkAuthAndRedirect } from "./revenue.js"; // Re-use auth check from a
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthAndRedirect(); // Ensure user is authenticated
 
-    const progressTableBody = document.getElementById('progressTableBody');
-    const progressTableMessage = document.getElementById('progressTableMessage');
+    const tatTableBody = document.getElementById('tatTableBody');
+    const tatTableMessage = document.getElementById('tatTableMessage');
 
-    const API_URL = "https://zyntel-data-updater.onrender.com/api/progress_data";
+    const API_URL = "https://zyntel-data-updater.onrender.com/api/performance"; // Your existing TAT API endpoint
 
     function showMessage(element, message, type) {
         element.textContent = message;
         element.className = `message-box ${type}`;
         element.classList.remove('hidden');
+        // No timeout here, as error messages for data tables should persist until fixed
     }
 
-    async function fetchProgressData() {
-        progressTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
-        progressTableMessage.classList.add('hidden');
+    async function fetchTatData() {
+        tatTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+        tatTableMessage.classList.add('hidden');
 
         const token = localStorage.getItem('token');
         if (!token) {
-            showMessage(progressTableMessage, 'Authentication required. Please log in.', 'error');
-            progressTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+            showMessage(tatTableMessage, 'Authentication required. Please log in.', 'error');
+            tatTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
             return;
         }
 
@@ -64,25 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (!Array.isArray(data) || data.length === 0) {
-                progressTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No progress data found.</td></tr>`;
+                tatTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No TAT data found.</td></tr>`;
                 return;
             }
 
-            renderProgressTable(data);
+            renderTatTable(data);
 
         } catch (error) {
-            console.error('Error fetching progress data:', error);
-            showMessage(progressTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-            progressTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+            console.error('Error fetching TAT data:', error);
+            showMessage(tatTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
+            tatTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
         }
     }
 
-    function renderProgressTable(data) {
-        progressTableBody.innerHTML = ''; // Clear existing rows
+    function renderTatTable(data) {
+        tatTableBody.innerHTML = ''; // Clear existing rows
 
         data.forEach(row => {
             const tr = document.createElement('tr');
-            tr.className = 'hover:bg-gray-100';
+            tr.className = 'hover:bg-gray-100'; // Add hover effect
             tr.innerHTML = `
                 <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
                 <td>${row.shift || 'N/A'}</td>
@@ -91,11 +92,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${row.request_time_in ? new Date(row.request_time_in).toLocaleString() : 'N/A'}</td>
                 <td>${row.daily_tat || 'N/A'}</td>
                 <td>${row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
-                <td>${row.request_delay_status || 'N/A'}</td> <!-- Mapping Request_Delay_Status to Request_Progress -->
+                <td>${row.request_time_out ? new Date(row.request_time_out).toLocaleString() : 'N/A'}</td>
+                <td>${row.request_delay_status || 'N/A'}</td>
+                <td>${row.request_time_range || 'N/A'}</td>
             `;
-            progressTableBody.appendChild(tr);
+            tatTableBody.appendChild(tr);
         });
     }
 
-    fetchProgressData();
+    // Initial data fetch
+    fetchTatData();
 });
