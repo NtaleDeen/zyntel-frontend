@@ -1,51 +1,10 @@
 // frontend/js/add_client.js
 
 // Check session validity and user match
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const currentUser = localStorage.getItem('zyntelUser');
+import { checkAuthAndRedirect, getToken } from "./auth.js";
+checkAuthAndRedirect();
+const token = getToken();
 
-    if (!session || !session.token || session.username !== currentUser) {
-        // Session invalid or belongs to another user
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
-
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
-
-// Add this function at the top
-function checkAuthAndRole() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        // Redirect to the login page if no token is found
-        window.location.href = '/index.html';
-        return;
-    }
-    try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        // The role check is crucial for the add_client page
-        if (payload.role !== 'manager') {
-            // Redirect to the dashboard if not a manager
-            window.location.href = '/dashboard.html?message=PermissionDenied';
-            return;
-        }
-    } catch (e) {
-        // If the token is invalid, redirect to login
-        console.error("Token invalid:", e);
-        window.location.href = '/index.html';
-        return;
-    }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     // Call the auth/role check as the first action

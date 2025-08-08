@@ -1,38 +1,11 @@
-// revenue.js - Refactored to use shared filters-revenue.js
+// revenue.js - Refactored to use shared filters-revenue.js and a centralized auth module.
 // This file is the main logic for the revenue dashboard.
 
-// Check session validity and user match
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const currentUser = localStorage.getItem('zyntelUser');
+// Import the centralized authentication functions.
+import { checkAuthAndRedirect, getToken } from "./auth.js";
 
-    if (!session || !session.token || session.username !== currentUser) {
-        // Session invalid or belongs to another user
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
-
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
-
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
+// Immediately check authentication on page load.
+checkAuthAndRedirect();
 
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
@@ -40,7 +13,7 @@ Chart.register(ChartDataLabels);
 import {
   populateLabSectionFilter,
   populateShiftFilter,
-  populateHospitalUnitFilter, // Keep this for the filter dropdown
+  populateHospitalUnitFilter,
   applyRevenueFilters,
   attachRevenueFilterListeners,
   updateDatesForPeriod
@@ -114,26 +87,14 @@ function capitalizeWords(str) {
 }
 
 /**
- * Checks for a JWT token in local storage. If not found, redirects to the login page.
- */
-function checkAuthAndRedirect() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        // Redirect to the login page if no token is found
-        window.location.href = '/index.html';
-    }
-}
-
-/**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-    // Check for token before making the API call
-    const token = localStorage.getItem('token');
+    // Get the JWT token using the centralized function
+    const token = getToken();
     if (!token) {
         console.error("No JWT token found. Aborting data load.");
-        // We've already redirected, but this prevents the fetch call.
         return;
     }
 
