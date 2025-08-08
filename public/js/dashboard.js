@@ -1,132 +1,153 @@
-// frontend/js/dashboard.js
-// Check session validity and user match
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const currentUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== currentUser) {
-        // Session invalid or belongs to another user
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
-
-// This file is now fully self-contained and handles all logic within a single event listener.
-
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
-
-// Function to handle logout
-function logout() {
-    localStorage.removeItem('token');
-    console.log("Token removed. Redirecting to login.");
-    // Make sure your login page path is correct
-    window.location.href = '/index.html'; 
-}
+// dashboard.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // IMPORTANT: Replace with your actual Render backend URL
-    const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
+    // Select elements from the DOM
+    const dashboardPanel = document.getElementById('dashboard-panel');
+    const tatPanel = document.getElementById('tat-panel');
 
-    // --- Single, comprehensive authentication and token check ---
-    const token = localStorage.getItem('token');
-    let userPayload = null;
+    const dashboardDropdownBtn = document.getElementById('dashboard-dropdown-btn');
+    const dashboardDropdownMenu = document.getElementById('dashboard-dropdown-menu');
+    const dashboardMainDisplay = document.getElementById('dashboard-main-display');
+    const dashboardViewBtn = document.getElementById('dashboard-view-btn');
 
-    if (!token) {
-        console.warn("No token found. Redirecting to login.");
-        return logout(); // Exit early if no token exists
-    }
+    const tatDropdownBtn = document.getElementById('tat-dropdown-btn');
+    const tatDropdownMenu = document.getElementById('tat-dropdown-menu');
+    const tatMainDisplay = document.getElementById('tat-main-display');
+    const tatViewBtn = document.getElementById('tat-view-btn');
 
-    try {
-        // Decode JWT payload (base64 decode the second part of the token)
-        userPayload = JSON.parse(atob(token.split('.')[1]));
-        
-        // Check for token expiration
-        const expiry = userPayload.exp * 1000; // Convert to milliseconds
-        if (Date.now() >= expiry) {
-            console.warn("Token expired. Logging out.");
-            return logout(); // Exit early if token has expired
+    const dashboardLinks = Array.from(dashboardDropdownMenu.querySelectorAll('a'));
+    const tatLinks = Array.from(tatDropdownMenu.querySelectorAll('a'));
+
+    // Variables for the animation and idle timer
+    let currentDashboardIndex = 0;
+    let currentTATIndex = 0;
+    let intervalId = null;
+    let timeoutId = null;
+    const animationDelay = 3000; // Animation interval in milliseconds (3 seconds)
+    const idleTime = 30000; // Idle time before animation starts in milliseconds (30 seconds)
+
+    // Function to initialize the panels with the default values
+    function initializePanels() {
+        // Set default pages
+        const defaultDashboardLink = dashboardLinks.find(link => link.href.includes('tat.html'));
+        const defaultTatLink = tatLinks.find(link => link.href.includes('progress.html'));
+
+        if (defaultDashboardLink) {
+            currentDashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
         }
-    } catch (e) {
-        console.error("Error decoding or validating token:", e);
-        return logout(); // Exit early for any token decoding errors
+
+        if (defaultTatLink) {
+            currentTATIndex = tatLinks.indexOf(defaultTatLink);
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
+        }
     }
 
-    // At this point, we have a valid and non-expired token and userPayload is available
-    // The rest of the dashboard logic can now safely proceed.
+    // Function to update a panel's main display
+    function updatePanel(panelId, index, links, mainDisplay, viewBtn) {
+        // Create an image element if it doesn't exist
+        let img = mainDisplay.querySelector('.page-image');
+        if (!img) {
+            img = document.createElement('img');
+            img.className = 'page-image active';
+            img.alt = 'Page Preview';
+            mainDisplay.appendChild(img);
+        }
+        
+        // Update the image source and link
+        img.src = links[index].dataset.image;
+        viewBtn.href = links[index].href;
+        
+        // Show the button and hide the overlay if it was there
+        viewBtn.style.display = 'block';
 
-    // --- Display User Info on Dashboard ---
-    const userInfoDisplay = document.getElementById('userInfoDisplay');
-    if (userInfoDisplay) {
-        userInfoDisplay.textContent = `Welcome, ${userPayload.username} (${userPayload.role} - ${userPayload.tier} Tier)`;
-    }
-
-    // --- Feature Protection based on Tier & Role ---
-    const userRole = userPayload.role;
-    const userTier = userPayload.tier;
-    console.log(`User Role: ${userRole}, Tier: ${userTier}`);
-
-    // Example: Hide/show elements based on tier
-    const realtimeTab = document.getElementById('realtimeTab');
-    const exportReportsBtn = document.getElementById('exportReportsBtn');
-    const brandingSettings = document.getElementById('brandingSettings');
-    const customReportsBtn = document.getElementById('customReportsBtn');
-
-    if (userTier === 'basic') {
-        if (realtimeTab) realtimeTab.style.display = 'none';
-        if (exportReportsBtn) exportReportsBtn.style.display = 'none';
-        if (brandingSettings) brandingSettings.style.display = 'none';
-        if (customReportsBtn) customReportsBtn.style.display = 'none';
-        console.log("Basic tier: Hiding advanced features.");
-    } else if (userTier === 'standard') {
-        if (brandingSettings) brandingSettings.style.display = 'none'; // Premium only
-        if (customReportsBtn) customReportsBtn.style.display = 'none'; // Premium only
-        console.log("Standard tier: Hiding Premium features.");
-    }
-    // For 'premium' tier, all features remain visible by default.
-
-    // Example: Restrict content/sections based on role
-    const managerDashboardSection = document.getElementById('managerDashboardSection');
-    const technicianReportingSection = document.getElementById('technicianReportingSection');
-
-    if (managerDashboardSection && userRole !== 'manager') {
-        managerDashboardSection.style.display = 'none';
-        console.log("Non-manager: Hiding manager-specific section.");
-    }
-    if (technicianReportingSection && userRole !== 'technician') {
-        technicianReportingSection.style.display = 'none';
-        console.log("Non-technician: Hiding technician-specific section.");
-    }
-
-    // --- Attach Logout Listener ---
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', logout);
+        // Update dropdown button text
+        const dropdownBtn = mainDisplay.previousElementSibling.querySelector('.dropdown-button span');
+        dropdownBtn.textContent = links[index].textContent;
     }
     
-    // --- The rest of your dashboard logic would go here ---
-    // For example, fetching data to populate charts and tables
+    // Function to animate the panels
+    function startAnimation() {
+        // Clear any existing interval to prevent duplicates
+        if (intervalId) clearInterval(intervalId);
+
+        const dashboardTotal = dashboardLinks.length;
+        const tatTotal = tatLinks.length;
+        
+        // The animation starts with the current selected items
+        
+        intervalId = setInterval(() => {
+            currentDashboardIndex = (currentDashboardIndex + 1) % dashboardTotal;
+            currentTATIndex = (currentTATIndex + 1) % tatTotal;
+
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
+        }, animationDelay); // Change image every 3 seconds
+    }
+
+    function stopAnimation() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+    // Function to reset the idle timer and stop animation
+    function resetIdleTimer() {
+        clearTimeout(timeoutId);
+        stopAnimation();
+        timeoutId = setTimeout(startAnimation, idleTime);
+    }
     
-    // Example of a fetch request using the valid token
-    // Note: The original snippet used localStorage.getItem('token'), which is inconsistent.
-    // Use the `token` variable already defined.
-    /*
-    fetch(`${BACKEND_URL}/api/client-status`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(response => response.json())
-    .then(data => {
-        // ... handle the data ...
-    })
-    .catch(error => console.error("Error fetching client status:", error));
-    */
+    // Initialize panels on page load
+    initializePanels();
     
+    // Start the idle timer after the initial page load
+    timeoutId = setTimeout(startAnimation, idleTime);
+
+    // Event listeners to handle user interaction
+    document.addEventListener('click', resetIdleTimer);
+    document.addEventListener('mousemove', resetIdleTimer);
+    document.addEventListener('keypress', resetIdleTimer);
+
+    dashboardDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dashboardDropdownMenu.classList.toggle('show');
+        tatDropdownMenu.classList.remove('show');
+        resetIdleTimer();
+    });
+
+    tatDropdownBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tatDropdownMenu.classList.toggle('show');
+        dashboardDropdownMenu.classList.remove('show');
+        resetIdleTimer();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown-container')) {
+            dashboardDropdownMenu.classList.remove('show');
+            tatDropdownMenu.classList.remove('show');
+        }
+    });
+
+    dashboardLinks.forEach((link, index) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            dashboardDropdownMenu.classList.remove('show');
+            currentDashboardIndex = index;
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
+            resetIdleTimer();
+        });
+    });
+
+    tatLinks.forEach((link, index) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            tatDropdownMenu.classList.remove('show');
+            currentTATIndex = index;
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
+            resetIdleTimer();
+        });
+    });
 });
