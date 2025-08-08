@@ -1,31 +1,17 @@
-// Check session validity and user match
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const currentUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== currentUser) {
-        // Session invalid or belongs to another user
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
-
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
+import { checkAuthAndRedirect, getToken } from "../js/auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuthAndRedirect(); // Ensure user is authenticated
+
     const addClientForm = document.getElementById('addClientForm');
     const addClientMessage = document.getElementById('addClientMessage');
     const clientsTableBody = document.getElementById('clientsTableBody');
     const clientsMessage = document.getElementById('clientsMessage');
+
+    const addUserForm = document.getElementById('addUserForm');
+    const addUserMessage = document.getElementById('addUserMessage');
+
+    const API_URL = "https://zyntel-data-updater.onrender.com/api";
 
     // --- Message Box Utility ---
     function showMessage(element, message, type) {
@@ -34,32 +20,62 @@ document.addEventListener('DOMContentLoaded', () => {
         element.classList.remove('hidden');
         setTimeout(() => {
             element.classList.add('hidden');
-        }, 5000); // Hide after 5 seconds
+        }, 5000);
     }
 
-    // --- API Interactions ---
+    // --- Password Validation Function with detailed feedback ---
+    function validatePassword(password) {
+        const errors = [];
+        const hasCapital = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(password);
 
-    // Conceptual API Base URL (replace with your actual backend URL)
-    const API_BASE_URL = 'http://localhost:5000/api'; // Example Flask backend URL
+        if (!hasCapital) {
+            errors.push("at least one capital letter");
+        }
+        if (!hasNumber) {
+            errors.push("at least one number");
+        }
+        if (!hasSpecial) {
+            errors.push("at least one special character");
+        }
+        
+        if (errors.length > 0) {
+            return {
+                isValid: false,
+                message: "Password must contain " + errors.join(", ") + "."
+            };
+        }
 
+        return {
+            isValid: true,
+            message: "Password is valid."
+        };
+    }
+
+    // --- Add Client Logic ---
     async function addClient(clientData) {
+        const token = getToken();
+        if (!token) {
+            showMessage(addClientMessage, 'Authentication token missing. Please log in again.', 'error');
+            return;
+        }
+
         try {
-            const response = await fetch(`${API_BASE_URL}/clients`, {
+            const response = await fetch(`${API_URL}/add_client`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // Add authentication headers if your backend requires them (e.g., Bearer Token)
-                    // 'Authorization': 'Bearer YOUR_DEVELOPER_TOKEN'
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(clientData)
             });
-
             const result = await response.json();
 
             if (response.ok) {
                 showMessage(addClientMessage, result.message || 'Client added successfully!', 'success');
                 addClientForm.reset();
-                fetchClients(); // Refresh the list of clients
+                loadClients(); // Reload the table to show the new client
             } else {
                 showMessage(addClientMessage, result.error || 'Failed to add client.', 'error');
             }
@@ -69,41 +85,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchClients() {
-        clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">Loading clients...</td></tr>`;
-        clientsMessage.classList.add('hidden');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/clients`, {
-                method: 'GET',
-                headers: {
-                    // Add authentication headers if your backend requires them
-                    // 'Authorization': 'Bearer YOUR_DEVELOPER_TOKEN'
-                }
-            });
-
-            const clients = await response.json();
-
-            if (response.ok) {
-                renderClients(clients);
-            } else {
-                showMessage(clientsMessage, clients.error || 'Failed to load clients.', 'error');
-                clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Error loading clients.</td></tr>`;
-            }
-        } catch (error) {
-            console.error('Error fetching clients:', error);
-            showMessage(clientsMessage, 'Network error or server unreachable.', 'error');
-            clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Network error. Please check your backend.</td></tr>`;
-        }
-    }
-
-    function renderClients(clients) {
-        clientsTableBody.innerHTML = ''; // Clear existing rows
-        if (clients.length === 0) {
-            clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No clients found.</td></tr>`;
+    // --- Add User Logic (for developers) ---
+    async function addUser(userData) {
+        const token = getToken();
+        if (!token) {
+            showMessage(addUserMessage, 'Authentication token missing. Please log in again.', 'error');
             return;
         }
 
+        try {
+            const response = await fetch(`${API_URL}/add_user`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(userData)
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                showMessage(addUserMessage, result.message || 'User added successfully!', 'success');
+                addUserForm.reset();
+            } else {
+                showMessage(addUserMessage, result.error || 'Failed to add user.', 'error');
+            }
+        } catch (error) {
+            console.error('Error adding user:', error);
+            showMessage(addUserMessage, 'Network error or server unreachable.', 'error');
+        }
+    }
+
+    // --- Load Clients Logic ---
+    async function loadClients() {
+        const token = getToken();
+        if (!token) {
+            clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Authentication token missing.</td></tr>`;
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/clients`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await response.json();
+
+            if (response.ok && Array.isArray(data) && data.length > 0) {
+                renderClientsTable(data);
+            } else {
+                clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No clients found.</td></tr>`;
+            }
+        } catch (error) {
+            console.error('Error fetching clients:', error);
+            clientsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-red-500">Failed to load client data.</td></tr>`;
+        }
+    }
+
+    function renderClientsTable(clients) {
+        clientsTableBody.innerHTML = ''; // Clear existing rows
         clients.forEach(client => {
             const row = document.createElement('tr');
             row.className = 'table-row';
@@ -140,6 +181,24 @@ document.addEventListener('DOMContentLoaded', () => {
         addClient(clientData);
     });
 
-    // Initial fetch of clients when the page loads
-    fetchClients();
+    addUserForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(addUserForm);
+        const userData = {};
+        formData.forEach((value, key) => {
+            userData[key] = value;
+        });
+
+        // Client-side password validation
+        const passwordValidation = validatePassword(userData.password);
+        if (!passwordValidation.isValid) {
+            showMessage(addUserMessage, passwordValidation.message, 'error');
+            return;
+        }
+
+        addUser(userData);
+    });
+
+    // Initial load
+    loadClients();
 });

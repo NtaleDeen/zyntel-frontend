@@ -29,24 +29,23 @@
             border-radius: 0.5rem; /* rounded-lg */
             padding: 0.75rem 1rem;
             width: 100%;
-            box-sizing: border-box;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
         }
         .input-field:focus {
+            border-color: #3b82f6; /* blue-500 */
             outline: none;
-            border-color: #2563eb; /* blue-600 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
         }
         .btn-primary {
-            background-color: #2563eb; /* blue-600 */
+            background-color: #3b82f6;
             color: #fff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem; /* rounded-lg */
             font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
             transition: background-color 0.2s;
-            cursor: pointer;
         }
         .btn-primary:hover {
-            background-color: #1d4ed8; /* blue-700 */
+            background-color: #2563eb;
         }
         .message-box {
             padding: 1rem;
@@ -55,47 +54,70 @@
             font-weight: 500;
         }
         .message-box.success {
-            background-color: #d1fae5; /* green-100 */
-            color: #065f46; /* green-800 */
+            background-color: #d1fae5;
+            color: #065f46;
         }
         .message-box.error {
-            background-color: #fee2e2; /* red-100 */
-            color: #991b1b; /* red-800 */
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .table-header th {
+            padding: 1rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #4b5563; /* gray-600 */
+            border-bottom-width: 2px;
+            border-color: #e5e7eb;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .table-row td {
+            padding: 1rem 1rem;
+            border-bottom-width: 1px;
+            border-color: #e5e7eb;
+        }
+        .password-info {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-blue-700 text-white p-4 shadow-md">
-        <div class="container flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Zyntel User Management</h1>
+<body class="bg-gray-100">
+    <header class="bg-white shadow-sm">
+        <div class="container flex justify-between items-center py-4">
+            <h1 class="text-3xl font-bold text-blue-600">Zyntel</h1>
             <nav>
-                <a href="developer_ui.html" class="text-white hover:text-blue-200 mx-2">Clients (Developer UI)</a>
-                <a href="manager_ui.html" class="text-white hover:text-blue-200 mx-2">Users</a>
+                <a href="#" class="text-gray-600 hover:text-blue-600 font-medium">Dashboard</a>
             </nav>
         </div>
     </header>
 
-    <main class="flex-grow container py-8">
-        <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Add New User for Client ID: <span id="clientIdDisplay">Loading...</span></h2>
+    <main class="container py-8">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-8">Manager Dashboard</h1>
+
+        <!-- Add User Section -->
+        <section class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Add New User</h2>
             <div class="card">
                 <form id="addUserForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Username:</label>
-                        <input type="text" id="username" name="username" class="input-field" placeholder="e.g., john.doe" required>
+                        <input type="text" id="username" name="username" class="input-field" required>
                     </div>
                     <div>
                         <label for="password" class="block text-gray-700 text-sm font-medium mb-2">Password:</label>
                         <input type="password" id="password" name="password" class="input-field" required>
+                        <p class="password-info">Must contain at least one capital letter, one number, or one special character.</p>
                     </div>
-                    <div class="md:col-span-2"> <!-- Role field now spans two columns for better layout -->
+                    <div>
                         <label for="role" class="block text-gray-700 text-sm font-medium mb-2">Role:</label>
                         <select id="role" name="role" class="input-field" required>
                             <option value="technician">Technician</option>
-                            <option value="viewer">Viewer</option>
-                            <!-- Managers should not add other managers directly from this UI -->
+                            <option value="manager">Manager</option>
                         </select>
                     </div>
+                    <!-- client_id is not required for a manager to add a user, as it's determined by the manager's own client_id -->
                     <div class="md:col-span-2 flex justify-end">
                         <button type="submit" class="btn-primary">Add User</button>
                     </div>
@@ -111,6 +133,7 @@
         </div>
     </footer>
 
+    <script src="../js/auth.js"></script>
     <script src="manager_ui.js"></script>
 </body>
 </html>
