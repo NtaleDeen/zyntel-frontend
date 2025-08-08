@@ -1,4 +1,42 @@
-/* General styles from general.css */
+/*
+ * ========================================
+ * Core Brand Styles - styles.css
+ * ========================================
+ */
+
+:root {
+  /* Brand Colors - Easily change for different clients */
+  --main-color: #21336a;
+  --primary-color: #000;
+  --secondary-color: #deab5f;
+  --canvas-color: #fff;
+  --background-color: rgba(250, 250, 250, 0.9);
+  --border-bottom: rgb(228, 228, 228);
+  --box-shadow: rgba(0, 0, 0, 0.05);
+  --light-grey-background: #f0f0f0;
+
+  /* Additional Colors */
+  --sidebar-bg: #2c3e50;
+  --sidebar-text: #ecf0f1;
+  --kpi-card-bg: #ffffff;
+  --kpi-card-hover: #f9f9f9;
+  --chart-title: #2c3e50;
+  --table-header-bg: #2c3e50;
+  --table-header-text: white;
+  --table-border: #ddd;
+  --positive-color: green;
+  --negative-color: red;
+  --warning-color: orange;
+  --on-time-color: #3498db;
+  --delayed-color: #e74c3c;
+  --over-delayed-color: #c0392b;
+}
+
+/* ========================================
+ * General Styles
+ * (From general.css, main.css, progress.css, tat.css)
+ * ========================================
+ */
 * {
   padding: 0;
   margin: 0;
@@ -7,456 +45,424 @@
   color: var(--main-color);
 }
 
-:root {
-  --main-color: #21336a;
-  --primary-color: #000;
-  --canvas-color: #fff;
-  --hover-color: #deab5f;
-  --background-color: rgba(250, 250, 250, 0.9);
-  --border-bottom: rgb(228, 228, 228);
-  --box-shadow: rgba(0, 0, 0, 0.05);
-}
-
 html {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
+body {
+  margin: 0;
+  padding-top: 90px;
+  background-color: var(--background-color);
+  color: var(--primary-color);
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+/* Header, Navbar, Footer Styles */
 header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 1000;
+  height: 90px;
   background-color: var(--background-color);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  height: 90px;
+  transition: transform 0.3s ease, top 0.3s ease, opacity 0.3s ease;
 }
-
-body {
-  margin: 0;
-  padding-top: 150px; /* Adjusted padding-to... */
-}
-
-/* header h1,
-header nav,
-header .navbar {
-  margin: 0;
-} */
 
 .header-container {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  height: auto;
-  padding: 10px 20px 0 20px;
+  align-items: center;
+  padding: 0 20px;
+  height: 100%;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
 }
 
 .logo img {
-  height: 40px;
+  height: 50px;
+  width: auto;
 }
 
-h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  word-spacing: 10px;
-  color: var(--main-color); /* Ensure h1 uses main-color */
+header h1 {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--main-color);
 }
 
 .page {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  font-size: 1rem;
-  padding: 10px 20px;
-  font-weight: 500;
-  border-left: 2px solid var(--hover-color);
-  justify-content: space-between;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--primary-color);
 }
 
-#menuToggle {
-  display: none;
-  color: var(--main-color);
+.logout-btn {
+  background-color: var(--main-color);
+  color: var(--canvas-color);
   border: none;
-  background-color: unset;
-  padding: 3px 5px;
-  margin-right: 10px;
+  border-radius: 5px;
+  padding: 10px 15px;
   cursor: pointer;
-  font-size: 0.7rem !important;
-  font-weight: normal !important;
+  transition: background-color 0.3s ease;
 }
 
-#menuToggle:hover {
-  border-bottom: 2px solid var(--hover-color);
+.logout-btn:hover {
+  background-color: var(--secondary-color);
 }
 
 .navbar {
   display: flex;
+  justify-content: flex-end;
   gap: 20px;
-  justify-content: center;
-  align-items: center;
-  line-height: 1;
-  background-color: #21336a;
-  padding: 10px 20px;
-  margin-top: 0;
+  padding-right: 20px;
 }
 
 .navbar a {
   text-decoration: none;
-  color: #fff;
-  font-weight: 500;
-  margin: 0 40px;
-  padding: 5px;
-}
-
-.navbar a:hover {
-  border-bottom: 2px solid var(--hover-color);
-}
-
-.navbar a.active {
-  border-bottom: 2px solid var(--hover-color);
-}
-
-.dashboard-filters,
-.filtersContainer {
-  position: fixed; /* Keep fixed to stay at top with scrolling */
-  top: 102px; /* Below the header */
-  left: 0;
-  width: 100vw;
-  z-index: 999;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  padding: 17px 30px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background-color: var(--background-color);
-  border-bottom: 1px solid var(--border-bottom);
-  box-shadow: 0 1px 2px var(--box-shadow);
-}
-
-.filter-group,
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-select,
-input {
-  padding: 5px 8px;
-  font-size: 10.5px;
   color: var(--primary-color);
-  border: 1px solid var(--main-color);
-  border-radius: 4px;
-  width: auto;
-  margin-left: 5px;
+  font-weight: 500;
+  transition: color 0.3s ease;
 }
 
-input:hover,
-select:hover,
-input:active,
-select:active {
-  border-color: var(--hover-color);
+.navbar a:hover,
+.navbar a.active {
+  color: var(--secondary-color);
 }
 
-input:focus,
-select:focus {
-  outline: none;
-  border-color: var(--main-color);
+footer {
+  width: 100%;
+  text-align: center;
+  padding: 20px;
+  background-color: var(--canvas-color);
+  border-top: 1px solid var(--border-bottom);
+  margin-top: auto; /* Pushes the footer to the bottom */
 }
 
+/* Dashboard-Specific Layouts */
 main.dashboard-layout {
+  flex-grow: 1;
   display: flex;
-  gap: 2rem;
-  margin: 3rem;
-  justify-content: space-between;
+  padding: 1rem;
+  gap: 1rem;
+  margin-top: 1rem;
+  overflow: hidden;
+}
+
+.filters-sidebar {
+  width: 25%;
+  max-width: 400px;
+  background-color: var(--canvas-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px var(--box-shadow);
+  padding: 20px;
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+  overflow-y: auto;
 }
 
 .charts-area {
-  flex: 3;
+  flex-grow: 1;
+  width: 75%;
 }
 
-.revenue-progress-card {
-  position: sticky;
-  top: 200px;
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  height: fit-content;
-  overflow-y: auto;
-  font-family: Roboto, sans-serif;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
 }
 
-.chart-bar {
-  height: 20px !important;
-  margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.percentage {
-  font-size: 28px;
-  font-weight: bold;
-  color: #deab5f;
-}
-
-.label {
-  margin-bottom: 4px;
-  font-size: 0.9rem;
-  color: #555;
+.chart-title {
+  font-size: 1.2rem;
   font-weight: 500;
+  color: var(--chart-title);
+  margin-bottom: 15px;
+  text-align: center;
 }
 
-.amounts {
-  display: flex;
-  justify-content: space-between;
-  color: var(--main-color);
-  font-size: 14px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-
-.amounts .target {
-  color: #6b7280;
-  font-weight: normal;
+.chart-container {
+  background-color: var(--canvas-color);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--box-shadow);
 }
 
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  width: 100%;
   margin-top: 1rem;
 }
 
 .kpi-card {
-  background-color: #fff;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  background-color: var(--kpi-card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--box-shadow);
   text-align: center;
+  transition: transform 0.2s ease-in-out;
+}
+
+.kpi-card:hover {
+  transform: translateY(-5px);
+}
+
+.kpi-card-full-width {
+  grid-column: 1 / -1;
 }
 
 .kpi-label {
-  font-size: 0.9rem;
-  color: #555;
-  font-weight: 500;
+  font-size: 14px;
+  color: #8c8d;
 }
 
 .kpi-value {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 2.2em;
+  font-weight: bold;
   color: var(--main-color);
+  margin: 10px 0 0;
 }
 
-.trend-positive {
-  color: green; /* Or a specific shade of green: #22c55e */
+.kpi-trend .positive {
+  color: var(--positive-color);
+  font-weight: bold;
 }
 
-.trend-negative {
-  color: red; /* Or a specific shade of red: #ef4444 */
+.kpi-trend .negative {
+  color: var(--negative-color);
+  font-weight: bold;
 }
 
-.trend-neutral {
-  color: blue; /* Or a specific shade of blue: #3b82f6 */
-}
-
-.dashboard-charts {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.chart-title {
-  color: var(--main-color);
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0 0 5px 0;
-  text-align: center;
-  text-decoration: underline;
-}
-
-/* Styles specifically for the dashboard layout, merged from inline HTML styles */
-.container {
-  max-width: 1200px;
-  margin-left: auto; /* Center the container */
-  margin-right: auto;
-}
-
-.chart-container {
-  background-color: white;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
-  position: relative; /* Added for chart-loading overlay */
-  height: 400px; /* Standard height for charts */
-  width: 100%; /* Ensure responsiveness */
-  max-width: 800px; /* Max width for single chart containers */
-  margin-left: auto; /* Center individual chart containers */
-  margin-right: auto;
-}
-
-.notice {
-  display: none;
-}
-
-footer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 10px 20px;
-  margin-top: 100px;
-}
-
-.zyntel {
-  height: 50px;
-  width: 120px;
-  overflow: hidden;
-  position: relative;
-  display: block;
-  margin-left: 20px;
+/* Tables */
+.table-area {
+  overflow-x: auto;
+  margin-top: 20px;
   padding: 10px;
+  background-color: var(--canvas-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px var(--box-shadow);
 }
 
-.zyntel img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.14);
-  transform-origin: center center;
+#progressTable {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-footer p {
-  margin-left: 20px;
-  color: var(--main-color);
-  font-size: 13.5px;
+#progressTable th,
+#progressTable td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--table-border);
 }
 
-/* Media Queries for responsiveness (from general.css) */
-@media (max-width: 1024px) {
+#progressTable th {
+  background-color: var(--table-header-bg);
+  color: var(--table-header-text);
+  font-weight: bold;
+}
+
+/* Status-specific table cell colors */
+.status-on-time {
+  color: var(--on-time-color);
+}
+
+.status-delayed {
+  color: var(--delayed-color);
+}
+
+.status-over-delayed {
+  color: var(--over-delayed-color);
+}
+
+.status-not-uploaded {
+  color: var(--warning-color);
+}
+
+
+/* ========================================
+ * Login Page Specific Styles
+ * (From index.css)
+ * ========================================
+ */
+body.login-page {
+  background-color: #0a0a0a;
+  display: grid;
+  grid-template-columns: 50% 50%;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 30px 50px;
+  box-sizing: border-box;
+  column-gap: 30px;
+}
+
+.login-page .image-column {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-page .full-height-image {
+  max-width: 100%;
+  width: 500px;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-page .login-column {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100vh;
+}
+
+.login-page .login-box {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(5px);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 15vh;
+  text-align: center;
+}
+
+.login-page .login-box-header {
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.login-page .input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.login-page .input-group label {
+  display: block;
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.login-page .input-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.login-page .input-group input:focus {
+  outline: none;
+  border-color: var(--secondary-color);
+}
+
+.login-page .login-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 18px;
+  cursor: pointer;
+  background-color: var(--secondary-color);
+  color: #fff;
+  transition: background-color 0.3s ease;
+}
+
+.login-page .login-button:hover {
+  background-color: #b89047;
+}
+
+.login-page .message-container {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #e74c3c;
+}
+
+/* ========================================
+ * Mobile Responsiveness & Print Styles
+ * ========================================
+ */
+@media (max-width: 1200px) {
+  .dashboard-layout {
+    flex-direction: column;
+  }
+  .filters-sidebar {
+    width: 100%;
+    position: static;
+    max-width: 100%;
+  }
   .charts-area {
-    flex: 2;
+    width: 100%;
+  }
+  .dashboard-charts {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  h1 {
-    font-size: 1.2rem;
-    word-spacing: normal;
+  body.login-page {
+    grid-template-columns: 1fr;
+    padding: 20px;
   }
 
+  .login-page .image-column {
+    display: none;
+  }
+
+  .login-page .login-box {
+    margin-top: 5vh;
+  }
+
+  /* Other responsive styles for different pages as needed */
   .page {
-    font-size: 0.85rem;
-    margin-top: 15px;
-    padding: 1px 10px;
-    justify-content: space-between;
-  }
-
-  .navbar {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .navbar a {
-    margin: 50px 30px;
-  }
-
-  /* Adjustments for the new main dashboard structure */
-  .container {
-    padding: 1rem; /* Adjust container padding for smaller screens */
-  }
-  .grid.grid-cols-1.lg\:grid-cols-2 {
-    grid-template-columns: 1fr; /* Stack charts vertically on small screens */
-  }
-  .chart-container {
-    margin-bottom: 1rem; /* Adjust margin between stacked charts */
-  }
-
-  main {
-    /* This rule from general.css hides main on small screens, which might hide charts */
-    display: block; /* Override to ensure main content is visible */
-  }
-
-  .charts-area {
-    /* This rule from general.css hides charts-area on small screens, which might hide charts */
-    display: block; /* Override to ensure charts-area content is visible */
-    width: 100%;
-  }
-
-  .revenue-progress-card {
-    position: static; /* Remove sticky positioning on small screens */
-    max-width: 100%; /* Allow full width */
-  }
-
-  .kpi-grid {
-    grid-template-columns: 1fr; /* Stack KPIs vertically on small screens */
-  }
-
-  main.dashboard-layout {
-    flex-direction: column;
-    margin: 1rem;
-    gap: 1rem;
+    font-size: 1rem;
   }
 }
 
-/* Print styles (from general.css) */
 @media print {
   body {
     padding-top: 0;
     overflow: visible;
   }
-
   header,
-  .filtersContainer,
+  .filters-sidebar,
   footer,
-  #menuToggle {
+  #menuToggle,
+  .notice {
     display: none !important;
   }
-
   main.dashboard-layout {
     display: block;
     margin: 0;
+    padding: 0;
   }
-
-  .revenue-progress-card,
+  .charts-area {
+    width: 100%;
+  }
+  .dashboard-charts {
+    display: block;
+  }
   .chart-container,
-  .kpi-card {
-    box-shadow: none !important;
-    border: 1px solid #ddd;
+  .kpi-grid,
+  .table-area {
     page-break-inside: avoid;
-    margin-bottom: 15px;
-  }
-
-  .chart-title {
-    font-size: 1.2rem;
-    text-align: left;
-    margin-bottom: 10px;
-  }
-
-  canvas {
-    max-width: 100% !important;
-    height: auto !important;
   }
 }
