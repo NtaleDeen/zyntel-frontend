@@ -9,6 +9,7 @@
 
 :root {
   --main-color: #21336a;
+  --main-trans-color: rgb(33, 51, 106, 0.7);
   --primary-color: #000;
   --canvas-color: #fff;
   --hover-color: #deab5f;
@@ -29,7 +30,7 @@ header {
   left: 0;
   width: 100%;
   z-index: 1000;
-  background-color: var(--background-color);
+  background-color: var(--main-trans-color);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   height: 90px;
 }
