@@ -1,13 +1,13 @@
 // dashboard.js
 
-// Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken } from "./auth.js";
+// // Import the centralized authentication functions.
+// import { checkAuthAndRedirect, getToken } from "./auth.js";
 
-// Immediately check authentication on page load.
-checkAuthAndRedirect();
+// // Immediately check authentication on page load.
+// checkAuthAndRedirect();
 
-// Register the datalabels plugin globally
-Chart.register(ChartDataLabels);
+// // Register the datalabels plugin globally
+// Chart.register(ChartDataLabels);
 
 document.addEventListener('DOMContentLoaded', () => {
     // Select elements from the DOM
@@ -40,20 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to initialize the panels with the default values
     function initializePanels() {
-        // Set default pages
-        const defaultDashboardLink = dashboardLinks.find(link => link.href.includes('tat.html'));
-        const defaultTatLink = tatLinks.find(link => link.href.includes('progress.html'));
+    // Set default to the first link if our target is missing
+    const defaultDashboardLink = dashboardLinks.find(link => link.href.includes('revenue.html')) || dashboardLinks[0];
+    const defaultTatLink = tatLinks.find(link => link.href.includes('reception.html')) || tatLinks[0];
 
-        if (defaultDashboardLink) {
-            currentDashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
-            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
-        }
-
-        if (defaultTatLink) {
-            currentTATIndex = tatLinks.indexOf(defaultTatLink);
-            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
-        }
+    if (defaultDashboardLink) {
+        currentDashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
+        updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
     }
+
+    if (defaultTatLink) {
+        currentTATIndex = tatLinks.indexOf(defaultTatLink);
+        updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
+    }
+}
 
     // Function to update a panel's main display
     function updatePanel(panelId, index, links, mainDisplay, viewBtn, imageTitleElement) {
