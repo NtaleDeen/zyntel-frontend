@@ -279,6 +279,5 @@ footer {
 }
 
 .footer-logo {
-  width: 200px; /* Set a specific size for the logo */
-  height: auto;
+  height: 200px;
 }
