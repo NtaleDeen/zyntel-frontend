@@ -38,7 +38,6 @@ header {
 body {
   margin: 0;
   padding-top: 150px; /* Adjusted padding-to... */
-  background-color: var(--main-trans-color);
 }
 
 /* header h1,
