@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.34/moment-timezone-with-data.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@latest/dist/chartjs-adapter-moment.min.js"></script>
     <link rel="stylesheet" href="../css/general.css" />
+    <link rel="stylesheet" href="../css/animation.css" />
   </head>
   <body>
     <header>
@@ -84,9 +85,14 @@
       </div>
     </header>
 
-    <div id="loadingOverlay" style="display:none; position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.7);align-items:center;justify-content:center;z-index:9999;">
-      <div class="spinner"></div>
-    </div>
+    <section class="wrapper" id="loadingOverlay">
+      <div class="loader">
+        <div class="loading one"></div>
+        <div class="loading two"></div>
+        <div class="loading three"></div>
+        <div class="loading four"></div>
+      </div>
+    </section>
     
     <main class="dashboard-layout">
       <aside class="revenue-progress-card">
