@@ -52,7 +52,7 @@ body {
     padding: 30px;
     text-align: center;
     width: 90%;
-    max-width: 400px;
+    max-width: 300px;
     box-shadow: 0 0 20px var(--glow-color, #00f0ffb3); /* Use variable for color */
     border: 1px solid #00eeff20;
     margin-bottom: 50px;
@@ -137,10 +137,10 @@ input[type="password"]::placeholder {
 /* Your existing general button styles */
 button {
     width: 100%;
-    padding: 12px;
+    padding: 8px;
     border: none;
     border-radius: 5px;
-    font-size: 18px;
+    font-size: 12px;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     margin-bottom: 15px;
@@ -149,6 +149,7 @@ button {
 /* Your existing .login-button styles */
 .login-button {
     background-color: #4CAF50;
+    font-size: 18px;
     color: white;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }

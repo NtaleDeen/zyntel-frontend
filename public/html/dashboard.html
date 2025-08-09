@@ -16,17 +16,14 @@
       <div class="header-container">
         <div class="header-left">
           <div class="logo">
-            <!-- You will need to provide the image for your logo -->
             <img src="../images/logo-nakasero.png" alt="logo" />
           </div>
           <h1>NHL Laboratory Dashboard</h1>
         </div>
         <div class="page">
-          <!-- The landing page itself doesn't need to be highlighted in a navbar -->
           <span>Home</span>
         </div>
       </div>
-      <!-- Navbar is removed as requested -->
     </header>
 
     <div class="main-container">
@@ -34,9 +31,13 @@
       <div class="panel" id="dashboard-panel">
         <div class="panel-header">
           <h2 class="panel-title">Dashboards</h2>
+          <div class="main-display" id="dashboard-main-display">
+            <a href="#" class="view-page-button" id="dashboard-view-btn" style="display: none;">View</a>
+            <!-- Images are loaded by JavaScript -->
+          </div>
           <div class="dropdown-container">
             <button class="dropdown-button" id="dashboard-dropdown-btn">
-              <span>Select a Dashboard...</span>
+              <span>Select a Dashboard</span>
               <span class="arrow">&#9662;</span>
             </button>
             <div class="dropdown-menu" id="dashboard-dropdown-menu">
@@ -46,19 +47,19 @@
             </div>
           </div>
         </div>
-        <div class="main-display" id="dashboard-main-display">
-          <!-- Images are loaded by JavaScript -->
-        </div>
-        <a href="#" class="view-page-button" id="dashboard-view-btn" style="display: none;">View Page</a>
       </div>
 
       <!-- TAT Panel -->
       <div class="panel" id="tat-panel">
         <div class="panel-header">
           <h2 class="panel-title">TAT</h2>
+          <div class="main-display" id="tat-main-display">
+            <a href="#" class="view-page-button" id="tat-view-btn" style="display: none;">View Page</a>
+            <!-- Images are loaded by JavaScript -->
+          </div>
           <div class="dropdown-container">
             <button class="dropdown-button" id="tat-dropdown-btn">
-              <span>Select a TAT Page...</span>
+              <span>Select a Table</span>
               <span class="arrow">&#9662;</span>
             </button>
             <div class="dropdown-menu" id="tat-dropdown-menu">
@@ -69,12 +70,16 @@
             </div>
           </div>
         </div>
-        <div class="main-display" id="tat-main-display">
-          <!-- Images are loaded by JavaScript -->
-        </div>
-        <a href="#" class="view-page-button" id="tat-view-btn" style="display: none;">View Page</a>
       </div>
+
+      
     </div>
+    
+    <footer>
+      <div class="image-column">
+        <img src="../images/zyntel_no_background.png" alt="Zyntel Icon" class="full-height-image">
+      </div>
+    </footer>
     
     <!-- Link to the new independent JS file -->
     <script src="../js/dashboard.js"></script>

@@ -3,36 +3,66 @@
 /* Import font if needed */
 /* @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap'); */
 
+* {
+  color: var(--panel-background);
+}
+
 :root {
   /* Using variables from general.css */
   --main-color: #21336a;
   --primary-color: #000;
   --canvas-color: #fff;
-  --hover-color: #deab5f;
-  --background-color: rgba(250, 250, 250, 0.9);
-  --border-bottom: rgb(228, 228, 228);
-  --box-shadow: rgba(0, 0, 0, 0.05);
+  --hover-color: rgb(222, 171, 95);
+  --background-color: #21336a; /* Adopted from index.css */
+  --panel-background: #fff;
+  --border-color: #4b5563;
+  --text-color: #21336a;
+  --secondary-text-color: #9ca3af;
+  --box-shadow: rgba(0, 0, 0, 0.25);
 }
 
 body {
   background-color: var(--background-color);
   font-family: 'Roboto', sans-serif;
-  color: var(--main-color);
+  color: var(--text-color);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   min-height: 100vh;
   margin: 0;
-  padding-top: 150px; /* To account for the fixed header */
+  padding-top: 60px;
+}
+
+.header-container {
+  padding: 20px 20px 0 20px;
+}
+
+header {
+  background-color: var(--panel-background);
+}
+
+h1 {
+  font-size: 1.75rem; /* Reduced font size */
+  font-weight: 700;
+  color: var(--main-color);
+}
+
+.page {
+  border-left: 2px solid var(--hover-color);
+}
+
+.page span {
+  color: var(--main-color);
 }
 
 .main-container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
+  gap: 3rem;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1000px; /* Reduced panel size */
+  padding: 5rem;
 }
 
 @media (max-width: 768px) {
@@ -43,10 +73,10 @@ body {
 }
 
 .panel {
-  background-color: white;
+  background-color: var(--panel-background);
   border-radius: 1.5rem;
   box-shadow: 0 10px 15px var(--box-shadow);
-  padding: 2.5rem;
+  padding: 3rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -57,49 +87,78 @@ body {
   transform: translateY(-5px);
 }
 
-.panel-header {
-  margin-bottom: 2rem;
-}
-
 .panel-title {
-  font-size: 2.5rem;
+  font-size: 1.75rem; /* Reduced font size */
   font-weight: 700;
   color: var(--main-color);
   text-align: center;
   margin-bottom: 1rem;
 }
 
+.main-display {
+  position: relative;
+  border-radius: 1rem;
+  overflow: hidden;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: #000;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  align-items: center;
+}
+
+.main-display img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  position: absolute;
+}
+
+.main-display img.active {
+  opacity: 1;
+}
+
 .dropdown-container {
   position: relative;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .dropdown-button {
   width: 100%;
-  padding: 1rem 1.5rem;
+  /* padding: 0.75rem 1rem; */
   background-color: var(--background-color);
-  border: 1px solid var(--border-bottom);
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   text-align: left;
-  font-size: 1.125rem;
-  color: var(--main-color);
+  font-size: 1rem;
+  color: var(--text-color);
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   align-items: center;
   cursor: pointer;
   transition: background-color 0.2s;
+  flex-direction: row;
+  justify-content: center;
+  margin-top: 1rem; /* Space between dropdown and display */
 }
 
 .dropdown-button:hover {
-  background-color: #e5e7eb;
+  background-color: var(--border-color);
 }
 
 .dropdown-menu {
   position: absolute;
   width: 100%;
-  background-color: white;
-  border: 1px solid var(--border-bottom);
-  border-radius: 0.75rem;
+  background-color: var(--panel-background);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
   box-shadow: 0 4px 6px var(--box-shadow);
   z-index: 10;
   margin-top: 0.5rem;
@@ -111,6 +170,10 @@ body {
   overflow-y: auto;
 }
 
+.arrow {
+    font-size: 1.5rem;
+}
+
 .dropdown-menu.show {
   opacity: 1;
   visibility: visible;
@@ -119,55 +182,68 @@ body {
 
 .dropdown-menu a {
   display: block;
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 1rem;
   text-decoration: none;
-  color: var(--main-color);
+  color: var(--text-color);
   transition: background-color 0.2s;
 }
 
 .dropdown-menu a:hover {
-  background-color: var(--background-color);
-}
-
-.main-display {
-  border: 1px solid var(--border-bottom);
-  border-radius: 1rem;
-  overflow: hidden;
-  position: relative;
-  min-height: 300px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background-color: var(--background-color);
-}
-
-.main-display img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  position: absolute;
-}
-
-.main-display img.active {
-  opacity: 1;
+  background-color: var(--border-color);
+  color: var(--panel-background);
 }
 
 .view-page-button {
-  margin-top: 1.5rem;
-  padding: 0.75rem 2rem;
-  background-color: var(--main-color);
-  color: white;
-  border-radius: 0.5rem;
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1rem;
+  width: 50px;
+  height: 30px;
+  background-color: var(--border-color);
+  color: var(--panel-background);
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 400;
   transition: background-color 0.2s, transform 0.2s;
+  z-index: 5;
+  font-size: 15px;
+  box-shadow: 0 4px 6px var(--box-shadow);
 }
 
 .view-page-button:hover {
-  background-color: var(--hover-color);
-  transform: translateY(-2px);
+  background-color: #c99c54;
+  transform: scale(1.05);
 }
+
+/* Style for the column containing the image */
+.image-column {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Style for the image itself within the image-column */
+.full-height-image {
+    max-width: 100%;
+    width: 500px;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Footer with Zyntel logo */
+/* footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  color: var(--secondary-text-color);
+  font-size: 0.875rem;
+} */

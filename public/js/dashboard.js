@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         viewBtn.href = links[index].href;
         
         // Show the button and hide the overlay if it was there
-        viewBtn.style.display = 'block';
+        viewBtn.style.display = 'flex';
 
         // Update dropdown button text
         const dropdownBtn = mainDisplay.previousElementSibling.querySelector('.dropdown-button span');
