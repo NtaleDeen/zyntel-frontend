@@ -30,7 +30,17 @@ function capitalizeWords(str) {
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-// The filtering function is also moved here to be reusable.
+/**
+ * Main function to apply all filters to the revenue data.
+ * @param {Array} allData The full dataset from the API.
+ * @param {string} startDateInputId The ID of the start date input.
+ * @param {string} endDateInputId The ID of the end date input.
+ * @param {string} periodSelectId The ID of the period select dropdown.
+ * @param {string} labSectionFilterId The ID of the lab section select dropdown.
+ * @param {string} shiftFilterId The ID of the shift select dropdown.
+ * @param {string} hospitalUnitFilterId The ID of the hospital unit select dropdown.
+ * @returns {Array} The filtered data.
+ */
 export function applyRevenueFilters(allData, startDateInputId, endDateInputId, periodSelectId, labSectionFilterId, shiftFilterId, hospitalUnitFilterId) {
     const startDateStr = document.getElementById(startDateInputId)?.value;
     const endDateStr = document.getElementById(endDateInputId)?.value;
@@ -38,9 +48,10 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
     const labSection = document.getElementById(labSectionFilterId)?.value;
     const shift = document.getElementById(shiftFilterId)?.value;
     const hospitalUnit = document.getElementById(hospitalUnitFilterId)?.value;
+
     let filteredData = [...allData];
 
-    // Filter by date range (keep as is, assuming parsedEncounterDate is correctly set in revenue.js)
+    // Filter by date range
     if (startDateStr && endDateStr) {
         const startDate = moment.utc(startDateStr).startOf('day');
         const endDate = moment.utc(endDateStr).endOf('day');
@@ -51,7 +62,7 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
         });
     }
 
-    // Filter by period (keep as is)
+    // Filter by period
     if (period) {
         const now = moment.utc();
         let startDate, endDate;
@@ -92,21 +103,21 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
         }
     }
 
-    // Filter by lab section - Convert to uppercase for consistent comparison
+    // Filter by lab section - CORRECTED: Using 'row.lab_section' from the API data
     if (labSection && labSection !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.LabSection?.toUpperCase() === labSection.toUpperCase()
+            row.lab_section?.toUpperCase() === labSection.toUpperCase()
         );
     }
 
-    // Filter by shift - Convert to uppercase for consistent comparison
+    // Filter by shift
     if (shift && shift !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.Shift?.toUpperCase() === shift.toUpperCase()
+            row.shift?.toUpperCase() === shift.toUpperCase()
         );
     }
 
-    // Filter by hospital unit - Corrected logic to use the 'unit' property from the API response
+    // Filter by hospital unit
     if (hospitalUnit && hospitalUnit !== 'all') {
         const filterUnit = hospitalUnit.toUpperCase();
 
@@ -117,11 +128,6 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
         } else if (filterUnit === "ANNEX") {
             filteredData = filteredData.filter(row =>
                 annexUnits.map(u => u.toUpperCase()).includes(row.unit?.toUpperCase())
-            );
-        } else {
-            // This part might not be needed based on your current HTML, but good to have for robustness
-            filteredData = filteredData.filter(row =>
-                row.unit?.toUpperCase() === filterUnit
             );
         }
     }
@@ -179,7 +185,6 @@ export function populateHospitalUnitFilter(allData) {
 
     // No need to populate unitSelect here. It's handled by populateChartUnitSelect in revenue.js
 }
-
 
 // Function to attach all event listeners for the filters
 export function attachRevenueFilterListeners(processData) {
