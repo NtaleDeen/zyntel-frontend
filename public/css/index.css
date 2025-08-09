@@ -11,8 +11,8 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    padding: 40px;
-    padding-top: 80px;
+
+    padding: 30px 50px;
     box-sizing: border-box;
 
     column-gap: 30px; /* Gap between columns */
@@ -23,8 +23,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100px;
-    padding: 15px;
+    height: 100vh;
 }
 
 /* Style for the image itself within the image-column */
@@ -38,7 +37,7 @@ body {
 /* Style for the column containing the login box */
 .login-column {
     display: flex;
-    align-items: flex-start; /* Align login-box to the top of its column */
+    align-items: center; /* Align login-box to the top of its column */
     justify-content: center;
     height: 100vh;
     padding: 20px;
