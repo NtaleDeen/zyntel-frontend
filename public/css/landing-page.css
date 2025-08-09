@@ -43,7 +43,7 @@ body {
 
 header {
   background-color: var(--panel-background);
-  height: 70px;
+  height: 80px;
 }
 
 h1 {
@@ -52,6 +52,26 @@ h1 {
   color: var(--main-color);
 }
 
+
+
+.logout-button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  cursor: pointer;
+  background-color: var(--background-2-color);
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 400;
+  transition: background-color 0.2s, transform 0.2s;
+  font-size: 15px;
+  box-shadow: 0 4px 6px var(--box-shadow);
+  align-items: center;
+}
+
+.logout-button:hover {
+  background-color: var(--border-color);
+  transform: scale(1.05);
+}
 .page {
   border-left: 2px solid var(--hover-color);
 }
@@ -107,18 +127,17 @@ h1 {
   /* border: 1px solid var(--background-color); */
   border-radius: 0.5rem;
   text-align: center;
-  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   transition: background-color 0.2s;
   box-shadow: 0 4px 6px var(--box-shadow);
 }
 
 .image-title span {
-    font-size: 1rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--background-color);
 }
@@ -251,10 +270,12 @@ h1 {
 
 /* Footer with Zyntel logo */
 footer {
-  position: absolute; /* Changed to absolute to be relative to the body */
-  bottom: 0.5rem; /* Positioning at the bottom */
-  left: 1rem; /* Positioning on the left */
+  position: fixed;
+  padding: 1rem;
+  right: 1rem; /* Positioning on the left */
+  bottom: 1rem;
   z-index: 99; /* Ensures it's above other content */
+  margin-top: auto;
 }
 
 .footer-logo {

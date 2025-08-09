@@ -1,5 +1,14 @@
 // dashboard.js
 
+// Import the centralized authentication functions.
+import { checkAuthAndRedirect, getToken } from "./auth.js";
+
+// Immediately check authentication on page load.
+checkAuthAndRedirect();
+
+// Register the datalabels plugin globally
+Chart.register(ChartDataLabels);
+
 document.addEventListener('DOMContentLoaded', () => {
     // Select elements from the DOM
     const dashboardPanel = document.getElementById('dashboard-panel');
