@@ -69,12 +69,12 @@ export function applyTATFilters(allData) {
 
   if (startDateInput?.value) {
     // Parse the input date as EAT, and set it to 8 AM EAT
-    filterStartDate = window.moment.tz(startDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi");
+    filterStartDate = window.moment(startDateInput.value + " 08:00:00", "YYYY-MM-DD HH:mm:ss");
   }
 
   if (endDateInput?.value) {
     // Parse the input date as EAT, and set it to 7:59:59 AM EAT on the *next* day
-    filterEndDate = window.moment.tz(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss", "Africa/Nairobi").add(1, 'day');
+    filterEndDate = window.moment(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss").add(1, 'day');
   }
 
   const filteredData = allData.filter((row) => {
@@ -208,7 +208,7 @@ function initializeFilterListeners(callback) {
 export function updateDatesForPeriod(period) {
   // All date calculations for periods should be based on EAT timezone,
   // then format for the input fields.
-  const nowEAT = window.moment().tz("Africa/Nairobi");
+  const nowEAT = window.moment();
   let startDateEAT, endDateEAT;
 
   switch (period) {
