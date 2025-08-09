@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tatImageTitle = document.getElementById('tat-image-title');
 
     const dashboardLinks = Array.from(dashboardDropdownMenu.querySelectorAll('a'));
-    const tatLinks = Array.from(tatDropdownMenu.querySelectorAll('a'));
+    const tatLinks = Array.from(tatDropdownMenu.querySelectorAll('a'));    
+    const logoutButton = document.getElementById('logout-button');
 
     // Variables for the animation and idle timer
     let currentDashboardIndex = 0;
@@ -120,6 +121,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', resetIdleTimer);
     document.addEventListener('mousemove', resetIdleTimer);
     document.addEventListener('keypress', resetIdleTimer);
+
+    // Select the logout button and add an event listener
+    logoutButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearSession();
+        window.location.href = "/index.html";
+    });
 
     dashboardDropdownBtn.addEventListener('click', (e) => {
         e.stopPropagation();
