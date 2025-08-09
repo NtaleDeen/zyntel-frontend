@@ -1,7 +1,7 @@
 // dashboard.js
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
@@ -129,11 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', resetIdleTimer);
     document.addEventListener('keypress', resetIdleTimer);
 
+    // Add a pageshow event listener to re-check auth if the user
+    // navigates back using the browser's back button.
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            checkAuthAndRedirect();
+        }
+    });
+
     // Select the logout button and add an event listener
     logoutButton.addEventListener('click', (e) => {
         e.preventDefault();
+        // Clear the user's session data
         clearSession();
-        window.location.href = "/index.html";
+        // Redirect to the login page, replacing the current history entry
+        window.location.replace("/index.html");
     });
 
     dashboardDropdownBtn.addEventListener('click', (e) => {
