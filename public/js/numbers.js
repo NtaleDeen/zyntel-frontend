@@ -1,26 +1,14 @@
 // numbers.js - Complete version sharing filters with TAT page
+
 // Check session validity and user match
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const currentUser = localStorage.getItem('zyntelUser');
+// Import the centralized authentication functions.
+import { checkAuthAndRedirect, getToken } from "./auth.js";
 
-    if (!session || !session.token || session.username !== currentUser) {
-        // Session invalid or belongs to another user
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
+// Immediately check authentication on page load.
+checkAuthAndRedirect();
 
-// Check token session and user validity
-(function checkSession() {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const storedUser = localStorage.getItem('zyntelUser');
-
-    if (!session || !session.token || session.username !== storedUser) {
-        window.location.href = '/index.html'; // force re-login
-    }
-})();
+// Register the datalabels plugin globally
+Chart.register(ChartDataLabels);
 
 import {
   initCommonDashboard,
@@ -58,14 +46,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Load data from database API
 async function loadData() {
-  // In the `loadData` function, you will need to add the JWT token to the fetch request headers
-  const token = localStorage.getItem('token');
-  if (!token) {
-      // This case is already handled by checkAuthAndRedirect(), but this is a good
-      // defensive measure to prevent an unauthenticated request.
-      console.error("No token found for API request.");
-      return;
-  }
+    // Get the JWT token using the centralized function
+    const token = getToken();
+    if (!token) {
+        console.error("No JWT token found. Aborting data load.");
+        // Stop execution if no token is found
+        return; 
+    }
 
   try {
     const response = await fetch(API_URL, {
