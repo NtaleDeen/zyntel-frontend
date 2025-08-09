@@ -30,6 +30,7 @@ body {
 .full-height-image {
     max-width: 100%;
     width: 500px;
+    padding: 20px;
     height: auto;
     object-fit: contain;
 }
