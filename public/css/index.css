@@ -15,7 +15,7 @@ body {
     padding: 30px 50px;
     box-sizing: border-box;
 
-    column-gap: 30px; /* Gap between columns */
+    column-gap: 10px; /* Gap between columns */
 }
 
 /* Style for the column containing the image */
