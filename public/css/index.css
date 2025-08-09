@@ -52,7 +52,7 @@ body {
     padding: 30px;
     text-align: center;
     width: 90%;
-    max-width: 300px;
+    max-width: 350px;
     box-shadow: 0 0 20px var(--glow-color, #00f0ffb3); /* Use variable for color */
     border: 1px solid #00eeff20;
     /* margin-bottom: 50px; */
