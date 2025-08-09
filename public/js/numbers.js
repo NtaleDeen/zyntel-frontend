@@ -26,12 +26,9 @@ const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", async () => {
-  // Add the check here as the very first action
-  checkAuthAndRedirect();
-  
   console.log("Numbers Dashboard initializing...");
-  await loadData();
-  // Call initCommonDashboard passing processNumbersData as the callback
+  // FIX: Change 'loadData' to 'loadAndRender'
+  await loadAndRender();
   initCommonDashboard(processNumbersData);
 });
 

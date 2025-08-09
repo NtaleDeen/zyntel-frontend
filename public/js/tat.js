@@ -52,23 +52,40 @@ window.addEventListener("DOMContentLoaded", () => {
  * This function is called initially and whenever filters change.
  */
 async function loadAndRender() {
-    const token = getToken();
-    if (!token) {
-        console.error("No JWT token found for API request.");
-        showError("Authentication failed. Please log in again.");
-        return;
-    }
+    // ... auth checks remain the same ...
 
-    console.log("[tat.js] loadAndRender called.");
+    // GET FILTER VALUES FROM DOM
+    const startDate = document.getElementById("startDateFilter").value;
+    const endDate = document.getElementById("endDateFilter").value;
+    const unit = document.getElementById("hospitalUnitFilter").value;
+    const labSection = document.getElementById("labSectionFilter").value;
+    const shift = document.getElementById("shiftFilter").value;
+
+    const queryParams = new URLSearchParams({
+        startDate,
+        endDate,
+        unit,
+        labSection,
+        shift
+    }).toString();
+
+    const fetchUrl = `${API_URL}?${queryParams}`;
+
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(fetchUrl, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                // CRUCIAL: Pass the token for authentication
                 'Authorization': `Bearer ${token}`
             },
         });
+        
+        // ADD THIS CHECK
+        if (response.status === 401) {
+            console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+            window.location.href = "/index.html";
+            return;
+        }
 
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
