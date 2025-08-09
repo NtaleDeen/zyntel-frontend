@@ -23,7 +23,11 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+}
+
+.image-column, .login-column {
+    height: auto;
+    min-height: 100vh; /* ensures they at least fill the screen */
 }
 
 /* Style for the image itself within the image-column */
