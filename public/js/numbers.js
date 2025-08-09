@@ -24,15 +24,6 @@ let filteredData = [];
 // Changed: Use the same API endpoint as tat.js
 const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
-// Add this function at the top, before the event listener
-function checkAuthAndRedirect() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        // Redirect to the login page if no token is found
-        window.location.href = '/index.html';
-    }
-}
-
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", async () => {
   // Add the check here as the very first action
