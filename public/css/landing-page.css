@@ -14,6 +14,7 @@
   --canvas-color: #fff;
   --hover-color: rgb(222, 171, 95);
   --background-color: #21336a; /* Adopted from index.css */
+  --background-2-color: #0a0a0a;
   --panel-background: #fff;
   --border-color: #4b5563;
   --text-color: #21336a;
@@ -31,15 +32,18 @@ body {
   align-items: center;
   min-height: 100vh;
   margin: 0;
-  padding-top: 60px;
+  padding: 60px 0 0 0; /* Adjusted padding to ensure content fits */
+  position: relative; /* Added for absolute positioning of the footer */
+  overflow: hidden; /* Added to prevent all scrolling */
 }
 
 .header-container {
-  padding: 20px 20px 0 20px;
+  padding: 15px 20px 0 20px;
 }
 
 header {
   background-color: var(--panel-background);
+  height: 70px;
 }
 
 h1 {
@@ -63,6 +67,8 @@ h1 {
   width: 100%;
   max-width: 1000px; /* Reduced panel size */
   padding: 5rem;
+  box-sizing: border-box; /* Ensures padding is included in the element's total width and height */
+  flex-grow: 1; /* Allows the main container to take up available space */
 }
 
 @media (max-width: 768px) {
@@ -95,6 +101,28 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.image-title {
+  width: 100%;
+  /* background-color: var(--background-color); */
+  /* border: 1px solid var(--background-color); */
+  border-radius: 0.5rem;
+  text-align: center;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 6px var(--box-shadow);
+}
+
+.image-title span {
+    font-size: 1rem;
+  font-weight: 700;
+  color: var(--background-color);
+}
+
 .main-display {
   position: relative;
   border-radius: 1rem;
@@ -106,7 +134,7 @@ h1 {
   align-items: center;
   text-align: center;
   background-color: #000;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0; /* Reduced space */
   width: 100%;
   padding: 0.75rem 1rem;
   align-items: center;
@@ -125,82 +153,13 @@ h1 {
   opacity: 1;
 }
 
-.dropdown-container {
-  position: relative;
-  margin-bottom: 1rem;
-}
-
-.dropdown-button {
-  width: 100%;
-  /* padding: 0.75rem 1rem; */
-  background-color: var(--background-color);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  text-align: left;
-  font-size: 1rem;
-  color: var(--text-color);
-  display: flex;
-  /* justify-content: space-between; */
-  align-items: center;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  flex-direction: row;
-  justify-content: center;
-  margin-top: 1rem; /* Space between dropdown and display */
-}
-
-.dropdown-button:hover {
-  background-color: var(--border-color);
-}
-
-.dropdown-menu {
-  position: absolute;
-  width: 100%;
-  background-color: var(--panel-background);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px var(--box-shadow);
-  z-index: 10;
-  margin-top: 0.5rem;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-10px);
-  transition: opacity 0.2s, transform 0.2s;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.arrow {
-    font-size: 1.5rem;
-}
-
-.dropdown-menu.show {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.dropdown-menu a {
-  display: block;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: var(--text-color);
-  transition: background-color 0.2s;
-}
-
-.dropdown-menu a:hover {
-  background-color: var(--border-color);
-  color: var(--panel-background);
-}
-
 .view-page-button {
   position: absolute;
   bottom: 1.5rem;
   right: 1rem;
   width: 50px;
   height: 30px;
-  background-color: var(--border-color);
-  color: var(--panel-background);
+  background-color: var(--background-2-color);
   border-radius: 10px;
   display: flex;
   justify-content: center;
@@ -214,36 +173,91 @@ h1 {
 }
 
 .view-page-button:hover {
-  background-color: #c99c54;
+  background-color: var(--border-color);
   transform: scale(1.05);
 }
 
-/* Style for the column containing the image */
-.image-column {
-    display: flex;
-    justify-content: left;
-    align-items: center;
-    height: 100vh;
+.dropdown-container {
+  position: relative;
+  margin-top: 1rem;
+  margin-bottom: 0; /* Reduced space */
 }
 
-/* Style for the image itself within the image-column */
-.full-height-image {
-    max-width: 100%;
-    width: 500px;
-    height: auto;
-    object-fit: contain;
+.dropdown-button {
+  width: 100%;
+  background-color: var(--background-2-color);
+  border-radius: 1rem;
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  font-size: 14px;
+  color: var(--panel-background); /* Corrected text color */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.arrow {
+    font-size: 1.5rem;
+}
+
+.dropdown-button span {
+  color: var(--panel-background); /* Ensures the text inside the span is the correct color */
+}
+
+.dropdown-button:hover {
+  background-color: var(--border-color);
+  transform: scale(1.05);
+}
+
+.dropdown-menu {
+  position: absolute;
+  width: 100%;
+  background-color: var(--panel-background);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px var(--box-shadow);
+  z-index: 100; /* Increased z-index to ensure it's on top */
+  margin-top: 0.5rem;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.2s, transform 0.2s;
+  max-height: 80px; /* Added max-height to prevent overflow */
+  overflow-y: auto; /* Added for scrolling within the dropdown */
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 0.25rem 1rem;
+  /* font-size: 13.5px; */
+  text-decoration: none;
+  color: var(--text-color);
+  transition: background-color 0.2s;
+}
+
+.dropdown-menu a:hover {
+  background-color: var(--border-color);
+  color: var(--panel-background);
 }
 
 /* Footer with Zyntel logo */
-/* footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 1rem;
-  display: flex;
-  justify-content: left;
-  align-items: center;
-  color: var(--secondary-text-color);
-  font-size: 0.875rem;
-} */
+footer {
+  position: absolute; /* Changed to absolute to be relative to the body */
+  bottom: 0.5rem; /* Positioning at the bottom */
+  left: 1rem; /* Positioning on the left */
+  z-index: 99; /* Ensures it's above other content */
+}
+
+.footer-logo {
+  width: 200px; /* Set a specific size for the logo */
+  height: auto;
+}

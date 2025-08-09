@@ -9,11 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardDropdownMenu = document.getElementById('dashboard-dropdown-menu');
     const dashboardMainDisplay = document.getElementById('dashboard-main-display');
     const dashboardViewBtn = document.getElementById('dashboard-view-btn');
+    const dashboardImageTitle = document.getElementById('dashboard-image-title'); 
 
     const tatDropdownBtn = document.getElementById('tat-dropdown-btn');
     const tatDropdownMenu = document.getElementById('tat-dropdown-menu');
     const tatMainDisplay = document.getElementById('tat-main-display');
     const tatViewBtn = document.getElementById('tat-view-btn');
+    const tatImageTitle = document.getElementById('tat-image-title');
 
     const dashboardLinks = Array.from(dashboardDropdownMenu.querySelectorAll('a'));
     const tatLinks = Array.from(tatDropdownMenu.querySelectorAll('a'));
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTATIndex = 0;
     let intervalId = null;
     let timeoutId = null;
-    const animationDelay = 3000; // Animation interval in milliseconds (3 seconds)
+    const animationDelay = 6000; // Animation interval in milliseconds (6 seconds)
     const idleTime = 30000; // Idle time before animation starts in milliseconds (30 seconds)
 
     // Function to initialize the panels with the default values
@@ -34,36 +36,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (defaultDashboardLink) {
             currentDashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
-            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
         }
 
         if (defaultTatLink) {
             currentTATIndex = tatLinks.indexOf(defaultTatLink);
-            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
         }
     }
 
     // Function to update a panel's main display
-    function updatePanel(panelId, index, links, mainDisplay, viewBtn) {
+    function updatePanel(panelId, index, links, mainDisplay, viewBtn, imageTitleElement) {
         // Create an image element if it doesn't exist
         let img = mainDisplay.querySelector('.page-image');
         if (!img) {
             img = document.createElement('img');
-            img.className = 'page-image active';
+            img.className = 'page-image';
             img.alt = 'Page Preview';
-            mainDisplay.appendChild(img);
+            mainDisplay.prepend(img);
         }
         
         // Update the image source and link
         img.src = links[index].dataset.image;
         viewBtn.href = links[index].href;
         
-        // Show the button and hide the overlay if it was there
+        // Show the button and make the image active
         viewBtn.style.display = 'flex';
+        img.classList.add('active');
 
-        // Update dropdown button text
-        const dropdownBtn = mainDisplay.previousElementSibling.querySelector('.dropdown-button span');
-        dropdownBtn.textContent = links[index].textContent;
+        // Update the new image title element's text content
+        imageTitleElement.querySelector('span').textContent = links[index].textContent;
     }
     
     // Function to animate the panels
@@ -80,9 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentDashboardIndex = (currentDashboardIndex + 1) % dashboardTotal;
             currentTATIndex = (currentTATIndex + 1) % tatTotal;
 
-            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
-            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
-        }, animationDelay); // Change image every 3 seconds
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
+        }, animationDelay); // Change image every 6 seconds
     }
 
     function stopAnimation() {
@@ -136,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             dashboardDropdownMenu.classList.remove('show');
             currentDashboardIndex = index;
-            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn);
+            updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
             resetIdleTimer();
         });
     });
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             tatDropdownMenu.classList.remove('show');
             currentTATIndex = index;
-            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn);
+            updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
             resetIdleTimer();
         });
     });

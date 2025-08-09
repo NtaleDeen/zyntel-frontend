@@ -7,7 +7,6 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
     </style>
-    <!-- Link to the new independent CSS file -->
     <link rel="stylesheet" href="../css/general.css" />
     <link rel="stylesheet" href="../css/landing-page.css" />
   </head>
@@ -27,13 +26,14 @@
     </header>
 
     <div class="main-container">
-      <!-- Dashboard Panel -->
       <div class="panel" id="dashboard-panel">
         <div class="panel-header">
           <h2 class="panel-title">Dashboards</h2>
+          <div class="image-title" id="dashboard-image-title">
+            <span>Dashboard Title</span>
+          </div>
           <div class="main-display" id="dashboard-main-display">
-            <a href="#" class="view-page-button" id="dashboard-view-btn" style="display: none;">View</a>
-            <!-- Images are loaded by JavaScript -->
+            <a href="#" class="view-page-button" id="dashboard-view-btn">View</a>
           </div>
           <div class="dropdown-container">
             <button class="dropdown-button" id="dashboard-dropdown-btn">
@@ -41,21 +41,22 @@
               <span class="arrow">&#9662;</span>
             </button>
             <div class="dropdown-menu" id="dashboard-dropdown-menu">
-              <a href="revenue.html" data-image="https://placehold.co/600x400/21336a/ffffff?text=Revenue">Revenue</a>
-              <a href="numbers.html" data-image="https://placehold.co/600x400/deab5f/ffffff?text=Numbers">Numbers</a>
-              <a href="tat.html" data-image="https://placehold.co/600x400/21336a/ffffff?text=TAT">TAT</a>
+              <a href="revenue.html" data-image="../images/stats-concept-with-wood-blocks.jpg">Revenue</a>
+              <a href="numbers.html" data-image="../images/e35316c2-b391-4bd4-ac99-06214bc0193b.jpg">Numbers</a>
+              <a href="tat.html" data-image="../images/vecteezy_close-up-of-laptop-screen-showing-colorful-website-traffic_50054370.jpg">TAT</a>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- TAT Panel -->
       <div class="panel" id="tat-panel">
         <div class="panel-header">
           <h2 class="panel-title">TAT</h2>
+          <div class="image-title" id="tat-image-title">
+            <span>TAT Title</span>
+          </div>
           <div class="main-display" id="tat-main-display">
-            <a href="#" class="view-page-button" id="tat-view-btn" style="display: none;">View Page</a>
-            <!-- Images are loaded by JavaScript -->
+            <a href="#" class="view-page-button" id="tat-view-btn">View</a>
           </div>
           <div class="dropdown-container">
             <button class="dropdown-button" id="tat-dropdown-btn">
@@ -63,25 +64,20 @@
               <span class="arrow">&#9662;</span>
             </button>
             <div class="dropdown-menu" id="tat-dropdown-menu">
-              <a href="reception.html" data-image="https://placehold.co/600x400/deab5f/ffffff?text=Reception">Reception</a>
-              <a href="progress.html" data-image="https://placehold.co/600x400/21336a/ffffff?text=Progress">Progress</a>
-              <a href="perfomance.html" data-image="https://placehold.co/600x400/deab5f/ffffff?text=Performance">Performance</a>
-              <a href="tracker.html" data-image="https://placehold.co/600x400/21336a/ffffff?text=Tracker">Tracker</a>
+              <a href="reception.html" data-image="../images/dark-skinned-woman-colleagues-corporate-start-up-office-working-finish-project-diverse-team-business-people-analyzing-company-financial-reports-from-computer.jpg">Reception</a>
+              <a href="progress.html" data-image="../images/business-person-looking-finance-graphs.jpg">Progress</a>
+              <a href="perfomance.html" data-image="../images/young-woman-analysing-charts-laptop-start-up-business-meeting-room.jpg">Performance</a>
+              <a href="tracker.html" data-image="../images/close-up-executive-working-with-his-tablet.jpg">Tracker</a>
             </div>
           </div>
         </div>
       </div>
-
-      
     </div>
     
     <footer>
-      <div class="image-column">
-        <img src="../images/zyntel_no_background.png" alt="Zyntel Icon" class="full-height-image">
-      </div>
+      <img src="../images/zyntel_no_background.png" alt="Zyntel Icon" class="footer-logo">
     </footer>
     
-    <!-- Link to the new independent JS file -->
     <script src="../js/dashboard.js"></script>
   </body>
 </html>
