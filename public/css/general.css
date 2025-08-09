@@ -30,7 +30,7 @@ header {
   left: 0;
   width: 100%;
   z-index: 1000;
-  background-color: var(--main-trans-color);
+  background-color: var(--background-color);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   height: 90px;
 }
@@ -38,6 +38,7 @@ header {
 body {
   margin: 0;
   padding-top: 150px; /* Adjusted padding-to... */
+  background-color: var(--main-trans-color);
 }
 
 /* header h1,
