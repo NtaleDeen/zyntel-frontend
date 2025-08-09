@@ -8,10 +8,24 @@ import { checkAuthAndRedirect, getToken } from "./auth.js";
 
 // 2. Immediately check authentication on page load.
 // This single call replaces all previous, duplicated auth checks.
+// Ensure the plugin is registered before any chart is created
+Chart.register(ChartDataLabels);
+
+// Auth check (must be early so unauthorized users are redirected)
 checkAuthAndRedirect();
 
-// Register the datalabels plugin globally
-Chart.register(ChartDataLabels);
+// API URL
+const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
+
+// DOMContentLoaded event to start dashboard initialization
+window.addEventListener("DOMContentLoaded", () => {
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth");
+    }
+    initCommonDashboard(loadAndRender);
+});
 
 import {
   parseTATDate,
@@ -23,7 +37,6 @@ import {
 // Global chart instances to ensure they can be destroyed and recreated
 let allData = [];
 let filteredData = [];
-const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 let tatPieChart = null;
 let tatLineChart = null;
 let tatHourlyLineChart = null;

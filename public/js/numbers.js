@@ -4,12 +4,25 @@
 import { checkAuthAndRedirect, getToken } from "./auth.js";
 
 // Immediately check authentication on page load.
-checkAuthAndRedirect();
-
-// Register the datalabels plugin globally
+// Ensure the plugin is registered before any chart is created
 Chart.register(ChartDataLabels);
 
-import Chart from "chart.js/auto";
+// Auth check (must be early so unauthorized users are redirected)
+checkAuthAndRedirect();
+
+// API URL
+const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
+
+// DOMContentLoaded event to start dashboard initialization
+window.addEventListener("DOMContentLoaded", () => {
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth");
+    }
+    initCommonDashboard(loadAndRender);
+});
+
 import "chartjs-adapter-moment";
 import {
   initCommonDashboard,
@@ -23,8 +36,6 @@ let dailyNumbersBarChart = null;
 let hourlyNumbersLineChart = null;
 let allData = [];
 let filteredData = [];
-// Changed: Use the same API endpoint as tat.js
-const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
 // Loading Spinner Functions
 function showLoadingSpinner() {
