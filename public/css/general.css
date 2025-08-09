@@ -174,6 +174,56 @@ select:focus {
   border-color: var(--main-color);
 }
 
+.wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.loader {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: #21336a;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+}
+
+.loader .loading {
+  background: #deab5f;
+  width: 30px;
+  height: 30px;
+  border-radius: 50px;
+  margin: 0 10px;
+  animation: load 0.8s ease infinite;
+}
+
+.loader .loading.one {
+  animation-delay: 0.3s;
+}
+.loader .loading.two {
+  animation-delay: 0.4s;
+}
+.loader .loading.three {
+  animation-delay: 0.5s;
+}
+
+@keyframes load {
+  0% {
+    width: 30px;
+    height: 30px;
+  }
+  50% {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 main.dashboard-layout {
   display: flex;
   gap: 2rem;
