@@ -11,8 +11,8 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    /* padding: 40px; */
-    padding-top: 60px;
+    padding: 40px;
+    /* padding-top: 0px; */
     box-sizing: border-box;
 
     column-gap: 30px; /* Gap between columns */
