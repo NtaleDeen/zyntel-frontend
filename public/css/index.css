@@ -55,7 +55,7 @@ body {
     max-width: 300px;
     box-shadow: 0 0 20px var(--glow-color, #00f0ffb3); /* Use variable for color */
     border: 1px solid #00eeff20;
-    margin-bottom: 50px;
+    /* margin-bottom: 50px; */
 }
 
 /* Your existing #pulsingIcon styles */
