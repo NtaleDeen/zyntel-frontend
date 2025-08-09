@@ -78,7 +78,7 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
                 break;
             case "lastYear":
                 startDate = now.clone().subtract(1, "year").startOf("year");
-                endDate = now.clone().endOf("year");
+                endDate = now.clone().subtract(1, "year").endOf("year");
                 break;
             default:
                 break;
@@ -95,33 +95,33 @@ export function applyRevenueFilters(allData, startDateInputId, endDateInputId, p
     // Filter by lab section - Convert to uppercase for consistent comparison
     if (labSection && labSection !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.LabSection.toUpperCase() === labSection.toUpperCase()
+            row.LabSection?.toUpperCase() === labSection.toUpperCase()
         );
     }
 
     // Filter by shift - Convert to uppercase for consistent comparison
     if (shift && shift !== 'all') {
         filteredData = filteredData.filter(row =>
-            row.Shift.toUpperCase() === shift.toUpperCase()
+            row.Shift?.toUpperCase() === shift.toUpperCase()
         );
     }
 
-    // Filter by hospital unit - Convert to uppercase for consistent comparison
+    // Filter by hospital unit - Corrected logic to use the 'unit' property from the API response
     if (hospitalUnit && hospitalUnit !== 'all') {
-        const rowUnit = row.Hospital_Unit ? row.Hospital_Unit.toUpperCase() : '';
         const filterUnit = hospitalUnit.toUpperCase();
 
         if (filterUnit === "MAINLAB") {
             filteredData = filteredData.filter(row =>
-                mainLaboratoryUnits.map(u => u.toUpperCase()).includes(rowUnit)
+                mainLaboratoryUnits.map(u => u.toUpperCase()).includes(row.unit?.toUpperCase())
             );
         } else if (filterUnit === "ANNEX") {
             filteredData = filteredData.filter(row =>
-                annexUnits.map(u => u.toUpperCase()).includes(rowUnit)
+                annexUnits.map(u => u.toUpperCase()).includes(row.unit?.toUpperCase())
             );
         } else {
+            // This part might not be needed based on your current HTML, but good to have for robustness
             filteredData = filteredData.filter(row =>
-                rowUnit === filterUnit
+                row.unit?.toUpperCase() === filterUnit
             );
         }
     }
@@ -138,7 +138,7 @@ export function populateLabSectionFilter(allData) {
     labSectionFilter.innerHTML = `<option value="all">All Lab Sections</option>`;
 
     // Dynamically get unique lab sections from data
-    const labSections = [...new Set(allData.map(row => row.LabSection).filter(Boolean))].sort();
+    const labSections = [...new Set(allData.map(row => row.lab_section).filter(Boolean))].sort();
 
     labSections.forEach(section => {
         const option = document.createElement("option");
@@ -156,7 +156,7 @@ export function populateShiftFilter(allData) {
     shiftFilter.innerHTML = `<option value="all">All Shifts</option>`;
 
     // Dynamically get unique shifts from data
-    const shifts = [...new Set(allData.map(row => row.Shift).filter(Boolean))].sort();
+    const shifts = [...new Set(allData.map(row => row.shift).filter(Boolean))].sort();
 
     shifts.forEach(shift => {
         const option = document.createElement("option");
@@ -188,7 +188,7 @@ export function attachRevenueFilterListeners(processData) {
     const periodSelect = document.getElementById("periodSelect");
     const labSectionFilter = document.getElementById("labSectionFilter");
     const shiftFilter = document.getElementById("shiftFilter");
-    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter"); // Corrected ID
+    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
     const unitSelect = document.getElementById("unitSelect"); // The existing unitSelect for charts
 
 
@@ -198,7 +198,7 @@ export function attachRevenueFilterListeners(processData) {
         periodSelect,
         labSectionFilter,
         shiftFilter,
-        hospitalUnitFilter, // Corrected ID
+        hospitalUnitFilter,
         unitSelect
     ];
 
