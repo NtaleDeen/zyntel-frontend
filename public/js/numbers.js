@@ -13,17 +13,6 @@ checkAuthAndRedirect();
 // API URL
 const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
-// DOMContentLoaded event to start dashboard initialization
-window.addEventListener("DOMContentLoaded", () => {
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod("thisMonth");
-    }
-    initCommonDashboard(loadAndRender);
-});
-
-import "chartjs-adapter-moment";
 import {
   initCommonDashboard,
   applyTATFilters,
@@ -113,7 +102,6 @@ async function loadAndRender() {
   }
 }
 
-
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Numbers Dashboard initializing...");
@@ -127,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize common dashboard elements, including rendering filters.
   initCommonDashboard(loadAndRender);
 });
+
 // Process data and update all visualizations
 function processNumbersData() {
   console.log("Processing numbers data...");

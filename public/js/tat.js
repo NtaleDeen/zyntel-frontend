@@ -17,16 +17,6 @@ checkAuthAndRedirect();
 // API URL
 const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
-// DOMContentLoaded event to start dashboard initialization
-window.addEventListener("DOMContentLoaded", () => {
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod("thisMonth");
-    }
-    initCommonDashboard(loadAndRender);
-});
-
 import {
   parseTATDate,
   applyTATFilters,
@@ -53,22 +43,6 @@ function hideLoadingSpinner() {
   const loadingOverlay = document.getElementById("loadingOverlay");
   if (loadingOverlay) loadingOverlay.style.display = "none";
 }
-
-// 3. The `DOMContentLoaded` event listener now only handles dashboard initialization,
-// not authentication, as that is already done at the top of the file.
-window.addEventListener("DOMContentLoaded", () => {
-
-  // Set default period to 'thisMonth' and update date inputs before initCommonDashboard
-  const periodSelect = document.getElementById("periodSelect");
-  if (periodSelect) {
-    periodSelect.value = "thisMonth";
-    updateDatesForPeriod("thisMonth"); // Explicitly set dates for 'thisMonth'
-  }
-
-  // Initialize common dashboard elements, including rendering filters.
-  // The loadAndRender function will be called as a callback once filters are set up.
-  initCommonDashboard(loadAndRender);
-});
 
 /**
  * Main function to load data from the database.
@@ -138,6 +112,38 @@ async function loadDatabaseData() {
     hideLoadingSpinner(); // <— end animation
   }
 }
+
+// Main function to fetch, process, and render all dashboard elements.
+async function loadAndRender() {
+  const dbData = await loadDatabaseData();
+  if (dbData) {
+    allData = dbData.map(row => ({
+      ...row,
+      parsedDate: parseTATDate(row.date),
+      timeInHour: row.time_in
+        ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
+        : null,
+      tat: row.request_delay_status || "Not Uploaded",
+    }));
+
+    filteredData = applyTATFilters(allData);
+    processNumbersData();
+  }
+}
+
+// DOM Content Loaded - Initialize everything
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("TAT Dashboard initializing...");
+  // Set default period to 'thisMonth' and update date inputs
+  const periodSelect = document.getElementById("periodSelect");
+  if (periodSelect) {
+    periodSelect.value = "thisMonth";
+    updateDatesForPeriod("thisMonth");
+  }
+
+  // Initialize common dashboard elements, including rendering filters.
+  initCommonDashboard(loadAndRender);
+});
 
 /**
  * Sets the trend arrow (▲ or ▼) and applies green/red coloring based on
