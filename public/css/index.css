@@ -24,6 +24,7 @@ body {
     justify-content: center;
     align-items: center;
     height: 100px;
+    padding: 15px;
 }
 
 /* Style for the image itself within the image-column */
