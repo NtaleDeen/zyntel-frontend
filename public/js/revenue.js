@@ -95,19 +95,29 @@ async function loadDatabaseData() {
     const token = getToken();
     if (!token) {
         console.error("No JWT token found. Aborting data load.");
-        return;
+        // Stop execution if no token is found
+        return; 
     }
 
     try {
         const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
             method: 'GET',
             headers: {
-                'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
         });
 
-        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+        if (response.status === 401) {
+            console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+            // Handle unauthorized access, e.g., by redirecting the user
+            window.location.href = "/index.html"; 
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! ${response.status}`);
+        }
 
         const dbData = await response.json();
 
