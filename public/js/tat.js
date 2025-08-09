@@ -52,12 +52,10 @@ window.addEventListener("DOMContentLoaded", () => {
  * This function is called initially and whenever filters change.
  */
 async function loadAndRender() {
-    // 4. Retrieve the JWT token using the imported `getToken()` function.
     const token = getToken();
     if (!token) {
-        // This defensive check is good practice, even though checkAuthAndRedirect()
-        // should have already handled the case of a missing token.
         console.error("No JWT token found for API request.");
+        showError("Authentication failed. Please log in again.");
         return;
     }
 

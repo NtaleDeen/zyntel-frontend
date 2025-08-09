@@ -45,27 +45,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Load data from database API
-async function loadData() {
-    // Get the JWT token using the centralized function
+// Load data from database API and render charts
+async function loadAndRender() {
     const token = getToken();
     if (!token) {
-        console.error("No JWT token found. Aborting data load.");
-        // Stop execution if no token is found
-        return; 
+        console.error("No token found for API request.");
+        showError("Authentication failed. Please log in again.");
+        return;
     }
 
-  try {
-    const response = await fetch(API_URL, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${token}` // Add the JWT token here
-      },
-    });
+    try {
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}` // Add the JWT token here
+            },
+        });
 
-    if (!response.ok) {
-        throw new Error(`HTTP error! ${response.status}`);
-    }
+        if (!response.ok) {
+            throw new Error(`HTTP error! ${response.status}`);
+        }
 
     const dbData = await response.json();
 
