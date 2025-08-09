@@ -12,6 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // The rest of the script will only run if a valid session exists.
     checkAuthAndRedirect();
 
+    // Add a pageshow event listener to re-check auth if the user
+    // navigates back using the browser's back button.
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+            checkAuthAndRedirect();
+        }
+    });
+
     // Select elements from the DOM
     const dashboardPanel = document.getElementById('dashboard-panel');
     const tatPanel = document.getElementById('tat-panel');
@@ -128,14 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', resetIdleTimer);
     document.addEventListener('mousemove', resetIdleTimer);
     document.addEventListener('keypress', resetIdleTimer);
-
-    // Add a pageshow event listener to re-check auth if the user
-    // navigates back using the browser's back button.
-    window.addEventListener("pageshow", (event) => {
-        if (event.persisted) {
-            checkAuthAndRedirect();
-        }
-    });
 
     // Select the logout button and add an event listener
     logoutButton.addEventListener('click', (e) => {
