@@ -12,7 +12,7 @@ body {
     align-items: center;
     overflow: hidden;
     padding: 60px;
-    /* padding-top: 100px; */
+    padding-top: 80px;
     box-sizing: border-box;
 
     column-gap: 30px; /* Gap between columns */
