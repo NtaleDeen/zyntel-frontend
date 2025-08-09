@@ -11,7 +11,7 @@ body {
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    padding: 40px;
+    /* padding: 40px; */
     padding-top: 60px;
     box-sizing: border-box;
 
