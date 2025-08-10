@@ -47,7 +47,7 @@ const paginationContainer = document.getElementById('pagination-container');
 
 let allRevenueData = [];
 let currentPage = 1;
-const rowsPerPage = 10;
+const rowsPerPage = 25; // Updated to 25 rows per page
 
 /**
  * Helper function to show messages in the message box.
@@ -140,7 +140,7 @@ function renderRevenueTable(data, page) {
 }
 
 /**
- * Creates and renders the pagination controls.
+ * Creates and renders the pagination controls with a limited number of buttons.
  */
 function setupPagination(data) {
     if (!paginationContainer) return;
@@ -160,7 +160,16 @@ function setupPagination(data) {
     });
     paginationContainer.appendChild(prevButton);
 
-    for (let i = 1; i <= pageCount; i++) {
+    // Logic to show a maximum of 5 page buttons
+    const maxButtons = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let endPage = Math.min(pageCount, startPage + maxButtons - 1);
+
+    if (endPage - startPage + 1 < maxButtons) {
+        startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
         btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
@@ -182,6 +191,16 @@ function setupPagination(data) {
         }
     });
     paginationContainer.appendChild(nextButton);
+
+    const endButton = document.createElement('button');
+    endButton.textContent = 'End';
+    endButton.className = 'px-4 py-2 border rounded-md mx-1';
+    endButton.disabled = currentPage === pageCount;
+    endButton.addEventListener('click', () => {
+        currentPage = pageCount;
+        renderRevenueTable(data, currentPage);
+    });
+    paginationContainer.appendChild(endButton);
 }
 
 // Attach the main function call to the DOMContentLoaded event
