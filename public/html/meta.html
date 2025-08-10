@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Revenue Data Table</title>
+    <title>Zyntel Meta Data Table</title>
     <!-- Tailwind CSS CDN -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/general.css" />
@@ -19,7 +19,7 @@
           <h1>Nakasero Hospital Laboratory</h1>
         </div>
         <div class="page page-table">
-          <span>Revenue Table</span>
+          <span>Meta Table</span>
           <a href="#" class="logout-button" id="logout-button">Logout</a>
         </div>
       </div>
@@ -89,7 +89,7 @@
         <section>
             <div class="card">
                 <div class="table-container">
-                    <table id="revenueTable" class="neon-table">
+                    <table id="meta" class="neon-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -99,7 +99,7 @@
                                 <th>Price</th>
                             </tr>
                         </thead>
-                        <tbody id="revenueTableBody">
+                        <tbody id="metaBody">
                             <tr>
                                 <td>Loading data...</td>
                             </tr>
@@ -107,7 +107,7 @@
                     </table>
                     <div id="pagination-container" class="flex justify-center mt-4"></div>
                 </div>
-                <div id="revenueTableMessage" class="message-box hidden"></div>
+                <div id="metaMessage" class="message-box hidden"></div>
             </div>
         </section>
     </main>
@@ -124,6 +124,6 @@
       </div>
     </footer>
 
-    <script type="module" src="../js/revenue-table.js"></script>
+    <script type="module" src="../js/meta.js"></script>
 </body>
 </html>

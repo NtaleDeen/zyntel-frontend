@@ -1,4 +1,4 @@
-// revenue-table.js
+// meta.js
 
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
@@ -30,14 +30,14 @@ function hideLoadingSpinner() {
 }
 
 // ----------------------------------------------------
-// REVENUE TABLE LOGIC
+// META TABLE LOGIC
 // ----------------------------------------------------
-const API_URL = "https://zyntel-data-updater.onrender.com/api/revenue";
-const revenueTableBody = document.getElementById('revenueTableBody');
-const revenueTableMessage = document.getElementById('revenueTableMessage');
+const API_URL = "https://zyntel-data-updater.onrender.com/api/meta";
+const metaBody = document.getElementById('metaBody');
+const metaMessage = document.getElementById('metaMessage');
 const paginationContainer = document.getElementById('pagination-container');
 
-let allRevenueData = [];
+let allmetaData = [];
 let currentPage = 1;
 const rowsPerPage = 25; // Updated to 25 rows per page
 
@@ -51,17 +51,18 @@ function showMessage(element, message, type = 'info') {
 }
 
 /**
- * Fetches revenue data from the API and calls the render function.
+ * Fetches meta data from the API and calls the render function.
  */
-async function fetchRevenueData() {
+async function fetchmetaData() {
     showLoadingSpinner();
-    revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
-    revenueTableMessage.classList.add('hidden');
+    // The colspan is now 4 to match the new number of columns
+    metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+    metaTableMessage.classList.add('hidden');
 
     const token = getToken();
     if (!token) {
-        showMessage(revenueTableMessage, 'Authentication required. Please log in.', 'error');
-        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+        showMessage(metaTableMessage, 'Authentication required. Please log in.', 'error');
+        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
         hideLoadingSpinner();
         return;
     }
@@ -80,19 +81,19 @@ async function fetchRevenueData() {
         }
 
         const data = await response.json();
-        allRevenueData = data;
+        allmetaData = data;
 
-        if (!Array.isArray(allRevenueData) || allRevenueData.length === 0) {
-            revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No revenue data found.</td></tr>`;
+        if (!Array.isArray(allmetaData) || allmetaData.length === 0) {
+            metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
-            renderRevenueTable(allRevenueData, currentPage);
+            rendermetaTable(allmetaData, currentPage);
         }
 
     } catch (error) {
-        console.error('Error fetching revenue data:', error);
-        showMessage(revenueTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+        console.error('Error fetching data:', error);
+        showMessage(metaTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
+        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
         hideLoadingSpinner();
     }
@@ -100,16 +101,16 @@ async function fetchRevenueData() {
 
 
 /**
- * Renders the fetched revenue data into the table with pagination.
+ * Renders the fetched metadata into the table with pagination.
  */
-function renderRevenueTable(data, page) {
-    revenueTableBody.innerHTML = '';
+function rendermetaTable(data, page) {
+    metaTableBody.innerHTML = '';
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginatedData = data.slice(start, end);
 
     if (paginatedData.length === 0) {
-        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
         return;
     }
 
@@ -117,13 +118,12 @@ function renderRevenueTable(data, page) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-100';
         tr.innerHTML = `
-            <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
-            <td>${row.unit || 'N/A'}</td>
-            <td>${row.lab_section || 'N/A'}</td>
             <td>${row.test_name || 'N/A'}</td>
+            <td>${row.lab_section || 'N/A'}</td>
             <td>UGX ${parseFloat(row.price || 0).toLocaleString()}</td>
+            <td>${row.tat || 'N/A'}</td>
         `;
-        revenueTableBody.appendChild(tr);
+        metaTableBody.appendChild(tr);
     });
 
     setupPagination(data);
@@ -145,7 +145,7 @@ function setupPagination(data) {
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            renderRevenueTable(data, currentPage);
+            rendermeta(data, currentPage);
         }
     });
     paginationContainer.appendChild(prevButton);
@@ -165,7 +165,7 @@ function setupPagination(data) {
         btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
-            renderRevenueTable(data, currentPage);
+            rendermeta(data, currentPage);
         });
         paginationContainer.appendChild(btn);
     }
@@ -177,7 +177,7 @@ function setupPagination(data) {
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
             currentPage++;
-            renderRevenueTable(data, currentPage);
+            rendermeta(data, currentPage);
         }
     });
     paginationContainer.appendChild(nextButton);
@@ -188,7 +188,7 @@ function setupPagination(data) {
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;
-        renderRevenueTable(data, currentPage);
+        rendermeta(data, currentPage);
     });
     paginationContainer.appendChild(endButton);
 }
@@ -196,5 +196,5 @@ function setupPagination(data) {
 // Attach the main function call to the DOMContentLoaded event
 document.addEventListener('DOMContentLoaded', () => {
     // Initial data fetch
-    fetchRevenueData();
+    fetchmetaData();
 });
