@@ -1,0 +1,102 @@
+/*
+ * This file contains all styles for the Zyntel Revenue Data Table page.
+ * It combines the custom styles and a conversion of the Tailwind CSS utility classes
+ * used in the provided HTML.
+ */
+/* =========================================================
+   Layout & Components
+   ========================================================= */
+
+/* Tailwind: `.main` classes (`flex-grow`, `container`, `py-8`) */
+main.flex-grow {
+    flex-grow: 1;
+}
+main.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* Custom `.container` style */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+/* Tailwind: `.card` classes (`bg-white`, `rounded-xl`, `shadow`, `p-8`) */
+.card {
+    background-color: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    padding: 2rem;
+}
+
+/* Tailwind: `.table-container` class (`overflow-x-auto`) */
+.table-container {
+    overflow-x: auto;
+}
+
+/* Tailwind: `table` classes (`min-w-full`, `divide-y`, `divide-gray-200`) */
+.revenue-table {
+    width: 100%;
+    min-width: 100%;
+    border-collapse: collapse;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* =========================================================
+   Table Styles
+   ========================================================= */
+
+/* Tailwind: `th`, `td` classes (`px-4`, `py-3`, `text-left`, `border-b`, `border-gray-200`) */
+th, td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Tailwind: `th` classes (`bg-gray-200`, `font-semibold`, `uppercase`, `text-xs`, `text-gray-600`) */
+th {
+    background-color: #e5e7eb;
+    font-weight: 600;
+}
+
+/* Tailwind: `tbody tr:nth-child(even)` classes (`bg-gray-50`) */
+tbody tr:nth-child(even) {
+    background-color: #f9fafb;
+}
+
+/* =========================================================
+   Buttons & Messages
+   ========================================================= */
+
+/* Tailwind: `.message-box` classes (`p-4`, `rounded-lg`, `mt-4`, `font-medium`, `hidden`) */
+.message-box {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+/* Tailwind: `.message-box.error` classes (`bg-red-100`, `text-red-800`) */
+.message-box.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Tailwind: `.btn-back` classes (`bg-gray-500`, `text-white`, `px-6`, `py-3`, `rounded-lg`, `font-semibold`, `hover:bg-gray-600`, `transition-colors`, `cursor-pointer`) */
+.btn-back {
+    background-color: #6b7280;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-back:hover {
+    background-color: #4b5563;
+}

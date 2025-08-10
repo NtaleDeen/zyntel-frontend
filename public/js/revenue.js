@@ -228,10 +228,6 @@ async function loadDatabaseData() {
   }
 }
 
-// ----------------------------------------------------
-// OTHER FUNCTIONS (unchanged)
-// ----------------------------------------------------
-
 /**
  * Initializes the dashboard by loading data and attaching event listeners.
  */

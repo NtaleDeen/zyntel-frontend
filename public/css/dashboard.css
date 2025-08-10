@@ -52,26 +52,6 @@ h1 {
   color: var(--main-color);
 }
 
-
-
-.logout-button {
-  padding: 10px 20px;
-  margin-right: 10px;
-  cursor: pointer;
-  background-color: var(--background-2-color);
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 400;
-  transition: background-color 0.2s, transform 0.2s;
-  font-size: 15px;
-  box-shadow: 0 4px 6px var(--box-shadow);
-  align-items: center;
-}
-
-.logout-button:hover {
-  background-color: var(--border-color);
-  transform: scale(1.05);
-}
 .page {
   border-left: 2px solid var(--hover-color);
 }

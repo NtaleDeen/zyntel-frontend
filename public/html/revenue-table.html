@@ -5,85 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zyntel Revenue Data Table</title>
     <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/general.css" />
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-        .card {
-            background-color: #fff;
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-        }
-        .table-container {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        th {
-            background-color: #e5e7eb; /* gray-200 */
-            font-weight: 600;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f9fafb; /* gray-50 */
-        }
-        .message-box {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            font-weight: 500;
-        }
-        .message-box.error {
-            background-color: #fee2e2; /* red-100 */
-            color: #991b1b; /* red-800 */
-        }
-        .btn-back {
-            background-color: #6b7280; /* gray-500 */
-            color: #fff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem; /* rounded-lg */
-            font-weight: 600;
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-        .btn-back:hover {
-            background-color: #4b5563; /* gray-600 */
-        }
-    </style>
+    <link rel="stylesheet" href="../css/table.css" />
 </head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-blue-700 text-white p-4 shadow-md">
-        <div class="header-container flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Zyntel Revenue Data</h1>
-            <nav>
-                <button onclick="window.location.href='revenue.html'" class="btn-back">Back to Revenue Dashboard</button>
-            </nav>
+<body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="../images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>Nakasero Hospital Laboratory</h1>
         </div>
+        <div class="page page-table">
+          <span>Revenue Table</span>
+          <a href="#" class="logout-button" id="logout-button">Logout</a>
+        </div>
+      </div>
+      <nav class="navbar">
+        <a href="dashboard.html">Home</a>
+        <a href="revenue.html">Revenue</a>
+        <a href="numbers.html">Numbers</a>
+        <a href="tat.html">TAT</a>
+      </nav>
+
+      <div class="dashboard-filters">
+        <div class="filter-group">
+          <label for="startDateFilter">Start Date:</label>
+          <input type="date" id="startDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="endDateFilter">End Date:</label>
+          <input type="date" id="endDateFilter" />
+        </div>
+        <div class="filter-group">
+          <label for="periodSelect">Period:</label>
+          <select id="periodSelect">
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisQuarter">This Quarter</option>
+            <option value="lastQuarter">Last Quarter</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="labSectionFilter">Lab Section:</label>
+          <select id="labSectionFilter">
+            <option value="all">All</option>
+            <option value="chemistry">Chemistry</option>
+            <option value="heamatology">Heamatology</option>
+            <option value="microbiology">Microbiology</option>
+            <option value="serology">Serology</option>
+            <option value="referral">Referral</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="shiftFilter">Shift:</label>
+          <select id="shiftFilter">
+            <option value="all">All</option>
+            <option value="day shift">Day Shift</option>
+            <option value="night shift">Night Shift</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="hospitalUnitFilter">Laboratory:</label>
+          <select id="hospitalUnitFilter">
+            <option value="all">All</option>
+            <option value="mainLab">Main Laboratory</option>
+            <option value="annex">Annex</option>
+          </select>
+        </div>
+      </div>
     </header>
 
-    <main class="flex-grow container py-8">
+    <div class="loader" id="loadingOverlay">
+      <div class="loading one"></div>
+      <div class="loading two"></div>
+      <div class="loading three"></div>
+      <div class="loading four"></div>
+    </div>
+    
+    <main>
         <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Raw Revenue Data</h2>
+            <h2>Raw Revenue Data</h2>
             <div class="card">
                 <div class="table-container">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table>
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -98,7 +105,7 @@
                         </thead>
                         <tbody id="revenueTableBody">
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-gray-500">Loading data...</td>
+                                <td>Loading data...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -108,10 +115,16 @@
         </section>
     </main>
 
-    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
-        <div class="container">
-            &copy; 2025 Zyntel Data Agent. All rights reserved.
-        </div>
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
+    </div>
+
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="../images/zyntel_no_background.png" alt="logo" />
+      </div>
     </footer>
 
     <script type="module" src="../js/revenue_table.js"></script>
