@@ -56,13 +56,13 @@ function showMessage(element, message, type = 'info') {
 async function fetchmetaData() {
     showLoadingSpinner();
     // The colspan is now 4 to match the new number of columns
-    metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
-    metaTableMessage.classList.add('hidden');
+    metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+    metaMessage.classList.add('hidden');
 
     const token = getToken();
     if (!token) {
-        showMessage(metaTableMessage, 'Authentication required. Please log in.', 'error');
-        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+        showMessage(metaMessage, 'Authentication required. Please log in.', 'error');
+        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
         hideLoadingSpinner();
         return;
     }
@@ -84,16 +84,16 @@ async function fetchmetaData() {
         allmetaData = data;
 
         if (!Array.isArray(allmetaData) || allmetaData.length === 0) {
-            metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
+            metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
-            rendermetaTable(allmetaData, currentPage);
+            rendermeta(allmetaData, currentPage);
         }
 
     } catch (error) {
         console.error('Error fetching data:', error);
-        showMessage(metaTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+        showMessage(metaMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
+        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
         hideLoadingSpinner();
     }
@@ -103,14 +103,14 @@ async function fetchmetaData() {
 /**
  * Renders the fetched metadata into the table with pagination.
  */
-function rendermetaTable(data, page) {
-    metaTableBody.innerHTML = '';
+function rendermeta(data, page) {
+    metaBody.innerHTML = '';
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
     const paginatedData = data.slice(start, end);
 
     if (paginatedData.length === 0) {
-        metaTableBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
         return;
     }
 
@@ -120,10 +120,10 @@ function rendermetaTable(data, page) {
         tr.innerHTML = `
             <td>${row.test_name || 'N/A'}</td>
             <td>${row.lab_section || 'N/A'}</td>
-            <td>UGX ${parseFloat(row.price || 0).toLocaleString()}</td>
             <td>${row.tat || 'N/A'}</td>
+            <td>UGX ${parseFloat(row.price || 0).toLocaleString()}</td>
         `;
-        metaTableBody.appendChild(tr);
+        metaBody.appendChild(tr);
     });
 
     setupPagination(data);
