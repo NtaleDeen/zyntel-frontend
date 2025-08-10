@@ -116,7 +116,7 @@ function renderRevenueTable(data, page) {
     const paginatedData = data.slice(start, end);
 
     if (paginatedData.length === 0) {
-        revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        revenueTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
         return;
     }
 
@@ -124,7 +124,6 @@ function renderRevenueTable(data, page) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-100';
         tr.innerHTML = `
-            <td>${row.id || 'N/A'}</td>
             <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
             <td>${row.shift || 'N/A'}</td>
             <td>${row.lab_number || 'N/A'}</td>
