@@ -31,6 +31,7 @@
     text-align: left;
     color: var(--border-color);
     font-size: 13px;
+    border: 0.1px solid var(--border-color);
 }
 
 .neon-table th {
@@ -38,12 +39,11 @@
     letter-spacing: 1px;
     position: relative;
     background-color: var(--background-color);
-    border: 0.1px solid var(--border-color);
 }
 
 .neon-table th::after {
     content: '';
-    position: absolute;
+    position: sticky;
     bottom: 0;
     left: 0;
     width: 100%;
@@ -52,7 +52,7 @@
 
 .neon-table tbody tr:hover {
     background-color: var(--hover-color-2);
-    box-shadow: 0 0 5px var(--hover-color);
+    box-shadow: 5px 0 0 var(--hover-color);
 }
 
 .neon-table tbody tr:nth-child(odd) {
@@ -68,14 +68,14 @@
     font-size: 13px;
 }
 
-.pagination-container {
+#pagination-container {
   display: flex;
   gap: 20px;
   justify-content: center;
   align-items: center;
 }
 
-.pagination-container button {
+#pagination-container button {
   padding: 10px 20px;
   color: var(--canvas-color);
   cursor: pointer;
@@ -89,16 +89,16 @@
   align-items: center;
 }
 
-.pagination-container button:hover {
+#pagination-container button:hover {
   background-color: var(--border-color);
   transform: scale(1.05);
 }
 
-.pagination-container button.active {
+#pagination-container button.active {
   background-color: var(--border-color);
 }
 
-.pagination-container button:disabled {
+#pagination-container button:disabled {
     background: #333d52;
     color: #666;
     cursor: not-allowed;
