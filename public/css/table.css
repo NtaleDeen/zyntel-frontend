@@ -78,10 +78,8 @@
 
 #pagination-container button {
   padding: 5px 10px;
-  color: var(--canvas-color);
+  color: var(--main-color);
   cursor: pointer;
-  background-color: var(--background-2-color);
-  border-radius: 10px;
   text-decoration: none;
   font-weight: 400;
   transition: background-color 0.2s, transform 0.2s;
@@ -90,17 +88,12 @@
   align-items: center;
 }
 
-#pagination-container button:hover {
-  background-color: var(--border-color);
-  transform: scale(1.05);
-}
-
-#pagination-container button.active {
-  background-color: var(--border-color);
+#pagination-container button:hover, #pagination-container button.active {
+  border-color: var(--background-2-color);
+  border-radius: 10px;
 }
 
 #pagination-container button:disabled {
-    background: #333d52;
     color: #666;
     cursor: not-allowed;
 }
