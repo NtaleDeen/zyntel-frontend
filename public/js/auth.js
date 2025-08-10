@@ -1,6 +1,18 @@
 // auth.js
 // This file centralizes all authentication and session management logic.
 
+let inactivityTimer;
+const inactivityTime = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+        // Clear the session and redirect to the login page
+        clearSession();
+        window.location.replace("/index.html");
+    }, inactivityTime);
+}
+
 /**
  * Checks for a valid session and redirects to the login page if none is found.
  */
@@ -12,6 +24,9 @@ export function checkAuthAndRedirect() {
     if (!session || !session.token || session.username !== currentUser) {
         window.location.href = "/index.html";
     }
+
+    // Also reset the inactivity timer on every check
+    resetInactivityTimer();
 }
 
 /**
@@ -42,13 +57,10 @@ export function clearSession() {
 }
 
 // ----------------------------------------------------
-// Global Authentication Check on Back/Forward Navigation
+// Global Event Listeners
 // ----------------------------------------------------
-// This event listener checks if a page is being restored from the browser's
-// history cache (e.g., via the back button). If so, it re-runs the
-// authentication check to prevent unauthorized access after logout.
+// These event listeners detect user activity and reset the inactivity timer.
 window.addEventListener("pageshow", (event) => {
-    // Check if the page was served from the bfcache (back/forward cache)
     if (event.persisted) {
         checkAuthAndRedirect();
     }
@@ -56,3 +68,11 @@ window.addEventListener("pageshow", (event) => {
 
 // A separate initial check for security
 checkAuthAndRedirect();
+
+// Reset the timer on any user activity across the document
+window.onload = resetInactivityTimer;
+window.onmousemove = resetInactivityTimer;
+window.onmousedown = resetInactivityTimer;
+window.onclick = resetInactivityTimer;
+window.onkeypress = resetInactivityTimer;
+window.addEventListener('scroll', resetInactivityTimer, true);

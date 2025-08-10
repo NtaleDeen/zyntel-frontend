@@ -70,13 +70,14 @@
 
 #pagination-container {
   display: flex;
-  gap: 20px;
+  gap: 10px;
   justify-content: center;
-  align-items: center;
+  align-items: left;
+  margin-top: 20px;
 }
 
 #pagination-container button {
-  padding: 10px 20px;
+  padding: 5px 10px;
   color: var(--canvas-color);
   cursor: pointer;
   background-color: var(--background-2-color);
