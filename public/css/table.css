@@ -83,9 +83,10 @@
   text-decoration: none;
   font-weight: 400;
   transition: background-color 0.2s, transform 0.2s;
-  font-size: 10px;
+  font-size: 15px;
   box-shadow: 0 4px 6px var(--box-shadow);
   align-items: center;
+  border: none;
 }
 
 #pagination-container button:hover, #pagination-container button.active {
