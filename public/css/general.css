@@ -23,7 +23,8 @@
 html {
   height: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
+  /* background-color: var(--background-2-color); */
 }
 
 header {
@@ -159,7 +160,7 @@ h1 {
 .dashboard-filters,
 .filtersContainer {
   position: fixed; /* Keep fixed to stay at top with scrolling */
-  top: 120px; /* Below the header */
+  top: 115px; /* Below the header */
   left: 0;
   width: 100vw;
   z-index: 999;
@@ -198,6 +199,7 @@ select:hover,
 input:active,
 select:active {
   border-color: var(--hover-color);
+  cursor: pointer;
 }
 
 input:focus,
@@ -208,7 +210,7 @@ select:focus {
 
 body {
   margin: 0;
-  padding-top: 190px; /* Adjusted padding-to... */
+  padding-top: 170px; /* Adjusted padding-to... */
 }
 
 .loader {

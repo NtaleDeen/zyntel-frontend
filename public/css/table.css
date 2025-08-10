@@ -5,8 +5,9 @@
   --main-trans-color: rgb(33, 51, 106, 0.7);
   --primary-color: #000;
   --background-2-color: #0a0a0a;
-  --canvas-color: #fff;
+  --canvas-color: #ffffff;
   --hover-color: #deab5f;
+  --hover-color-2: #21336a1a;
   --background-color: rgba(250, 250, 250, 0.9);
   --border-color: #4b5563;
   --border-bottom: rgb(228, 228, 228);
@@ -15,34 +16,29 @@
 
 .table-container {
     padding: 20px;
-    /* background-color: var(--main-color); */
     border-radius: 10px;
-    box-shadow: 0 0 20px var(--box-shadow);
+    box-shadow: 0 0 5px var(--box-shadow);
 }
 
 .neon-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
-    /* background: #1a1e2a; */
-    box-shadow: 0 0 15px var(--hover-color), 0 0 20px var(--box-shadow);
-    border: 2px solid var(--hover-color);
+    box-shadow: 0 0 2px var(--border-color);
 }
 
 .neon-table th, .neon-table td {
-    padding: 12px 15px;
+    padding: 10px 15px;
     text-align: left;
-    border: 1px solid var(--border-color);
-    /* color: var(--main-color); */
-    font-size: 14px;
+    color: var(--border-color);
+    font-size: 13px;
 }
 
 .neon-table th {
-    /* background-color: #008080; */
-    /* color: #ffffff; */
     text-transform: uppercase;
     letter-spacing: 1px;
     position: relative;
+    background-color: var(--background-color);
+    border: 0.1px solid var(--border-color);
 }
 
 .neon-table th::after {
@@ -52,74 +48,58 @@
     left: 0;
     width: 100%;
     height: 2px;
-    /* background: linear-gradient(to right, #00ffff, #ff00ff); */
-}
-
-.neon-table tbody tr {
-    transition: background-color 0.3s ease-in-out;
 }
 
 .neon-table tbody tr:hover {
-    /* background-color: #2a3242; */
-    /* box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); */
-    cursor: pointer;
+    background-color: var(--hover-color-2);
+    box-shadow: 0 0 5px var(--hover-color);
 }
 
-/* .neon-table tbody tr:nth-child(odd) {
-    background-color: #1a1e2a;
+.neon-table tbody tr:nth-child(odd) {
+    background-color: var(--canvas-color);
 }
 
 .neon-table tbody tr:nth-child(even) {
-    background-color: #131720;
+    background-color: var(--background-color);
 }
 
 .neon-table tbody tr:hover td {
-    color: #00ffff;
+    color: var(--background-2-color);
+    font-size: 13px;
 }
-
-.neon-glow {
-    text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff;
-    animation: neon-pulse 1.5s infinite alternate;
-}
-
-@keyframes neon-pulse {
-    from {
-        text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff;
-    }
-    to {
-        text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff;
-    }
-} */
 
 .pagination-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
 }
 
 .pagination-container button {
-    /* background: #1a1e2a; */
-    /* border: 1px solid #00ffff; */
-    /* color: #fff; */
-    padding: 8px 16px;
-    margin: 0 5px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s, color 0.3s;
+  padding: 10px 20px;
+  color: var(--canvas-color);
+  cursor: pointer;
+  background-color: var(--background-2-color);
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 400;
+  transition: background-color 0.2s, transform 0.2s;
+  font-size: 10px;
+  box-shadow: 0 4px 6px var(--box-shadow);
+  align-items: center;
 }
 
-/* .pagination-container button:hover {
-    background: #00ffff;
-    color: #000;
+.pagination-container button:hover {
+  background-color: var(--border-color);
+  transform: scale(1.05);
 }
 
 .pagination-container button.active {
-    background: #00ffff;
-    color: #000;
+  background-color: var(--border-color);
 }
 
 .pagination-container button:disabled {
     background: #333d52;
     color: #666;
     cursor: not-allowed;
-} */
+}
