@@ -106,66 +106,75 @@ function refreshDashboard() {
  * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-  const token = getToken();
-  if (!token) {
-    console.error("No JWT token found. Aborting data load.");
-    return;
-  }
-
-  showLoadingSpinner(); // <— start animation
-
-  try {
-    const response = await fetch(API_URL, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (response.status === 401) {
-      console.error("401 Unauthorized");
-      window.location.href = "/index.html";
-      return;
+    const token = getToken();
+    if (!token) {
+        console.error("No JWT token found. Aborting data load.");
+        window.location.href = "/index.html";
+        return;
     }
 
-    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+    showLoadingSpinner();
 
-    const dbData = await response.json();
+    try {
+        // Get date range from UI
+        const startDate = document.getElementById("startDateFilter")?.value;
+        const endDate = document.getElementById("endDateFilter")?.value;
 
-    allData = dbData.map(row => {
-      // Normalize 'request_delay_status' to a consistent 'tat' value
-      let tatStatus;
-      switch (row.request_delay_status) {
-        case "Delayed for less than 15 minutes":
-          tatStatus = "Delayed <15min";
-          break;
-        case "Over Delayed":
-          tatStatus = "Over Delayed";
-          break;
-        case "Swift":
-        case "On Time":
-          tatStatus = "On Time"; // Consolidate "Swift" and "On Time"
-          break;
-        default:
-          tatStatus = "Not Uploaded";
-      }
+        // Build query string
+        let url = API_URL;
+        if (startDate && endDate) {
+            url += `?start_date=${startDate}&end_date=${endDate}`;
+        }
 
-      return {
-        ...row,
-        parsedDate: parseTATDate(row.date),
-        timeInHour: row.time_in
-          ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
-          : null,
-        tat: tatStatus, // Use the normalized status
-        minutesDelayed: row.daily_tat || 0,
-      };
-    });
+        const response = await fetch(url, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
 
-    // Initial dashboard refresh after data is loaded
-    refreshDashboard();
+        if (response.status === 401) {
+            console.error("401 Unauthorized");
+            window.location.href = "/index.html";
+            return;
+        }
 
-  } catch (err) {
-    console.error("Data load failed:", err);
-  } finally {
-    hideLoadingSpinner(); // <— end animation
-  }
+        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+        const dbData = await response.json();
+
+        allData = dbData.map(row => {
+            let tatStatus;
+            switch (row.request_delay_status) {
+                case "Delayed for less than 15 minutes":
+                    tatStatus = "Delayed <15min";
+                    break;
+                case "Over Delayed":
+                    tatStatus = "Over Delayed";
+                    break;
+                case "Swift":
+                case "On Time":
+                    tatStatus = "On Time";
+                    break;
+                default:
+                    tatStatus = "Not Uploaded";
+            }
+
+            return {
+                ...row,
+                parsedDate: parseTATDate(row.date),
+                timeInHour: row.time_in ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null : null,
+                tat: tatStatus,
+                minutesDelayed: row.daily_tat || 0,
+            };
+        });
+
+        refreshDashboard();
+
+    } catch (err) {
+        console.error("Data load failed:", err);
+    } finally {
+        hideLoadingSpinner();
+    }
 }
 
 // Main function to fetch, process, and render all dashboard elements.
