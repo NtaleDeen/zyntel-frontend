@@ -24,7 +24,7 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background: #1a1e2a;
+    /* background: #1a1e2a; */
     box-shadow: 0 0 15px var(--hover-color), 0 0 20px var(--box-shadow);
     border: 2px solid var(--hover-color);
 }
