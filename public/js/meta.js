@@ -76,9 +76,18 @@ async function fetchmetaData() {
             },
         });
 
+        // --- NEW: Add this check to handle server errors gracefully ---
         if (!response.ok) {
+            // Check for a 401 (Unauthorized) or 500 (Internal Server Error)
+            if (response.status === 401 || response.status === 500) {
+                // Clear the session and redirect, as if they logged out.
+                clearSession();
+                window.location.replace("/index.html");
+                return; // Stop further execution
+            }
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        // --- END NEW CODE ---
 
         const data = await response.json();
         allmetaData = data;
@@ -98,7 +107,6 @@ async function fetchmetaData() {
         hideLoadingSpinner();
     }
 }
-
 
 /**
  * Renders the fetched metadata into the table with pagination.
