@@ -6,14 +6,6 @@ import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 // Immediately check authentication on page load.
 checkAuthAndRedirect();
 
-// Add a pageshow event listener to re-check auth if the user
-// navigates back using the browser's back button.
-window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-        checkAuthAndRedirect();
-    }
-});
-
 // Select the logout button and add an event listener
 const logoutButton = document.getElementById('logout-button');
 logoutButton.addEventListener('click', (e) => {
