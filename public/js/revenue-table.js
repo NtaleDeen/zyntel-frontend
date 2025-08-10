@@ -55,13 +55,13 @@ function showMessage(element, message, type = 'info') {
  */
 async function fetchRevenueData() {
     showLoadingSpinner();
-    revenueTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+    revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
     revenueTableMessage.classList.add('hidden');
 
     const token = getToken();
     if (!token) {
         showMessage(revenueTableMessage, 'Authentication required. Please log in.', 'error');
-        revenueTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
         hideLoadingSpinner();
         return;
     }
@@ -80,10 +80,10 @@ async function fetchRevenueData() {
         }
 
         const data = await response.json();
-        allRevenueData = data; // Store the full data
+        allRevenueData = data;
 
         if (!Array.isArray(allRevenueData) || allRevenueData.length === 0) {
-            revenueTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No revenue data found.</td></tr>`;
+            revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No revenue data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
             renderRevenueTable(allRevenueData, currentPage);
@@ -92,7 +92,7 @@ async function fetchRevenueData() {
     } catch (error) {
         console.error('Error fetching revenue data:', error);
         showMessage(revenueTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-        revenueTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
         hideLoadingSpinner();
     }
@@ -109,7 +109,7 @@ function renderRevenueTable(data, page) {
     const paginatedData = data.slice(start, end);
 
     if (paginatedData.length === 0) {
-        revenueTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        revenueTableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
         return;
     }
 
@@ -118,7 +118,6 @@ function renderRevenueTable(data, page) {
         tr.className = 'hover:bg-gray-100';
         tr.innerHTML = `
             <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
-            <td>${row.lab_number || 'N/A'}</td>
             <td>${row.unit || 'N/A'}</td>
             <td>${row.lab_section || 'N/A'}</td>
             <td>${row.test_name || 'N/A'}</td>
