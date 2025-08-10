@@ -52,7 +52,7 @@
 
 .neon-table tbody tr:hover {
     background-color: var(--hover-color-2);
-    box-shadow: 5px 0 0 var(--hover-color);
+    box-shadow: 0 5px 5px var(--hover-color);
 }
 
 .neon-table tbody tr:nth-child(odd) {
