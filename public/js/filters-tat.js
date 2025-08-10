@@ -26,6 +26,7 @@ export const outpatientUnits = [
 ];
 export const annexUnits = ["ANNEX"];
 
+const EAT_TIMEZONE = "Africa/Nairobi";
 // Date parsing - IMPORTANT: This function should parse the raw database string (which is GMT/UTC)
 // into a Moment.js object that represents that *exact* UTC timestamp.
 // We will handle the 8 AM EAT "day start" logic when applying filters.
@@ -48,71 +49,100 @@ export function parseTATDate(dateStr) {
 }
 
 
-// Define EAT timezone for consistent parsing
-const EAT_TIMEZONE = "Africa/Nairobi";
-
+// Filter application
 export function applyTATFilters(allData) {
   const periodSelect = document.getElementById("periodSelect");
   const startDateInput = document.getElementById("startDateFilter");
   const endDateInput = document.getElementById("endDateFilter");
-  const labSectionFilter = document.getElementById("labSectionFilter");
-  const shiftFilter = document.getElementById("shiftFilter");
-  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
+  const labSectionFilter = document.getElementById("labSectionFilter"); // Get element for value access
+  const shiftFilter = document.getElementById("shiftFilter");           // Get element for value access
+  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter"); // Get element for value access
 
+  // Get selected values for comparison
   const selectedLabSection = labSectionFilter?.value || "all";
   const selectedShift = shiftFilter?.value || "all";
   const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
+
 
   // Define filter start and end dates based on 8 AM EAT day concept
   let filterStartDate = null;
   let filterEndDate = null;
 
   if (startDateInput?.value) {
-    // Parse input date as EAT, setting time to 8 AM EAT
+    // Parse the input date as EAT, and set it to 8 AM EAT
     filterStartDate = window.moment.tz(startDateInput.value + " 08:00:00", EAT_TIMEZONE);
   }
 
   if (endDateInput?.value) {
-    // Parse input date as EAT, setting time to 7:59:59 AM EAT on the next day
+    // Parse the input date as EAT, and set it to 7:59:59 AM EAT on the *next* day
     filterEndDate = window.moment.tz(endDateInput.value + " 07:59:59", EAT_TIMEZONE);
   }
 
   const filteredData = allData.filter((row) => {
+    // Date filtering
+    // row.parsedDate is already in UTC from loadAndRender -> dbData.map -> parseTATDate
     const rowDate = row.parsedDate;
     if (!rowDate?.isValid()) return false;
 
-    // Convert rowDate (which is UTC) to EAT for consistent comparison
+    // Convert filter dates to UTC for comparison with rowDate
+    // The previous logic here was flawed. We now convert the rowDate to EAT
+    // and compare with the filter dates, which are also set in EAT.
     const rowDateEAT = rowDate.clone().tz(EAT_TIMEZONE);
 
     if (filterStartDate && rowDateEAT.isBefore(filterStartDate)) return false;
     if (filterEndDate && rowDateEAT.isAfter(filterEndDate)) return false;
 
-    // ... (rest of the filtering logic for labSection, shift, hospitalUnit)
+
+    // --- Start Debugging Other Filters ---
+  const DEBUG = false; // Set to true to see console logs
+  if (DEBUG) {
+    console.log(`--- Row Debug ---`);
+    console.log(`Row Date (UTC): ${rowDate ? rowDate.format() : 'Invalid'}`);
+    console.log(`Row Lab Section: '${row.LabSection}' (compared as: '${row.LabSection?.toLowerCase()}')`);
+    console.log(`Row Shift: '${row.Shift}' (compared as: '${row.Shift?.toLowerCase()}')`);
+    console.log(`Row Unit: '${row.Hospital_Unit}' (compared as: '${row.Hospital_Unit?.toUpperCase()}')`);
+    console.log(`Selected Lab Section: '${selectedLabSection}'`);
+    console.log(`Selected Shift: '${selectedShift}'`);
+    console.log(`Selected Unit: '${selectedHospitalUnit}'`);
+    // --- End Debugging Other Filters ---
+  }
+
+
+    // Other filters (these are your actual filter conditions)
     if (selectedLabSection !== "all" && row.LabSection?.toLowerCase() !== selectedLabSection) {
+      if(DEBUG) console.log(`  -- Lab Section Mismatch: row '${row.LabSection?.toLowerCase()}' != selected '${selectedLabSection}'`);
       return false;
     }
+
     if (selectedShift !== "all" && row.Shift?.toLowerCase() !== selectedShift) {
+      if(DEBUG) console.log(`  -- Shift Mismatch: row '${row.Shift?.toLowerCase()}' != selected '${selectedShift}'`);
       return false;
     }
+
     if (selectedHospitalUnit !== "all") {
       const unit = row.Hospital_Unit?.toUpperCase();
       if (
         selectedHospitalUnit === "mainLab" &&
         ![...inpatientUnits, ...outpatientUnits].includes(unit)
       ) {
+        if(DEBUG) console.log(`  -- Hospital Unit Mismatch (mainLab): row '${unit}' not in mainLab units.`);
         return false;
       }
       if (selectedHospitalUnit === "annex" && !annexUnits.includes(unit)) {
+        if(DEBUG) console.log(`  -- Hospital Unit Mismatch (annex): row '${unit}' not in annex units.`);
         return false;
       }
+      // If selectedHospitalUnit is a specific unit name and not 'mainLab' or 'annex'
       if (selectedHospitalUnit !== "mainLab" && selectedHospitalUnit !== "annex" && unit !== selectedHospitalUnit) {
+          if(DEBUG) console.log(`  -- Hospital Unit Mismatch (specific unit): row '${unit}' != selected '${selectedHospitalUnit}'`);
           return false;
       }
     }
-
+    if(DEBUG) console.log(`--- Row Passes All Filters ---`);
     return true; // If all filters pass
   });
 
+  console.log(`[filters-tat.js] Final Filtered Data Length: ${filteredData.length}`);
   return filteredData;
 }
 
@@ -181,7 +211,8 @@ function initializeFilterListeners(callback) {
 export function updateDatesForPeriod(period) {
   // All date calculations for periods should be based on EAT timezone,
   // then format for the input fields.
-  const nowEAT = window.moment();
+  // We use moment.tz to ensure consistency.
+  const nowEAT = window.moment.tz(EAT_TIMEZONE);
   let startDateEAT, endDateEAT;
 
   switch (period) {

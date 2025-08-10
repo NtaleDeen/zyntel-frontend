@@ -55,7 +55,7 @@ async function loadDatabaseData() {
     return;
   }
 
-  showLoadingSpinner();
+  showLoadingSpinner(); // <— start animation
 
   try {
     const response = await fetch(API_URL, {
@@ -101,14 +101,15 @@ async function loadDatabaseData() {
       };
     });
 
+    // Apply filters from UI for current data after loading all data
+    // This is now correctly handled by applyTATFilters, which uses timezone-aware logic
+    filteredData = applyTATFilters(allData);
+
     // Determine current and previous month's date ranges for KPI trend calculation
     const currentMonthStart = moment().startOf("month");
     const currentMonthEnd = moment().endOf("month");
     const lastMonthStart = moment().subtract(1, "month").startOf("month");
     const lastMonthEnd = moment().subtract(1, "month").endOf("month");
-
-    // Apply filters from UI for current data after loading all data
-    filteredData = applyTATFilters(allData);
 
     // Filter data for the previous month to calculate trends
     const previousFilteredData = applyTATFilters(
@@ -119,31 +120,22 @@ async function loadDatabaseData() {
 
     // Update KPIs and render all charts with the currently filtered data
     updateKPI(filteredData, previousFilteredData);
-    // ... (call render functions)
+    renderSummaryChart(filteredData);
+    renderOnTimeSummaryChart(filteredData);
+    renderPieChart(filteredData);
+    renderLineChart(filteredData);
+    renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
 
   } catch (err) {
     console.error("Data load failed:", err);
   } finally {
-    hideLoadingSpinner();
+    hideLoadingSpinner(); // <— end animation
   }
 }
 
 // Main function to fetch, process, and render all dashboard elements.
 async function loadAndRender() {
-  const dbData = await loadDatabaseData();
-  if (dbData) {
-    allData = dbData.map(row => ({
-      ...row,
-      parsedDate: parseTATDate(row.date),
-      timeInHour: row.time_in
-        ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
-        : null,
-      tat: row.request_delay_status || "Not Uploaded",
-    }));
-
-    filteredData = applyTATFilters(allData);
-    processNumbersData();
-  }
+  await loadDatabaseData();
 }
 
 // DOM Content Loaded - Initialize everything
@@ -248,10 +240,10 @@ function setTrendArrow(
 function updateKPI(currentData, previousData) {
   const total = currentData.length;
   const delayed = currentData.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
   ).length;
   const onTime = currentData.filter(
-    (r) => r.tat === "On Time" || r.tat === "Swift"
+    (r) => r.tat === "On Time"
   ).length;
   const notUploaded = currentData.filter(
     (r) => r.tat === "Not Uploaded"
@@ -265,7 +257,7 @@ function updateKPI(currentData, previousData) {
     if (!groupedByDay[day])
       groupedByDay[day] = { total: 0, delayed: 0, data: [] };
     groupedByDay[day].total++;
-    if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes") {
+    if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
       groupedByDay[day].delayed++;
     }
     groupedByDay[day].data.push(r);
@@ -274,12 +266,12 @@ function updateKPI(currentData, previousData) {
   const dailyDelayedCounts = Object.values(groupedByDay).map(
     (rows) =>
       rows.data.filter(
-        (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
+        (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
       ).length
   );
   const dailyOnTimeCounts = Object.values(groupedByDay).map(
     (rows) =>
-      rows.data.filter((r) => r.tat === "On Time" || r.tat === "Swift").length
+      rows.data.filter((r) => r.tat === "On Time").length
   );
   const dailyNotUploadedCounts = Object.values(groupedByDay).map(
     (rows) => rows.data.filter((r) => r.tat === "Not Uploaded").length
@@ -327,10 +319,10 @@ function updateKPI(currentData, previousData) {
   // --- KPI Values for Previous Period (for trends) ---
   const prevTotal = previousData.length;
   const prevDelayed = previousData.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
   ).length;
   const prevOnTime = previousData.filter(
-    (r) => r.tat === "On Time" || r.tat === "Swift"
+    (r) => r.tat === "On Time"
   ).length;
 
   const prevGroupedByDay = {};
@@ -343,12 +335,12 @@ function updateKPI(currentData, previousData) {
 
   const prevDailyDelayedCounts = Object.values(prevGroupedByDay).map(
     (rows) =>
-      rows.filter((r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes")
+      rows.filter((r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min")
         .length
   );
   const prevDailyOnTimeCounts = Object.values(prevGroupedByDay).map(
     (rows) =>
-      rows.filter((r) => r.tat === "On Time" || r.tat === "Swift").length
+      rows.filter((r) => r.tat === "On Time").length
   );
   const prevDailyNotUploadedCounts = Object.values(prevGroupedByDay).map(
     (rows) => rows.filter((r) => r.tat === "Not Uploaded").length
@@ -437,7 +429,7 @@ function renderSummaryChart(data) {
   if (!ctx) return;
 
   const delayed = data.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
   ).length;
   const total = data.length; // Total samples in the filtered data
   const notDelayed = total - delayed; // Remaining samples (on-time + swift + not uploaded)
@@ -518,7 +510,7 @@ function renderOnTimeSummaryChart(data) {
   if (!ctx) return;
 
   const onTime = data.filter(
-    (r) => r.tat === "On Time" || r.tat === "Swift"
+    (r) => r.tat === "On Time"
   ).length;
   const total = data.length; // Total samples in the filtered data
   const notOnTime = total - onTime; // Remaining samples (delayed + not uploaded)
@@ -595,7 +587,8 @@ function renderPieChart(data) {
 
   const statusCounts = {};
   data.forEach((item) => {
-    const status = item["Delay_Status"];
+    // Use the normalized 'tat' property, not the original 'Delay_Status'
+    const status = item["tat"];
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
@@ -607,12 +600,10 @@ function renderPieChart(data) {
     switch (label) {
       case "On Time":
         return "#4CAF50"; // Green
-      case "Delayed for less than 15 minutes":
+      case "Delayed <15min":
         return "#FFC107"; // Amber
       case "Over Delayed":
         return "#F44336"; // Red
-      case "Swift":
-        return "#21336a"; // Blue
       case "Not Uploaded": // Assuming this might appear if there's missing data
         return "#9E9E9E"; // Grey
       default:
@@ -704,9 +695,9 @@ function renderLineChart(data) {
     // Initialize for each day if not present
     if (!dailyCounts[day])
       dailyCounts[day] = { delayed: 0, onTime: 0, notUploaded: 0 };
-    if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes")
+    if (r.tat === "Over Delayed" || r.tat === "Delayed <15min")
       dailyCounts[day].delayed++;
-    if (r.tat === "On Time" || r.tat === "Swift") dailyCounts[day].onTime++;
+    if (r.tat === "On Time") dailyCounts[day].onTime++;
     // Add Not Uploaded count
     if (r.tat === "Not Uploaded") dailyCounts[day].notUploaded++;
   });
@@ -798,10 +789,10 @@ function renderHourlyLineChart(data) {
     // Use 'timeInHour' extracted from 'Time_In'
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
-      if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes") {
+      if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
         currentHourData.delayed++;
       }
-      if (r.tat === "On Time" || r.tat === "Swift") {
+      if (r.tat === "On Time") {
         currentHourData.onTime++;
       }
       // Add Not Uploaded count
