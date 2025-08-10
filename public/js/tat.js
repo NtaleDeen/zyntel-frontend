@@ -44,6 +44,39 @@ function hideLoadingSpinner() {
   if (loadingOverlay) loadingOverlay.style.display = "none";
 }
 
+// Helper function to get the previous period's date range
+function getPreviousPeriodDates() {
+  const periodSelect = document.getElementById("periodSelect");
+  const currentPeriod = periodSelect ? periodSelect.value : "thisMonth";
+  const nowEAT = window.moment.tz("Africa/Nairobi");
+  let prevPeriodStartDate, prevPeriodEndDate;
+
+  switch (currentPeriod) {
+    case "thisMonth":
+      prevPeriodStartDate = nowEAT.clone().subtract(1, "month").startOf("month");
+      prevPeriodEndDate = nowEAT.clone().subtract(1, "month").endOf("month");
+      break;
+    case "lastMonth":
+      prevPeriodStartDate = nowEAT.clone().subtract(2, "month").startOf("month");
+      prevPeriodEndDate = nowEAT.clone().subtract(2, "month").endOf("month");
+      break;
+    case "thisQuarter":
+      prevPeriodStartDate = nowEAT.clone().subtract(1, "quarter").startOf("quarter");
+      prevPeriodEndDate = nowEAT.clone().subtract(1, "quarter").endOf("quarter");
+      break;
+    case "lastQuarter":
+      prevPeriodStartDate = nowEAT.clone().subtract(2, "quarter").startOf("quarter");
+      prevPeriodEndDate = nowEAT.clone().subtract(2, "quarter").endOf("quarter");
+      break;
+    default:
+      // For custom or other periods, we can't reliably determine the previous period.
+      // Return null to indicate no previous data for comparison.
+      return { prevPeriodStartDate: null, prevPeriodEndDate: null };
+  }
+  return { prevPeriodStartDate, prevPeriodEndDate };
+}
+
+
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
@@ -102,20 +135,16 @@ async function loadDatabaseData() {
     });
 
     // Apply filters from UI for current data after loading all data
-    // This is now correctly handled by applyTATFilters, which uses timezone-aware logic
     filteredData = applyTATFilters(allData);
 
-    // Determine current and previous month's date ranges for KPI trend calculation
-    const currentMonthStart = moment().startOf("month");
-    const currentMonthEnd = moment().endOf("month");
-    const lastMonthStart = moment().subtract(1, "month").startOf("month");
-    const lastMonthEnd = moment().subtract(1, "month").endOf("month");
+    // Get the previous period's date range for KPI trend calculation
+    const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates();
 
-    // Filter data for the previous month to calculate trends
+    // Filter data for the previous period to calculate trends
     const previousFilteredData = applyTATFilters(
       allData,
-      lastMonthStart,
-      lastMonthEnd
+      prevPeriodStartDate,
+      prevPeriodEndDate
     );
 
     // Update KPIs and render all charts with the currently filtered data
