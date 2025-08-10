@@ -37,20 +37,17 @@ function hideLoadingSpinner() {
   if (loadingOverlay) loadingOverlay.style.display = "none";
 }
 
-/**
- * Helper function to capitalize the first letter of each word in a string.
- */
-function capitalizeWords(str) {
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
 // ----------------------------------------------------
 // REVENUE TABLE LOGIC
 // ----------------------------------------------------
-// Define API_URL here for the table logic
 const API_URL = "https://zyntel-data-updater.onrender.com/api/revenue";
 const revenueTableBody = document.getElementById('revenueTableBody');
 const revenueTableMessage = document.getElementById('revenueTableMessage');
+const paginationContainer = document.getElementById('pagination-container');
+
+let allRevenueData = [];
+let currentPage = 1;
+const rowsPerPage = 10;
 
 /**
  * Helper function to show messages in the message box.
@@ -65,16 +62,15 @@ function showMessage(element, message, type = 'info') {
  * Fetches revenue data from the API and calls the render function.
  */
 async function fetchRevenueData() {
-    showLoadingSpinner(); // Start the spinner
+    showLoadingSpinner();
     revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
     revenueTableMessage.classList.add('hidden');
 
-    // Use getToken() for consistent JWT retrieval
     const token = getToken();
     if (!token) {
         showMessage(revenueTableMessage, 'Authentication required. Please log in.', 'error');
         revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
-        hideLoadingSpinner(); // Stop the spinner
+        hideLoadingSpinner();
         return;
     }
 
@@ -92,11 +88,13 @@ async function fetchRevenueData() {
         }
 
         const data = await response.json();
+        allRevenueData = data; // Store the full data
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!Array.isArray(allRevenueData) || allRevenueData.length === 0) {
             revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No revenue data found.</td></tr>`;
+            if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
-            renderRevenueTable(data);
+            renderRevenueTable(allRevenueData, currentPage);
         }
 
     } catch (error) {
@@ -104,20 +102,27 @@ async function fetchRevenueData() {
         showMessage(revenueTableMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
         revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
-        hideLoadingSpinner(); // Stop the spinner
+        hideLoadingSpinner();
     }
 }
 
 /**
- * Renders the fetched revenue data into the table.
- * @param {Array<Object>} data The array of revenue objects from the API.
+ * Renders the fetched revenue data into the table with pagination.
  */
-function renderRevenueTable(data) {
-    revenueTableBody.innerHTML = ''; // Clear existing rows
+function renderRevenueTable(data, page) {
+    revenueTableBody.innerHTML = '';
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const paginatedData = data.slice(start, end);
 
-    data.forEach(row => {
+    if (paginatedData.length === 0) {
+        revenueTableBody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        return;
+    }
+
+    paginatedData.forEach(row => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-100'; // Add hover effect
+        tr.className = 'hover:bg-gray-100';
         tr.innerHTML = `
             <td>${row.id || 'N/A'}</td>
             <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
@@ -130,6 +135,53 @@ function renderRevenueTable(data) {
         `;
         revenueTableBody.appendChild(tr);
     });
+
+    setupPagination(data);
+}
+
+/**
+ * Creates and renders the pagination controls.
+ */
+function setupPagination(data) {
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+    const pageCount = Math.ceil(data.length / rowsPerPage);
+
+    const prevButton = document.createElement('button');
+    prevButton.textContent = 'Previous';
+    prevButton.className = 'px-4 py-2 border rounded-md mx-1';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderRevenueTable(data, currentPage);
+        }
+    });
+    paginationContainer.appendChild(prevButton);
+
+    for (let i = 1; i <= pageCount; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
+        btn.addEventListener('click', () => {
+            currentPage = i;
+            renderRevenueTable(data, currentPage);
+        });
+        paginationContainer.appendChild(btn);
+    }
+
+    const nextButton = document.createElement('button');
+    nextButton.textContent = 'Next';
+    nextButton.className = 'px-4 py-2 border rounded-md mx-1';
+    nextButton.disabled = currentPage === pageCount;
+    nextButton.addEventListener('click', () => {
+        if (currentPage < pageCount) {
+            currentPage++;
+            renderRevenueTable(data, currentPage);
+        }
+    });
+    paginationContainer.appendChild(nextButton);
 }
 
 // Attach the main function call to the DOMContentLoaded event
