@@ -233,7 +233,7 @@ function setTrendArrow(
 function updateKPI(currentData, previousData) {
   const total = currentData.length;
   const delayed = currentData.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
   ).length;
   const onTime = currentData.filter(
     (r) => r.tat === "On Time" || r.tat === "Swift"
@@ -250,7 +250,7 @@ function updateKPI(currentData, previousData) {
     if (!groupedByDay[day])
       groupedByDay[day] = { total: 0, delayed: 0, data: [] };
     groupedByDay[day].total++;
-    if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
+    if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes") {
       groupedByDay[day].delayed++;
     }
     groupedByDay[day].data.push(r);
@@ -259,7 +259,7 @@ function updateKPI(currentData, previousData) {
   const dailyDelayedCounts = Object.values(groupedByDay).map(
     (rows) =>
       rows.data.filter(
-        (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
+        (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
       ).length
   );
   const dailyOnTimeCounts = Object.values(groupedByDay).map(
@@ -312,7 +312,7 @@ function updateKPI(currentData, previousData) {
   // --- KPI Values for Previous Period (for trends) ---
   const prevTotal = previousData.length;
   const prevDelayed = previousData.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
   ).length;
   const prevOnTime = previousData.filter(
     (r) => r.tat === "On Time" || r.tat === "Swift"
@@ -328,7 +328,7 @@ function updateKPI(currentData, previousData) {
 
   const prevDailyDelayedCounts = Object.values(prevGroupedByDay).map(
     (rows) =>
-      rows.filter((r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min")
+      rows.filter((r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes")
         .length
   );
   const prevDailyOnTimeCounts = Object.values(prevGroupedByDay).map(
@@ -422,7 +422,7 @@ function renderSummaryChart(data) {
   if (!ctx) return;
 
   const delayed = data.filter(
-    (r) => r.tat === "Over Delayed" || r.tat === "Delayed <15min"
+    (r) => r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes"
   ).length;
   const total = data.length; // Total samples in the filtered data
   const notDelayed = total - delayed; // Remaining samples (on-time + swift + not uploaded)
@@ -689,7 +689,7 @@ function renderLineChart(data) {
     // Initialize for each day if not present
     if (!dailyCounts[day])
       dailyCounts[day] = { delayed: 0, onTime: 0, notUploaded: 0 };
-    if (r.tat === "Over Delayed" || r.tat === "Delayed <15min")
+    if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes")
       dailyCounts[day].delayed++;
     if (r.tat === "On Time" || r.tat === "Swift") dailyCounts[day].onTime++;
     // Add Not Uploaded count
@@ -783,7 +783,7 @@ function renderHourlyLineChart(data) {
     // Use 'timeInHour' extracted from 'Time_In'
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
-      if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
+      if (r.tat === "Over Delayed" || r.tat === "Delayed for less than 15 minutes") {
         currentHourData.delayed++;
       }
       if (r.tat === "On Time" || r.tat === "Swift") {

@@ -68,6 +68,7 @@
     font-size: 13px;
     background-color: var(--hover-color-2);
     box-shadow: 0 5px 5px var(--hover-color);
+    cursor: pointer;
 }
 
 #pagination-container {
@@ -84,9 +85,7 @@
   cursor: pointer;
   text-decoration: none;
   font-weight: 400;
-  transition: background-color 0.2s, transform 0.2s;
   font-size: 15px;
-  box-shadow: 0 4px 6px var(--box-shadow);
   align-items: center;
   border: none;
 }

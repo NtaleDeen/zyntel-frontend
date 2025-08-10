@@ -74,7 +74,7 @@ export function applyTATFilters(allData) {
 
   if (endDateInput?.value) {
     // Parse the input date as EAT, and set it to 7:59:59 AM EAT on the *next* day
-    filterEndDate = window.moment(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss").add(1, 'day');
+    filterEndDate = window.moment(endDateInput.value + " 07:59:59", "YYYY-MM-DD HH:mm:ss");
   }
 
   const filteredData = allData.filter((row) => {
@@ -92,6 +92,8 @@ export function applyTATFilters(allData) {
 
 
     // --- Start Debugging Other Filters ---
+  const DEBUG = false;
+  if (DEBUG) {   
     console.log(`--- Row Debug ---`);
     console.log(`Row Date (UTC): ${rowDate ? rowDate.format() : 'Invalid'}`);
     console.log(`Row Lab Section: '${row.LabSection}' (compared as: '${row.LabSection?.toLowerCase()}')`);
@@ -101,6 +103,7 @@ export function applyTATFilters(allData) {
     console.log(`Selected Shift: '${selectedShift}'`);
     console.log(`Selected Unit: '${selectedHospitalUnit}'`);
     // --- End Debugging Other Filters ---
+  }
 
 
     // Other filters (these are your actual filter conditions)
@@ -145,9 +148,7 @@ export function applyTATFilters(allData) {
 export function initCommonDashboard(callback) {
   setupDateRangeControls();
   initializeFilterListeners(callback);
-  // Initial render will be triggered by the DOMContentLoaded listener in tat.js/numbers.js
-  // which then calls loadAndRender, which in turn calls this callback.
-  // So, no immediate callback() here.
+  if (callback) callback(); // trigger initial render
 }
 
 function setupDateRangeControls() {
