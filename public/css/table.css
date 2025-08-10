@@ -1,102 +1,117 @@
-/*
- * This file contains all styles for the Zyntel Revenue Data Table page.
- * It combines the custom styles and a conversion of the Tailwind CSS utility classes
- * used in the provided HTML.
- */
-/* =========================================================
-   Layout & Components
-   ========================================================= */
-
-/* Tailwind: `.main` classes (`flex-grow`, `container`, `py-8`) */
-main.flex-grow {
-    flex-grow: 1;
-}
-main.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-}
-
-/* Custom `.container` style */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1.5rem;
-}
-
-/* Tailwind: `.card` classes (`bg-white`, `rounded-xl`, `shadow`, `p-8`) */
-.card {
-    background-color: #fff;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    padding: 2rem;
-}
-
-/* Tailwind: `.table-container` class (`overflow-x-auto`) */
-.table-container {
-    overflow-x: auto;
-}
-
-/* Tailwind: `table` classes (`min-w-full`, `divide-y`, `divide-gray-200`) */
-.revenue-table {
-    width: 100%;
-    min-width: 100%;
-    border-collapse: collapse;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-/* =========================================================
-   Table Styles
-   ========================================================= */
-
-/* Tailwind: `th`, `td` classes (`px-4`, `py-3`, `text-left`, `border-b`, `border-gray-200`) */
-th, td {
-    padding: 0.75rem 1rem;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-/* Tailwind: `th` classes (`bg-gray-200`, `font-semibold`, `uppercase`, `text-xs`, `text-gray-600`) */
-th {
-    background-color: #e5e7eb;
-    font-weight: 600;
-}
-
-/* Tailwind: `tbody tr:nth-child(even)` classes (`bg-gray-50`) */
-tbody tr:nth-child(even) {
-    background-color: #f9fafb;
-}
-
-/* =========================================================
-   Buttons & Messages
-   ========================================================= */
-
-/* Tailwind: `.message-box` classes (`p-4`, `rounded-lg`, `mt-4`, `font-medium`, `hidden`) */
-.message-box {
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-top: 1rem;
-    font-weight: 500;
-}
-
-/* Tailwind: `.message-box.error` classes (`bg-red-100`, `text-red-800`) */
-.message-box.error {
-    background-color: #fee2e2;
-    color: #991b1b;
-}
-
-/* Tailwind: `.btn-back` classes (`bg-gray-500`, `text-white`, `px-6`, `py-3`, `rounded-lg`, `font-semibold`, `hover:bg-gray-600`, `transition-colors`, `cursor-pointer`) */
-.btn-back {
-    background-color: #6b7280;
+body {
+    background: #0d0f17;
+    font-family: 'Arial', sans-serif;
     color: #fff;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: background-color 0.2s;
-    cursor: pointer;
-    border: none;
+    padding: 20px;
 }
 
-.btn-back:hover {
-    background-color: #4b5563;
+.table-container {
+    padding: 20px;
+    background-color: #1a1e2a;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+}
+
+.neon-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #1a1e2a;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), 0 0 20px rgba(255, 0, 255, 0.2);
+    border: 2px solid #00ffff;
+}
+
+.neon-table th, .neon-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border: 1px solid #333d52;
+    color: #fff;
+    font-size: 14px;
+}
+
+.neon-table th {
+    background-color: #008080;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+.neon-table th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #00ffff, #ff00ff);
+}
+
+.neon-table tbody tr {
+    transition: background-color 0.3s ease-in-out;
+}
+
+.neon-table tbody tr:hover {
+    background-color: #2a3242;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    cursor: pointer;
+}
+
+.neon-table tbody tr:nth-child(odd) {
+    background-color: #1a1e2a;
+}
+
+.neon-table tbody tr:nth-child(even) {
+    background-color: #131720;
+}
+
+.neon-table tbody tr:hover td {
+    color: #00ffff;
+}
+
+.neon-glow {
+    text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff;
+    animation: neon-pulse 1.5s infinite alternate;
+}
+
+@keyframes neon-pulse {
+    from {
+        text-shadow: 0 0 5px #00ffff, 0 0 10px #ff00ff;
+    }
+    to {
+        text-shadow: 0 0 10px #00ffff, 0 0 20px #ff00ff;
+    }
+}
+
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination-container button {
+    background: #1a1e2a;
+    border: 1px solid #00ffff;
+    color: #fff;
+    padding: 8px 16px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination-container button:hover {
+    background: #00ffff;
+    color: #000;
+}
+
+.pagination-container button.active {
+    background: #00ffff;
+    color: #000;
+}
+
+.pagination-container button:disabled {
+    background: #333d52;
+    color: #666;
+    cursor: not-allowed;
 }
