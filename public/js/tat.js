@@ -76,6 +76,30 @@ function getPreviousPeriodDates() {
   return { prevPeriodStartDate, prevPeriodEndDate };
 }
 
+// NEW: A central function to apply filters and render all charts.
+function refreshDashboard() {
+  // Apply filters from UI for current data after loading all data
+  filteredData = applyTATFilters(allData);
+
+  // Get the previous period's date range for KPI trend calculation
+  const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates();
+
+  // Filter data for the previous period to calculate trends
+  const previousFilteredData = applyTATFilters(
+    allData,
+    prevPeriodStartDate,
+    prevPeriodEndDate
+  );
+
+  // Update KPIs and render all charts with the currently filtered data
+  updateKPI(filteredData, previousFilteredData);
+  renderSummaryChart(filteredData);
+  renderOnTimeSummaryChart(filteredData);
+  renderPieChart(filteredData);
+  renderLineChart(filteredData);
+  renderHourlyLineChart(filteredData);
+}
+
 
 /**
  * Main function to load data from the database.
@@ -134,26 +158,8 @@ async function loadDatabaseData() {
       };
     });
 
-    // Apply filters from UI for current data after loading all data
-    filteredData = applyTATFilters(allData);
-
-    // Get the previous period's date range for KPI trend calculation
-    const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates();
-
-    // Filter data for the previous period to calculate trends
-    const previousFilteredData = applyTATFilters(
-      allData,
-      prevPeriodStartDate,
-      prevPeriodEndDate
-    );
-
-    // Update KPIs and render all charts with the currently filtered data
-    updateKPI(filteredData, previousFilteredData);
-    renderSummaryChart(filteredData);
-    renderOnTimeSummaryChart(filteredData);
-    renderPieChart(filteredData);
-    renderLineChart(filteredData);
-    renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+    // Initial dashboard refresh after data is loaded
+    refreshDashboard();
 
   } catch (err) {
     console.error("Data load failed:", err);
@@ -178,7 +184,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize common dashboard elements, including rendering filters.
-  initCommonDashboard(loadAndRender);
+  // The refreshDashboard function is now passed as the callback.
+  initCommonDashboard(refreshDashboard);
 });
 
 /**
