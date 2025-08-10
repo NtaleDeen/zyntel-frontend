@@ -55,7 +55,7 @@ async function loadDatabaseData() {
     return;
   }
 
-  showLoadingSpinner(); // <— start animation
+  showLoadingSpinner();
 
   try {
     const response = await fetch(API_URL, {
@@ -72,24 +72,43 @@ async function loadDatabaseData() {
 
     const dbData = await response.json();
 
-    allData = dbData.map(row => ({
-      ...row,
-      parsedDate: parseTATDate(row.date),
-      timeInHour: row.time_in
-        ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
-        : null,
-      tat: row.request_delay_status || "Not Uploaded",
-      minutesDelayed: row.daily_tat || 0,
-    }));
+    allData = dbData.map(row => {
+      // Normalize 'request_delay_status' to a consistent 'tat' value
+      let tatStatus;
+      switch (row.request_delay_status) {
+        case "Delayed for less than 15 minutes":
+          tatStatus = "Delayed <15min";
+          break;
+        case "Over Delayed":
+          tatStatus = "Over Delayed";
+          break;
+        case "Swift":
+        case "On Time":
+          tatStatus = "On Time"; // Consolidate "Swift" and "On Time"
+          break;
+        default:
+          tatStatus = "Not Uploaded";
+      }
 
-    // Apply filters from UI for current data after loading all data
-    filteredData = applyTATFilters(allData);
+      return {
+        ...row,
+        parsedDate: parseTATDate(row.date),
+        timeInHour: row.time_in
+          ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
+          : null,
+        tat: tatStatus, // Use the normalized status
+        minutesDelayed: row.daily_tat || 0,
+      };
+    });
 
     // Determine current and previous month's date ranges for KPI trend calculation
     const currentMonthStart = moment().startOf("month");
     const currentMonthEnd = moment().endOf("month");
     const lastMonthStart = moment().subtract(1, "month").startOf("month");
     const lastMonthEnd = moment().subtract(1, "month").endOf("month");
+
+    // Apply filters from UI for current data after loading all data
+    filteredData = applyTATFilters(allData);
 
     // Filter data for the previous month to calculate trends
     const previousFilteredData = applyTATFilters(
@@ -100,16 +119,12 @@ async function loadDatabaseData() {
 
     // Update KPIs and render all charts with the currently filtered data
     updateKPI(filteredData, previousFilteredData);
-    renderSummaryChart(filteredData);
-    renderOnTimeSummaryChart(filteredData);
-    renderPieChart(filteredData);
-    renderLineChart(filteredData);
-    renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+    // ... (call render functions)
 
   } catch (err) {
     console.error("Data load failed:", err);
   } finally {
-    hideLoadingSpinner(); // <— end animation
+    hideLoadingSpinner();
   }
 }
 
