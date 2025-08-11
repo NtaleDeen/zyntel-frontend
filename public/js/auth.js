@@ -66,9 +66,6 @@ window.addEventListener("pageshow", (event) => {
     }
 });
 
-// A separate initial check for security
-checkAuthAndRedirect();
-
 // Reset the timer on any user activity across the document
 window.onload = resetInactivityTimer;
 window.onmousemove = resetInactivityTimer;
