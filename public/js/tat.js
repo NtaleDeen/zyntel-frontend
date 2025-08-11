@@ -116,15 +116,19 @@ async function loadDatabaseData() {
     showLoadingSpinner();
 
     try {
-        // Get date range from UI
         const startDate = document.getElementById("startDateFilter")?.value;
         const endDate = document.getElementById("endDateFilter")?.value;
+        const labSection = document.getElementById("labSectionFilter")?.value;
+        const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
+        const shift = document.getElementById("shiftFilter")?.value;
 
         // Build query string
-        let url = API_URL;
-        if (startDate && endDate) {
-            url += `?start_date=${startDate}&end_date=${endDate}`;
-        }
+        let url = new URL(API_URL);
+        if (startDate) url.searchParams.append('start_date', startDate);
+        if (endDate) url.searchParams.append('end_date', endDate);
+        if (labSection !== "all") url.searchParams.append('lab_section', labSection);
+        if (hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
+        if (shift !== "all") url.searchParams.append('shift', shift);
 
         const response = await fetch(url, {
             headers: {
@@ -168,6 +172,7 @@ async function loadDatabaseData() {
             };
         });
 
+        // The refreshDashboard function will now handle the remaining client-side filtering (e.g., Hospital Unit)
         refreshDashboard();
 
     } catch (err) {

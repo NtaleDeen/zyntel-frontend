@@ -44,10 +44,7 @@ export function parseTATDate(dateStr) {
 }
 
 
-export function applyTATFilters(allData, startFilterMoment = null, endFilterMoment = null) {
-  const periodSelect = document.getElementById("periodSelect");
-  const startDateInput = document.getElementById("startDateFilter");
-  const endDateInput = document.getElementById("endDateFilter");
+export function applyTATFilters(allData) {
   const labSectionFilter = document.getElementById("labSectionFilter");
   const shiftFilter = document.getElementById("shiftFilter");
   const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
@@ -56,26 +53,7 @@ export function applyTATFilters(allData, startFilterMoment = null, endFilterMome
   const selectedShift = shiftFilter?.value || "all";
   const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
 
-  let filterStartDate = startFilterMoment;
-  let filterEndDate = endFilterMoment;
-
-  // If date moments are not provided (e.g., for main dashboard view), use the UI inputs
-  if (!startFilterMoment && startDateInput?.value) {
-    filterStartDate = window.moment.tz(startDateInput.value + " 08:00:00", EAT_TIMEZONE);
-  }
-
-  if (!endFilterMoment && endDateInput?.value) {
-    filterEndDate = window.moment.tz(endDateInput.value + " 07:59:59", EAT_TIMEZONE);
-  }
-
   const filteredData = allData.filter((row) => {
-    const rowDate = row.parsedDate;
-    if (!rowDate?.isValid()) return false;
-    const rowDateEAT = rowDate.clone().tz(EAT_TIMEZONE);
-
-    if (filterStartDate && rowDateEAT.isBefore(filterStartDate)) return false;
-    if (filterEndDate && rowDateEAT.isAfter(filterEndDate)) return false;
-
     if (selectedLabSection !== "all" && row.LabSection?.toLowerCase() !== selectedLabSection) {
       return false;
     }
@@ -86,13 +64,13 @@ export function applyTATFilters(allData, startFilterMoment = null, endFilterMome
 
     if (selectedHospitalUnit !== "all") {
       const unit = row.Hospital_Unit?.toUpperCase();
-      if (
-        selectedHospitalUnit === "mainLab" &&
-        ![...inpatientUnits, ...outpatientUnits].includes(unit)
-      ) {
+      const isMainLab = [...inpatientUnits, ...outpatientUnits].includes(unit);
+      const isAnnex = annexUnits.includes(unit);
+
+      if (selectedHospitalUnit === "mainLab" && !isMainLab) {
         return false;
       }
-      if (selectedHospitalUnit === "annex" && !annexUnits.includes(unit)) {
+      if (selectedHospitalUnit === "annex" && !isAnnex) {
         return false;
       }
       if (selectedHospitalUnit !== "mainLab" && selectedHospitalUnit !== "annex" && unit !== selectedHospitalUnit) {
