@@ -3,6 +3,9 @@
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 
+// Immediately check authentication on page load.
+checkAuthAndRedirect();
+
 // Select the logout button and add an event listener
 const logoutButton = document.getElementById('logout-button');
 logoutButton.addEventListener('click', (e) => {
