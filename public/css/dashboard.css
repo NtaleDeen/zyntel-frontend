@@ -34,7 +34,7 @@ body {
   margin: 0;
   padding: 60px 0 0 0; /* Adjusted padding to ensure content fits */
   position: relative; /* Added for absolute positioning of the footer */
-  overflow: hidden; /* Added to prevent all scrolling */
+  overflow-y: auto; /* Added to for auto scroll bar */
 }
 
 .header-container {
