@@ -1,4 +1,5 @@
-// meta.js
+// meta.js - Refactored to use a centralized auth module.
+// This file is the main logic for the meta dashboard.
 
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
@@ -17,6 +18,18 @@ logoutButton.addEventListener('click', (e) => {
 });
 
 // ----------------------------------------------------
+// META TABLE LOGIC
+// ----------------------------------------------------
+const API_URL = "https://zyntel-data-updater.onrender.com/api/meta";
+const metaBody = document.getElementById('metaBody');
+const metaMessage = document.getElementById('metaMessage');
+const paginationContainer = document.getElementById('pagination-container');
+
+let allmetaData = [];
+let currentPage = 1;
+const rowsPerPage = 25;
+
+// ----------------------------------------------------
 // LOADING SPINNER FUNCTIONS
 // ----------------------------------------------------
 function showLoadingSpinner() {
@@ -29,18 +42,6 @@ function hideLoadingSpinner() {
   if (loadingOverlay) loadingOverlay.style.display = "none";
 }
 
-// ----------------------------------------------------
-// META TABLE LOGIC
-// ----------------------------------------------------
-const API_URL = "https://zyntel-data-updater.onrender.com/api/meta";
-const metaBody = document.getElementById('metaBody');
-const metaMessage = document.getElementById('metaMessage');
-const paginationContainer = document.getElementById('pagination-container');
-
-let allmetaData = [];
-let currentPage = 1;
-const rowsPerPage = 25; // Updated to 25 rows per page
-
 /**
  * Helper function to show messages in the message box.
  */
@@ -51,11 +52,17 @@ function showMessage(element, message, type = 'info') {
 }
 
 /**
+ * Helper function to capitalize the first letter of each word in a string.
+ */
+function capitalizeWords(str) {
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+/**
  * Fetches meta data from the API and calls the render function.
  */
 async function fetchmetaData() {
     showLoadingSpinner();
-    // The colspan is now 4 to match the new number of columns
     metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
     metaMessage.classList.add('hidden');
 
@@ -76,18 +83,9 @@ async function fetchmetaData() {
             },
         });
 
-        // --- NEW: Add this check to handle server errors gracefully ---
         if (!response.ok) {
-            // Check for a 401 (Unauthorized) or 500 (Internal Server Error)
-            if (response.status === 401 || response.status === 500) {
-                // Clear the session and redirect, as if they logged out.
-                clearSession();
-                window.location.replace("/index.html");
-                return; // Stop further execution
-            }
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        // --- END NEW CODE ---
 
         const data = await response.json();
         allmetaData = data;
