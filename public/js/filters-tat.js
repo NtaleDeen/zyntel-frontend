@@ -24,7 +24,7 @@ export const outpatientUnits = [
 ];
 export const annexUnits = ["ANNEX"];
 
-const EAT_TIMEZONE = "Africa/Nairobi";
+// Removed the EAT_TIMEZONE constant to make the script timezone-agnostic
 
 export function parseTATDate(dateStr) {
   if (!dateStr) return null;
@@ -40,7 +40,8 @@ export function parseTATDate(dateStr) {
     "YYYY-MM-DD HH:mm:ss.SSS",
     "ddd, DD MMM YYYY HH:mm:ss [GMT]",
   ];
-  return window.moment.utc(dateStr, formats, true);
+  // Changed window.moment.utc to window.moment to use the database's time directly
+  return window.moment(dateStr, formats, true);
 }
 
 
@@ -146,33 +147,34 @@ function initializeFilterListeners(callback) {
 }
 
 export function updateDatesForPeriod(period) {
-  const nowEAT = window.moment.tz(EAT_TIMEZONE);
-  let startDateEAT, endDateEAT;
+  // Changed nowEAT to now and removed the timezone-specific function
+  const now = window.moment();
+  let startDate, endDate;
 
   switch (period) {
     case "thisMonth":
-      startDateEAT = nowEAT.clone().startOf("month");
-      endDateEAT = nowEAT.clone().endOf("month");
+      startDate = now.clone().startOf("month");
+      endDate = now.clone().endOf("month");
       break;
     case "lastMonth":
-      startDateEAT = nowEAT.clone().subtract(1, "month").startOf("month");
-      endDateEAT = nowEAT.clone().subtract(1, "month").endOf("month");
+      startDate = now.clone().subtract(1, "month").startOf("month");
+      endDate = now.clone().subtract(1, "month").endOf("month");
       break;
     case "thisQuarter":
-      startDateEAT = nowEAT.clone().startOf("quarter");
-      endDateEAT = nowEAT.clone().endOf("quarter");
+      startDate = now.clone().startOf("quarter");
+      endDate = now.clone().endOf("quarter");
       break;
     case "lastQuarter":
-      startDateEAT = nowEAT.clone().subtract(1, "quarter").startOf("quarter");
-      endDateEAT = nowEAT.clone().subtract(1, "quarter").endOf("quarter");
+      startDate = now.clone().subtract(1, "quarter").startOf("quarter");
+      endDate = now.clone().subtract(1, "quarter").endOf("quarter");
       break;
     case "thisYear":
-      startDateEAT = nowEAT.clone().startOf("year");
-      endDateEAT = nowEAT.clone().endOf("year");
+      startDate = now.clone().startOf("year");
+      endDate = now.clone().endOf("year");
       break;
     case "lastYear":
-      startDateEAT = nowEAT.clone().subtract(1, "year").startOf("year");
-      endDateEAT = nowEAT.clone().subtract(1, "year").endOf("year");
+      startDate = now.clone().subtract(1, "year").startOf("year");
+      endDate = now.clone().subtract(1, "year").endOf("year");
       break;
     default:
       return;
@@ -182,10 +184,10 @@ export function updateDatesForPeriod(period) {
   const endDateInput = document.getElementById("endDateFilter");
 
   if (startDateInput) {
-    startDateInput.value = startDateEAT.format("YYYY-MM-DD");
+    startDateInput.value = startDate.format("YYYY-MM-DD");
   }
   if (endDateInput) {
-    endDateInput.value = endDateEAT.format("YYYY-MM-DD");
+    endDateInput.value = endDate.format("YYYY-MM-DD");
     endDateInput.disabled = false;
   }
 }
