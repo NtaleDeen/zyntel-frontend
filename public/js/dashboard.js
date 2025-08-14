@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let animationInterval = null;
 
     // Function to update a panel's main display
-    function updatePanel(panelId, index, links, mainDisplay, viewBtn, imageTitleElement) {
+    function updatePanel(links, mainDisplay, viewBtn, imageTitleElement, index) {
         // Create an image element if it doesn't exist
         let img = mainDisplay.querySelector('.page-image');
         if (!img) {
@@ -65,11 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to update both panels simultaneously to ensure they are synchronized
     function updatePanels() {
-        const dashboardLink = dashboardLinks[currentIndex % dashboardLinks.length];
-        const tatLink = tatLinks[currentIndex % tatLinks.length];
+        const dashboardTotal = dashboardLinks.length;
+        const tatTotal = tatLinks.length;
+        const dashboardIndex = currentIndex % dashboardTotal;
+        const tatIndex = currentIndex % tatTotal;
 
-        updatePanelContent(dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, dashboardLink);
-        updatePanelContent(tatMainDisplay, tatViewBtn, tatImageTitle, tatLink);
+        // Use the synchronized update function
+        updatePanel(dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, dashboardIndex);
+        updatePanel(tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle, tatIndex);
         console.log(`Panels updated to index: ${currentIndex}`);
     }
 
@@ -80,11 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const defaultTatLink = tatLinks.find(link => link.href.includes('reception.html')) || tatLinks[0];
 
         if (defaultDashboardLink) {
-            currentDashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
-        }
-
-        if (defaultTatLink) {
-            currentTATIndex = tatLinks.indexOf(defaultTatLink);
+            currentIndex = dashboardLinks.indexOf(defaultDashboardLink);
+        } else if (defaultTatLink) {
+            currentIndex = tatLinks.indexOf(defaultTatLink);
         }
 
         // Update both panels once with the initial values
@@ -94,39 +95,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to animate the panels
     function startAnimation() {
         // Clear any existing interval to prevent duplicates
-        if (intervalId) clearInterval(intervalId);
+        if (animationInterval) clearInterval(animationInterval);
 
         const dashboardTotal = dashboardLinks.length;
         const tatTotal = tatLinks.length;
 
-        intervalId = setInterval(() => {
-            currentDashboardIndex = (currentDashboardIndex + 1) % dashboardTotal;
-            currentTATIndex = (currentTATIndex + 1) % tatTotal;
+        animationInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % Math.max(dashboardTotal, tatTotal);
 
             // Use the synchronized update function
             updatePanels();
-        }, animationDelay);
+        }, updateInterval);
     }
 
     function stopAnimation() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
         }
     }
 
     // Function to reset the idle timer and stop animation
     function resetIdleTimer() {
-        clearTimeout(timeoutId);
+        clearTimeout(idleTimer);
         stopAnimation();
-        timeoutId = setTimeout(startAnimation, idleTime);
+        idleTimer = setTimeout(startAnimation, idleTimeout);
     }
 
     // Initialize panels on page load
     initializePanels();
 
     // Start the idle timer after the initial page load
-    timeoutId = setTimeout(startAnimation, idleTime);
+    idleTimer = setTimeout(startAnimation, idleTimeout);
 
     // Event listeners to handle user interaction
     document.addEventListener('click', resetIdleTimer);
