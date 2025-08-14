@@ -55,37 +55,51 @@ function hideLoadingSpinner() {
 }
 
 // Helper function to get the previous period's date range
-function getPreviousPeriodDates() {
-  const periodSelect = document.getElementById("periodSelect");
-  const currentPeriod = periodSelect ? periodSelect.value : "thisMonth";
-  const nowEAT = window.moment.tz("Africa/Nairobi");
-  let prevPeriodStartDate, prevPeriodEndDate;
+function getPreviousPeriodDates(selectedPeriod) {
+    let now = moment();
+    let startDate, endDate;
 
-  switch (currentPeriod) {
-    case "thisMonth":
-      prevPeriodStartDate = nowEAT.clone().subtract(1, "month").startOf("month");
-      prevPeriodEndDate = nowEAT.clone().subtract(1, "month").endOf("month");
-      break;
-    case "lastMonth":
-      prevPeriodStartDate = nowEAT.clone().subtract(2, "month").startOf("month");
-      prevPeriodEndDate = nowEAT.clone().subtract(2, "month").endOf("month");
-      break;
-    case "thisQuarter":
-      prevPeriodStartDate = nowEAT.clone().subtract(1, "quarter").startOf("quarter");
-      prevPeriodEndDate = nowEAT.clone().subtract(1, "quarter").endOf("quarter");
-      break;
-    case "lastQuarter":
-      prevPeriodStartDate = nowEAT.clone().subtract(2, "quarter").startOf("quarter");
-      prevPeriodEndDate = nowEAT.clone().subtract(2, "quarter").endOf("quarter");
-      break;
-    default:
-      // For custom or other periods, we can't reliably determine the previous period.
-      // Return null to indicate no previous data for comparison.
-      return { prevPeriodStartDate: null, prevPeriodEndDate: null };
-  }
-  return { prevPeriodStartDate, prevPeriodEndDate };
+    switch (selectedPeriod) {
+        case "Today":
+            startDate = now.startOf('day');
+            endDate = now.endOf('day');
+            break;
+        case "Yesterday":
+            startDate = moment().subtract(1, 'days').startOf('day');
+            endDate = moment().subtract(1, 'days').endOf('day');
+            break;
+        case "This Week":
+            startDate = now.startOf('isoWeek');
+            endDate = now.endOf('isoWeek');
+            break;
+        case "Last Week":
+            startDate = moment().subtract(1, 'weeks').startOf('isoWeek');
+            endDate = moment().subtract(1, 'weeks').endOf('isoWeek');
+            break;
+        case "This Month":
+            startDate = now.startOf('month');
+            endDate = now.endOf('month');
+            break;
+        case "Last Month":
+            startDate = moment().subtract(1, 'months').startOf('month');
+            endDate = moment().subtract(1, 'months').endOf('month');
+            break;
+        case "Last 30 Days":
+            startDate = moment().subtract(30, 'days').startOf('day');
+            endDate = now.endOf('day');
+            break;
+        default:
+            // Default to today if an invalid period is selected
+            startDate = now.startOf('day');
+            endDate = now.endOf('day');
+            break;
+    }
+
+    return {
+        startDate: startDate.format(),
+        endDate: endDate.format()
+    };
 }
-
 // NEW: A central function to apply filters and render all charts.
 function refreshDashboard() {
   // Apply filters from UI for current data after loading all data
