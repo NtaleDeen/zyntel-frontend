@@ -133,8 +133,17 @@ function initializeFilterListeners(callback) {
     }, debounceDelay);
   };
 
+  const periodSelect = document.getElementById("periodSelect");
+  if (periodSelect) {
+    periodSelect.addEventListener("change", (e) => {
+      if (e.target.value !== "custom") {
+        updateDatesForPeriod(e.target.value);
+        handleFilterChange();
+      }
+    });
+  }
+
   const filterIds = [
-    "periodSelect",
     "startDateFilter",
     "endDateFilter",
     "shiftFilter",

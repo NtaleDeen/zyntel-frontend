@@ -76,8 +76,9 @@ async function loadDatabaseData() {
     const dbData = await response.json();
 
     allData = dbData.map(row => {
+      // Fix: Correctly parse time_in for 'T' separated format.
       const timeInHour = row.time_in
-        ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
+        ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
         : null;
 
       // Add these console logs to debug
