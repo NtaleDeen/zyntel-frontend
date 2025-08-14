@@ -33,12 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button');
 
     // Variables for the animation and idle timer
-    let currentDashboardIndex = 0;
-    let currentTATIndex = 0;
-    let intervalId = null;
-    let timeoutId = null;
-    const animationDelay = 6000; // Animation interval in milliseconds (6 seconds)
-    const idleTime = 30000; // Idle time before animation starts in milliseconds (30 seconds)
+    // Use a single index to synchronize both dashboard and TAT panels
+    let currentIndex = 0;
+    const updateInterval = 6000; // 6 seconds
+    const idleTimeout = 30000; // 30 seconds
+    let idleTimer = null;
+    let animationInterval = null;
 
     // Function to update a panel's main display
     function updatePanel(panelId, index, links, mainDisplay, viewBtn, imageTitleElement) {
@@ -65,8 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to update both panels simultaneously to ensure they are synchronized
     function updatePanels() {
-        updatePanel('dashboard-panel', currentDashboardIndex, dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle);
-        updatePanel('tat-panel', currentTATIndex, tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle);
+        const dashboardLink = dashboardLinks[currentIndex % dashboardLinks.length];
+        const tatLink = tatLinks[currentIndex % tatLinks.length];
+
+        updatePanelContent(dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, dashboardLink);
+        updatePanelContent(tatMainDisplay, tatViewBtn, tatImageTitle, tatLink);
+        console.log(`Panels updated to index: ${currentIndex}`);
     }
 
     // Function to initialize the panels with the default values
@@ -159,24 +163,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Dashboard links handler
     dashboardLinks.forEach((link, index) => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             dashboardDropdownMenu.classList.remove('show');
-            currentDashboardIndex = index;
-            currentTATIndex = index % tatLinks.length; // Align TAT index to dashboard
-            updatePanels(); // Use the synchronized update function
+            currentIndex = index; // Set the single index
+            updatePanels();
             resetIdleTimer();
         });
     });
 
+    // TAT links handler
     tatLinks.forEach((link, index) => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             tatDropdownMenu.classList.remove('show');
-            currentTATIndex = index;
-            currentDashboardIndex = index % dashboardLinks.length; // Align dashboard index to TAT
-            updatePanels(); // Use the synchronized update function
+            currentIndex = index; // Set the single index
+            updatePanels();
             resetIdleTimer();
         });
     });
