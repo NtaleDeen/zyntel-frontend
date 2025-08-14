@@ -75,14 +75,21 @@ async function loadDatabaseData() {
 
     const dbData = await response.json();
 
-    allData = dbData.map(row => ({
-      ...row,
-      parsedDate: parseTATDate(row.date),
-      timeInHour: row.time_in
+    allData = dbData.map(row => {
+      const timeInHour = row.time_in
         ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
-        : null,
-      tat: row.request_delay_status || "Not Uploaded",
-    }));
+        : null;
+
+      // Add these console logs to debug
+      console.log('Original time_in:', row.time_in);
+      console.log('Parsed timeInHour:', timeInHour);
+
+      return {
+        ...row,
+        parsedDate: parseTATDate(row.date),
+        timeInHour: timeInHour
+      };
+    });
 
     filteredData = applyTATFilters(allData);
     processNumbersData();
@@ -91,24 +98,6 @@ async function loadDatabaseData() {
     console.error("Data load failed:", err);
   } finally {
     hideLoadingSpinner(); // <— end animation
-  }
-}
-
-// Main function to fetch, process, and render all dashboard elements.
-async function loadAndRender() {
-  const dbData = await loadDatabaseData();
-  if (dbData) {
-    allData = dbData.map(row => ({
-      ...row,
-      parsedDate: parseTATDate(row.date),
-      timeInHour: row.time_in
-        ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null
-        : null,
-      tat: row.request_delay_status || "Not Uploaded",
-    }));
-
-    filteredData = applyTATFilters(allData);
-    processNumbersData();
   }
 }
 
@@ -123,7 +112,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize common dashboard elements, including rendering filters.
-  initCommonDashboard(loadAndRender);
+  // Change the callback to processNumbersData()
+  initCommonDashboard(processNumbersData);
+  // Initial data load after filters are set
+  loadDatabaseData();
 });
 
 // Process data and update all visualizations

@@ -48,11 +48,25 @@ export function parseTATDate(dateStr) {
 export function applyTATFilters(allData) {
   const shiftFilter = document.getElementById("shiftFilter");
   const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
+  const startDateInput = document.getElementById("startDateFilter");
+  const endDateInput = document.getElementById("endDateFilter");
 
   const selectedShift = shiftFilter?.value || "all";
   const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
+  const startDate = startDateInput?.value ? window.moment(startDateInput.value) : null;
+  const endDate = endDateInput?.value ? window.moment(endDateInput.value).endOf('day') : null;
 
   const filteredData = allData.filter((row) => {
+    // Check if the date is within the selected range
+    const rowDate = parseTATDate(row.date);
+    if (startDate && rowDate && rowDate.isBefore(startDate)) {
+        return false;
+    }
+    if (endDate && rowDate && rowDate.isAfter(endDate)) {
+        return false;
+    }
+    
+    // Existing shift and unit filters
     if (selectedShift !== "all" && row.Shift?.toLowerCase() !== selectedShift) {
       return false;
     }
@@ -72,7 +86,6 @@ export function applyTATFilters(allData) {
           return false;
       }
     }
-
     return true;
   });
 
