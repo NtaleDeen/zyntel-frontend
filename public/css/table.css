@@ -67,7 +67,7 @@
     color: var(--background-2-color);
     font-size: 13px;
     background-color: var(--hover-color-2);
-    box-shadow: 0 5px 5px var(--hover-color);
+    /* box-shadow: 0 5px 5px var(--hover-color); */
     cursor: pointer;
 }
 
@@ -91,7 +91,7 @@
 }
 
 #pagination-container button:hover, #pagination-container button.active {
-  border-color: var(--background-2-color);
+  border-color: var(--hover-color);
   border-radius: 10px;
 }
 
