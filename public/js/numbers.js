@@ -251,8 +251,6 @@ function renderHourlyNumbersLineChart() {
 function updateNumberKPIs() {
   // Total Requests
   const totalRequests = filteredData.length;
-  document.getElementById("totalRequestsValue").textContent =
-    totalRequests.toLocaleString();
 
   // Average Daily Requests
   const uniqueDates = new Set(
@@ -264,6 +262,34 @@ function updateNumberKPIs() {
     uniqueDates.size > 0 ? totalRequests / uniqueDates.size : 0;
   document.getElementById("avgDailyRequests").textContent =
     Math.round(avgDailyRequests).toLocaleString();
+
+  // --- Start of realistic trend calculation logic for Average Daily Requests ---
+  const currentPeriodStartDate = filteredData[0]?.parsedDate;
+  if (currentPeriodStartDate) {
+    const previousPeriodStartDate = currentPeriodStartDate.clone().subtract(1, 'month');
+    const previousPeriodEndDate = currentPeriodStartDate.clone().subtract(1, 'day');
+
+    const previousPeriodData = allData.filter(row => {
+      const rowDate = parseTATDate(row.date);
+      return rowDate && rowDate.isBetween(previousPeriodStartDate, previousPeriodEndDate, null, '[]');
+    });
+
+    const uniqueDatesPrevious = new Set(
+      previousPeriodData
+        .map((row) => row.parsedDate?.format("YYYY-MM-DD"))
+        .filter(Boolean)
+    );
+    const avgDailyRequestsPrevious = uniqueDatesPrevious.size > 0
+      ? previousPeriodData.length / uniqueDatesPrevious.size
+      : 0;
+
+    const avgDailyRequestsTrendValue = avgDailyRequestsPrevious > 0
+      ? ((avgDailyRequests - avgDailyRequestsPrevious) / avgDailyRequestsPrevious) * 100
+      : 0;
+      
+    updateTrend("avgDailyRequestsTrend", avgDailyRequestsTrendValue, true);
+  }
+  // --- End of realistic trend calculation logic ---
 
   // Busiest Hour
   const hourlyCounts = Array(24).fill(0);
@@ -295,29 +321,6 @@ function updateNumberKPIs() {
     }
   });
   document.getElementById("busiestDay").textContent = busiestDay;
-
-  // --- Start of realistic trend calculation logic ---
-  const currentPeriod = filteredData;
-  const previousPeriod = allData.filter(row => {
-    const rowDate = parseTATDate(row.date);
-    if (!rowDate) return false;
-    // For demonstration, comparing to the same period in the previous month
-    const startOfCurrentMonth = moment().startOf('month');
-    const startOfPreviousMonth = moment().subtract(1, 'month').startOf('month');
-    return rowDate.isBetween(startOfPreviousMonth, startOfCurrentMonth, null, '[]');
-  });
-
-  const totalRequestsCurrent = currentPeriod.length;
-  const totalRequestsPrevious = previousPeriod.length;
-  const totalRequestsTrendValue = totalRequestsPrevious > 0
-    ? ((totalRequestsCurrent - totalRequestsPrevious) / totalRequestsPrevious) * 100
-    : 0;
-
-  // Update Total Requests KPI with the new trend value
-  document.getElementById("totalRequestsValue").textContent =
-    totalRequestsCurrent.toLocaleString();
-  updateTrend("totalRequestsTrend", totalRequestsTrendValue, true);
-  // --- End of realistic trend calculation logic ---
 }
 
 // Update trend indicators
