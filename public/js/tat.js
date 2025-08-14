@@ -34,7 +34,7 @@ import {
   updateDatesForPeriod // Import this to set default period dates
 } from "./filters-tat.js";
 
-// Global chart instances to ensure they can be destroyed and recreated
+// Global chart instances and data
 let allData = [];
 let filteredData = [];
 let tatPieChart = null;
@@ -163,6 +163,7 @@ function updateKPIs() {
       ? filteredData.reduce((sum, row) => sum + row.TAT_in_Hours, 0) /
         filteredData.length
       : 0;
+  // This line was causing the error, it needs a corresponding HTML element
   document.getElementById("averageTATValue").textContent =
     `${averageTAT.toFixed(1)} hrs`;
     
