@@ -24,8 +24,6 @@ export const outpatientUnits = [
 ];
 export const annexUnits = ["ANNEX"];
 
-// Removed the EAT_TIMEZONE constant to make the script timezone-agnostic
-
 export function parseTATDate(dateStr) {
   if (!dateStr) return null;
   const formats = [
@@ -40,7 +38,6 @@ export function parseTATDate(dateStr) {
     "YYYY-MM-DD HH:mm:ss.SSS",
     "ddd, DD MMM YYYY HH:mm:ss [GMT]",
   ];
-  // Changed window.moment.utc to window.moment to use the database's time directly
   return window.moment(dateStr, formats, true);
 }
 
@@ -153,7 +150,6 @@ function initializeFilterListeners(callback) {
 }
 
 export function updateDatesForPeriod(period) {
-  // Changed nowEAT to now and removed the timezone-specific function
   const now = window.moment();
   let startDate, endDate;
 
@@ -174,14 +170,7 @@ export function updateDatesForPeriod(period) {
       startDate = now.clone().subtract(1, "quarter").startOf("quarter");
       endDate = now.clone().subtract(1, "quarter").endOf("quarter");
       break;
-    case "thisYear":
-      startDate = now.clone().startOf("year");
-      endDate = now.clone().endOf("year");
-      break;
-    case "lastYear":
-      startDate = now.clone().subtract(1, "year").startOf("year");
-      endDate = now.clone().subtract(1, "year").endOf("year");
-      break;
+    // Cases for "thisYear" and "lastYear" have been removed
     default:
       return;
   }
