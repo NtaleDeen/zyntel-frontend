@@ -52,6 +52,10 @@ h1 {
   color: var(--main-color);
 }
 
+.page {
+  padding: 0 25px;
+}
+
 .page span {
   color: var(--main-color);
 }
