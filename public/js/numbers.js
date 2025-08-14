@@ -249,8 +249,12 @@ function renderHourlyNumbersLineChart() {
 
 // Update all KPIs
 function updateNumberKPIs() {
-  // Total Requests
-  const totalRequests = filteredData.length;
+  const currentPeriod = filteredData;
+  const totalRequestsCurrent = currentPeriod.length;
+
+  // Update Total Requests KPI with the new trend value
+  document.getElementById("totalRequestsValue").textContent =
+    totalRequestsCurrent.toLocaleString();
 
   // Average Daily Requests
   const uniqueDates = new Set(
@@ -259,7 +263,7 @@ function updateNumberKPIs() {
       .filter(Boolean)
   );
   const avgDailyRequests =
-    uniqueDates.size > 0 ? totalRequests / uniqueDates.size : 0;
+    uniqueDates.size > 0 ? totalRequestsCurrent / uniqueDates.size : 0;
   document.getElementById("avgDailyRequests").textContent =
     Math.round(avgDailyRequests).toLocaleString();
 
