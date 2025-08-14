@@ -172,7 +172,7 @@ h1 {
 }
 
 .view-page-button:hover {
-  background-color: var(--border-color);
+  background-color: var(--hover-color);
   transform: scale(1.05);
 }
 
@@ -207,7 +207,7 @@ h1 {
 }
 
 .dropdown-button:hover {
-  background-color: var(--border-color);
+  background-color: var(--hover-color);
   transform: scale(1.05);
 }
 
