@@ -10,6 +10,16 @@ Chart.register(ChartDataLabels);
 // Auth check (must be early so unauthorized users are redirected)
 checkAuthAndRedirect();
 
+// Select the logout button and add an event listener
+const logoutButton = document.getElementById('logout-button');
+logoutButton.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Clear the user's session data
+    clearSession();
+    // Redirect to the login page, replacing the current history entry
+    window.location.replace("/index.html");
+});
+
 // API URL
 const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
 
