@@ -37,7 +37,7 @@ body {
   overflow-y: auto; /* Added to for auto scroll bar */
 }
 
-/* .header-container {
+.header-container {
   padding: 15px 20px 0 20px;
 }
 
@@ -47,18 +47,18 @@ header {
 }
 
 h1 {
-  font-size: 1.75rem;
+  font-size: 1.75rem; /* Reduced font size */
   font-weight: 700;
   color: var(--main-color);
 }
 
 .page {
-  border-left: 2px solid var(--hover-color);
+  padding: 0 30px;
 }
 
 .page span {
   color: var(--main-color);
-} */
+}
 
 .main-container {
   display: grid;
