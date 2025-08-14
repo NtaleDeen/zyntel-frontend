@@ -81,10 +81,6 @@ async function loadDatabaseData() {
         ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
         : null;
 
-      // Add these console logs to debug
-      console.log('Original time_in:', row.time_in);
-      console.log('Parsed timeInHour:', timeInHour);
-
       return {
         ...row,
         parsedDate: parseTATDate(row.date),
@@ -113,7 +109,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Initialize common dashboard elements, including rendering filters.
-  // Change the callback to processNumbersData()
   initCommonDashboard(processNumbersData);
   // Initial data load after filters are set
   loadDatabaseData();
@@ -301,9 +296,28 @@ function updateNumberKPIs() {
   });
   document.getElementById("busiestDay").textContent = busiestDay;
 
-  // Update trends (simplified example)
-  updateTrend("totalRequestsTrend", totalRequests * 0.1, true); // 10% increase for demo
-  updateTrend("avgDailyRequestsTrend", avgDailyRequests * 0.05, true); // 5% increase for demo
+  // --- Start of realistic trend calculation logic ---
+  const currentPeriod = filteredData;
+  const previousPeriod = allData.filter(row => {
+    const rowDate = parseTATDate(row.date);
+    if (!rowDate) return false;
+    // For demonstration, comparing to the same period in the previous month
+    const startOfCurrentMonth = moment().startOf('month');
+    const startOfPreviousMonth = moment().subtract(1, 'month').startOf('month');
+    return rowDate.isBetween(startOfPreviousMonth, startOfCurrentMonth, null, '[]');
+  });
+
+  const totalRequestsCurrent = currentPeriod.length;
+  const totalRequestsPrevious = previousPeriod.length;
+  const totalRequestsTrendValue = totalRequestsPrevious > 0
+    ? ((totalRequestsCurrent - totalRequestsPrevious) / totalRequestsPrevious) * 100
+    : 0;
+
+  // Update Total Requests KPI with the new trend value
+  document.getElementById("totalRequestsValue").textContent =
+    totalRequestsCurrent.toLocaleString();
+  updateTrend("totalRequestsTrend", totalRequestsTrendValue, true);
+  // --- End of realistic trend calculation logic ---
 }
 
 // Update trend indicators

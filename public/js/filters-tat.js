@@ -138,8 +138,8 @@ function initializeFilterListeners(callback) {
     periodSelect.addEventListener("change", (e) => {
       if (e.target.value !== "custom") {
         updateDatesForPeriod(e.target.value);
-        handleFilterChange();
       }
+      handleFilterChange();
     });
   }
 
