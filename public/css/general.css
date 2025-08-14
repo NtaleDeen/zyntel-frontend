@@ -90,7 +90,7 @@ h1 {
 }
 
 .page-table {
-  padding: 0 30px;
+  padding: 0 25px;
 }
 
 .page {
@@ -101,6 +101,7 @@ h1 {
   font-weight: 500;
   border-left: 2px solid var(--hover-color);
   justify-content: space-between;
+  padding: 0 25px;
 }
 
 #menuToggle {
