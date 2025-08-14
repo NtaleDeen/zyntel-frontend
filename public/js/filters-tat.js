@@ -46,19 +46,13 @@ export function parseTATDate(dateStr) {
 
 
 export function applyTATFilters(allData) {
-  const labSectionFilter = document.getElementById("labSectionFilter");
   const shiftFilter = document.getElementById("shiftFilter");
   const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
 
-  const selectedLabSection = labSectionFilter?.value || "all";
   const selectedShift = shiftFilter?.value || "all";
   const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
 
   const filteredData = allData.filter((row) => {
-    if (selectedLabSection !== "all" && row.LabSection?.toLowerCase() !== selectedLabSection) {
-      return false;
-    }
-
     if (selectedShift !== "all" && row.Shift?.toLowerCase() !== selectedShift) {
       return false;
     }
@@ -133,7 +127,6 @@ function initializeFilterListeners(callback) {
     "periodSelect",
     "startDateFilter",
     "endDateFilter",
-    "labSectionFilter",
     "shiftFilter",
     "hospitalUnitFilter",
   ];
