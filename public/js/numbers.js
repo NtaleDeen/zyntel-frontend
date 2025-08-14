@@ -267,7 +267,7 @@ function updateNumberKPIs() {
   document.getElementById("avgDailyRequests").textContent =
     Math.round(avgDailyRequests).toLocaleString();
 
-  // --- Start of realistic trend calculation logic for Average Daily Requests ---
+  // --- Start of realistic trend calculation logic ---
   const currentPeriodStartDate = filteredData[0]?.parsedDate;
   if (currentPeriodStartDate) {
     const previousPeriodStartDate = currentPeriodStartDate.clone().subtract(1, 'month');
@@ -278,22 +278,29 @@ function updateNumberKPIs() {
       return rowDate && rowDate.isBetween(previousPeriodStartDate, previousPeriodEndDate, null, '[]');
     });
 
+    // Trend for Total Requests
+    const totalRequestsPrevious = previousPeriodData.length;
+    const totalRequestsTrendValue = totalRequestsPrevious > 0
+        ? ((totalRequestsCurrent - totalRequestsPrevious) / totalRequestsPrevious) * 100
+        : 0;
+    updateTrend("totalRequestsTrend", totalRequestsTrendValue, true);
+
+    // Trend for Average Daily Requests
     const uniqueDatesPrevious = new Set(
       previousPeriodData
         .map((row) => row.parsedDate?.format("YYYY-MM-DD"))
         .filter(Boolean)
     );
     const avgDailyRequestsPrevious = uniqueDatesPrevious.size > 0
-      ? previousPeriodData.length / uniqueDatesPrevious.size
+      ? totalRequestsPrevious / uniqueDatesPrevious.size
       : 0;
-
     const avgDailyRequestsTrendValue = avgDailyRequestsPrevious > 0
       ? ((avgDailyRequests - avgDailyRequestsPrevious) / avgDailyRequestsPrevious) * 100
       : 0;
-      
     updateTrend("avgDailyRequestsTrend", avgDailyRequestsTrendValue, true);
   }
   // --- End of realistic trend calculation logic ---
+
 
   // Busiest Hour
   const hourlyCounts = Array(24).fill(0);
