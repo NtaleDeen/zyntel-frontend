@@ -60,22 +60,6 @@ function getPreviousPeriodDates(selectedPeriod) {
     let startDate, endDate;
 
     switch (selectedPeriod) {
-        case "Today":
-            startDate = now.startOf('day');
-            endDate = now.endOf('day');
-            break;
-        case "Yesterday":
-            startDate = moment().subtract(1, 'days').startOf('day');
-            endDate = moment().subtract(1, 'days').endOf('day');
-            break;
-        case "This Week":
-            startDate = now.startOf('isoWeek');
-            endDate = now.endOf('isoWeek');
-            break;
-        case "Last Week":
-            startDate = moment().subtract(1, 'weeks').startOf('isoWeek');
-            endDate = moment().subtract(1, 'weeks').endOf('isoWeek');
-            break;
         case "This Month":
             startDate = now.startOf('month');
             endDate = now.endOf('month');
@@ -84,14 +68,10 @@ function getPreviousPeriodDates(selectedPeriod) {
             startDate = moment().subtract(1, 'months').startOf('month');
             endDate = moment().subtract(1, 'months').endOf('month');
             break;
-        case "Last 30 Days":
-            startDate = moment().subtract(30, 'days').startOf('day');
-            endDate = now.endOf('day');
-            break;
         default:
-            // Default to today if an invalid period is selected
-            startDate = now.startOf('day');
-            endDate = now.endOf('day');
+            // Default to a sensible period if an invalid one is selected
+            startDate = now.startOf('month');
+            endDate = now.endOf('month');
             break;
     }
 
@@ -100,6 +80,7 @@ function getPreviousPeriodDates(selectedPeriod) {
         endDate: endDate.format()
     };
 }
+
 // NEW: A central function to apply filters and render all charts.
 function refreshDashboard() {
   // Apply filters from UI for current data after loading all data
@@ -142,7 +123,6 @@ async function loadDatabaseData() {
     try {
         const startDate = document.getElementById("startDateFilter")?.value;
         const endDate = document.getElementById("endDateFilter")?.value;
-        const labSection = document.getElementById("labSectionFilter")?.value;
         const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
         const shift = document.getElementById("shiftFilter")?.value;
 
@@ -150,7 +130,6 @@ async function loadDatabaseData() {
         let url = new URL(API_URL);
         if (startDate) url.searchParams.append('start_date', startDate);
         if (endDate) url.searchParams.append('end_date', endDate);
-        if (labSection !== "all") url.searchParams.append('lab_section', labSection);
         if (hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
         if (shift !== "all") url.searchParams.append('shift', shift);
 
