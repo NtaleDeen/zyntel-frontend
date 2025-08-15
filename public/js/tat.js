@@ -130,8 +130,12 @@ async function loadDatabaseData() {
         let url = new URL(API_URL);
         if (startDate) url.searchParams.append('start_date', startDate);
         if (endDate) url.searchParams.append('end_date', endDate);
-        if (hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
-        if (shift !== "all") url.searchParams.append('shift', shift);
+        // The hospital_unit and shift parameters should be sent to the API only if a specific value is selected.
+        // For "all", they should not be appended to the URL to avoid filtering on the server side.
+        // This is a crucial fix to ensure the filter logic is correctly handled.
+        // The client-side filtering will then be applied in refreshDashboard()
+        if (hospitalUnit && hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
+        if (shift && shift !== "all") url.searchParams.append('shift', shift);
 
         const response = await fetch(url, {
             headers: {
@@ -141,6 +145,8 @@ async function loadDatabaseData() {
 
         if (response.status === 401) {
             console.error("401 Unauthorized");
+            // Clear session and redirect to login page
+            clearSession();
             window.location.href = "/index.html";
             return;
         }
@@ -163,19 +169,26 @@ async function loadDatabaseData() {
                     tatStatus = "On Time";
                     break;
                 default:
+                    // This handles cases where the status is null, which should be treated as 'Not Uploaded'
                     tatStatus = "Not Uploaded";
             }
+            
+            // The `time_in` parsing logic needs to be more robust.
+            // It should handle different formats and potential `null` values.
+            const timeInParts = row.time_in ? row.time_in.split(" ") : null;
+            const timeInHour = (timeInParts && timeInParts.length > 1) ? parseInt(timeInParts[1].split(":")[0]) : null;
 
             return {
                 ...row,
                 parsedDate: parseTATDate(row.date),
-                timeInHour: row.time_in ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null : null,
+                timeInHour: timeInHour,
                 tat: tatStatus,
                 minutesDelayed: row.daily_tat || 0,
             };
         });
 
-        // The refreshDashboard function will now handle the remaining client-side filtering (e.g., Hospital Unit)
+        // After loading the data, the refreshDashboard function will now handle
+        // the remaining client-side filtering (e.g., Hospital Unit).
         refreshDashboard();
 
     } catch (err) {
@@ -187,7 +200,7 @@ async function loadDatabaseData() {
 
 // Main function to fetch, process, and render all dashboard elements.
 async function loadAndRender() {
-  await loadDatabaseData();
+    await loadDatabaseData();
 }
 
 // DOM Content Loaded - Initialize everything
@@ -834,39 +847,42 @@ function renderLineChart(data) {
  */
 function renderHourlyLineChart(data) {
   const ctx = document.getElementById("tatHourlyLineChart")?.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) {
+      console.error("Could not find canvas element with id 'tatHourlyLineChart'");
+      return;
+  }
 
-  // Aggregate delayed and on-time counts per hour (0-23)
+  // Aggregate delayed, on-time, and not uploaded counts per hour (0-23)
   const hourlyCounts = Array(24)
     .fill()
-    .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 })); // Initialize with objects and notUploaded
+    .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 }));
+
   data.forEach((r) => {
-    // Use 'timeInHour' extracted from 'Time_In'
+    // Use 'timeInHour' which has been correctly parsed in loadDatabaseData
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
       if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
         currentHourData.delayed++;
-      }
-      if (r.tat === "On Time") {
+      } else if (r.tat === "On Time") {
         currentHourData.onTime++;
-      }
-      // Add Not Uploaded count
-      if (r.tat === "Not Uploaded") {
+      } else if (r.tat === "Not Uploaded") {
         currentHourData.notUploaded++;
       }
-      hourlyCounts[r.timeInHour] = currentHourData; // Update the array element
+      // No need to reassign, as we're modifying the object reference in the array.
     }
   });
 
-  const labels = Array.from({ length: 24 }, (_, i) => i + ":00"); // 0:00, 1:00, ..., 23:00
+  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`); // 0:00, 1:00, ..., 23:00
   const delayedData = hourlyCounts.map((h) => h.delayed);
   const onTimeData = hourlyCounts.map((h) => h.onTime);
-  const notUploadedData = hourlyCounts.map((h) => h.notUploaded); // New data array for Not Uploaded
+  const notUploadedData = hourlyCounts.map((h) => h.notUploaded);
 
-  tatHourlyLineChart?.destroy(); // Destroy previous chart instance
+  if (tatHourlyLineChart) {
+      tatHourlyLineChart.destroy(); // Destroy previous chart instance
+  }
+
   tatHourlyLineChart = new Chart(ctx, {
-    // Create new chart instance
-    type: "line", // Changed to line chart
+    type: "line",
     data: {
       labels,
       datasets: [
@@ -876,10 +892,10 @@ function renderHourlyLineChart(data) {
           borderColor: "#f44336",
           backgroundColor: "#f44336",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
         {
           label: "On Time",
@@ -887,22 +903,21 @@ function renderHourlyLineChart(data) {
           borderColor: "#4caf50",
           backgroundColor: "#4caf50",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
-        // NEW DATASET FOR NOT UPLOADED
         {
           label: "Not Uploaded",
           data: notUploadedData,
-          borderColor: "#9E9E9E", // Grey color
+          borderColor: "#9E9E9E",
           backgroundColor: "#9E9E9E",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
       ],
     },
@@ -910,19 +925,19 @@ function renderHourlyLineChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: 10, // Small padding around the chart
+        padding: 10,
       },
       plugins: {
-        legend: { display: true, position: "bottom" }, // Show legend
+        legend: { display: true, position: "bottom" },
       },
       scales: {
         x: {
-          title: { display: true, text: "Hour of Day" }, // Horizontal axis label
+          title: { display: true, text: "Hour of Day" },
           grid: { display: false },
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: "Number of Requests" }, // Vertical axis label (same as daily chart)
+          title: { display: true, text: "Number of Requests" },
           grid: { color: "#e0e0e0" },
         },
       },

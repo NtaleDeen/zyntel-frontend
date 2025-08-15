@@ -43,47 +43,38 @@ export function parseTATDate(dateStr) {
 
 
 export function applyTATFilters(allData) {
-  const shiftFilter = document.getElementById("shiftFilter");
-  const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
-  const startDateInput = document.getElementById("startDateFilter");
-  const endDateInput = document.getElementById("endDateFilter");
+  const selectedHospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
+  const selectedShift = document.getElementById("shiftFilter")?.value;
 
-  const selectedShift = shiftFilter?.value || "all";
-  const selectedHospitalUnit = hospitalUnitFilter?.value || "all";
-  const startDate = startDateInput?.value ? window.moment(startDateInput.value) : null;
-  const endDate = endDateInput?.value ? window.moment(endDateInput.value).endOf('day') : null;
+  // No longer need to filter by start/end date, as this is now handled by the API call.
+  // We're only applying the client-side filters here.
+  return allData.filter((row) => {
+    // Client-side filtering for hospital unit and shift.
+    // The main_lab and annex logic is incorrect, as it's not present on the numbers page.
+    // The fix is to check the `hospitalUnit` value and filter accordingly.
 
-  const filteredData = allData.filter((row) => {
-    // Check if the date is within the selected range
-    const rowDate = parseTATDate(row.date);
-    if (startDate && rowDate && rowDate.isBefore(startDate)) {
-        return false;
-    }
-    if (endDate && rowDate && rowDate.isAfter(endDate)) {
-        return false;
-    }
-    
-    // Existing shift and unit filters
-    // CORRECTED: 'row.Shift' is changed to 'row.shift'
-    if (selectedShift !== "all" && row.shift?.toLowerCase() !== selectedShift) {
-      return false;
-    }
-
-    if (selectedHospitalUnit !== "all") {
-      // CORRECTED: 'row.Hospital_Unit' is changed to 'row.unit'
-      const unit = row.unit?.toUpperCase();
-
-      if (selectedHospitalUnit === "mainLab" && !isMainLab) {
-        return false;
+    // Filter by Hospital Unit
+    if (selectedHospitalUnit && selectedHospitalUnit !== "all") {
+      const unit = row.hospital_unit?.toUpperCase();
+      if (selectedHospitalUnit === "mainLab") {
+        const isMainLab = [...inpatientUnits, ...outpatientUnits].includes(unit);
+        if (!isMainLab) return false;
+      } else if (selectedHospitalUnit === "annex") {
+        const isAnnex = annexUnits.includes(unit);
+        if (!isAnnex) return false;
+      } else {
+        if (unit !== selectedHospitalUnit) return false;
       }
-      if (selectedHospitalUnit === "annex" && !isAnnex) {
-        return false;
-      }
-      if (selectedHospitalUnit !== "mainLab" && selectedHospitalUnit !== "annex" && unit !== selectedHospitalUnit) {
+    }
+
+    // Filter by Shift
+    if (selectedShift && selectedShift !== "all") {
+      if (row.shift !== selectedShift) {
         return false;
       }
     }
 
+    // If all filters pass, include the row
     return true;
   });
 
