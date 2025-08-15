@@ -199,10 +199,12 @@ document.addEventListener("DOMContentLoaded", () => {
     periodSelect.value = "thisMonth";
     updateDatesForPeriod("thisMonth");
   }
-
   // Initialize common dashboard elements, including rendering filters.
   // The refreshDashboard function is now passed as the callback.
   initCommonDashboard(refreshDashboard);
+
+  // FIX: This line was missing. Call the data loading function.
+  loadAndRender();
 });
 
 /**
