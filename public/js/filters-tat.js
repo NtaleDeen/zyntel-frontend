@@ -64,12 +64,14 @@ export function applyTATFilters(allData) {
     }
     
     // Existing shift and unit filters
-    if (selectedShift !== "all" && row.Shift?.toLowerCase() !== selectedShift) {
+    // CORRECTED: 'row.Shift' is changed to 'row.shift'
+    if (selectedShift !== "all" && row.shift?.toLowerCase() !== selectedShift) {
       return false;
     }
 
     if (selectedHospitalUnit !== "all") {
-      const unit = row.Hospital_Unit?.toUpperCase();
+      // CORRECTED: 'row.Hospital_Unit' is changed to 'row.unit'
+      const unit = row.unit?.toUpperCase();
       const isMainLab = [...inpatientUnits, ...outpatientUnits].includes(unit);
       const isAnnex = annexUnits.includes(unit);
 
@@ -80,9 +82,10 @@ export function applyTATFilters(allData) {
         return false;
       }
       if (selectedHospitalUnit !== "mainLab" && selectedHospitalUnit !== "annex" && unit !== selectedHospitalUnit) {
-          return false;
+        return false;
       }
     }
+
     return true;
   });
 
