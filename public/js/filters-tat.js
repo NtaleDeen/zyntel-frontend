@@ -72,8 +72,6 @@ export function applyTATFilters(allData) {
     if (selectedHospitalUnit !== "all") {
       // CORRECTED: 'row.Hospital_Unit' is changed to 'row.unit'
       const unit = row.unit?.toUpperCase();
-      const isMainLab = [...inpatientUnits, ...outpatientUnits].includes(unit);
-      const isAnnex = annexUnits.includes(unit);
 
       if (selectedHospitalUnit === "mainLab" && !isMainLab) {
         return false;
