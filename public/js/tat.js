@@ -9,7 +9,7 @@ import { checkAuthAndRedirect, getToken } from "./auth.js";
 // 2. Immediately check authentication on page load.
 // This single call replaces all previous, duplicated auth checks.
 // Ensure the plugin is registered before any chart is created
-Chart.register(ChartDataLabels);
+// Chart.register(ChartDataLabels);
 
 // Auth check (must be early so unauthorized users are redirected)
 checkAuthAndRedirect();
@@ -763,7 +763,7 @@ function renderLineChart(data) {
     // Create new chart
     type: "line",
     data: {
-      labels,
+      display: true,
       datasets: [
         {
           label: "Delayed",
