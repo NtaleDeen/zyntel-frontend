@@ -121,23 +121,9 @@ async function loadDatabaseData() {
     showLoadingSpinner();
 
     try {
-        const startDate = document.getElementById("startDateFilter")?.value;
-        const endDate = document.getElementById("endDateFilter")?.value;
-        const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
-        const shift = document.getElementById("shiftFilter")?.value;
-
-        // Build query string
-        let url = new URL(API_URL);
-        if (startDate) url.searchParams.append('start_date', startDate);
-        if (endDate) url.searchParams.append('end_date', endDate);
-        // The hospital_unit and shift parameters should be sent to the API only if a specific value is selected.
-        // For "all", they should not be appended to the URL to avoid filtering on the server side.
-        // This is a crucial fix to ensure the filter logic is correctly handled.
-        // The client-side filtering will then be applied in refreshDashboard()
-        if (hospitalUnit && hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
-        if (shift && shift !== "all") url.searchParams.append('shift', shift);
-
-        const response = await fetch(url, {
+        // Corrected: Removed date and other filters from the API call.
+        // The numbers.js file correctly fetches all data first.
+        const response = await fetch(API_URL, {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -169,12 +155,9 @@ async function loadDatabaseData() {
                     tatStatus = "On Time";
                     break;
                 default:
-                    // This handles cases where the status is null, which should be treated as 'Not Uploaded'
                     tatStatus = "Not Uploaded";
             }
-            
-            // The `time_in` parsing logic needs to be more robust.
-            // It should handle different formats and potential `null` values.
+
             const timeInParts = row.time_in ? row.time_in.split(" ") : null;
             const timeInHour = (timeInParts && timeInParts.length > 1) ? parseInt(timeInParts[1].split(":")[0]) : null;
 
@@ -205,19 +188,19 @@ async function loadAndRender() {
 
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("TAT Dashboard initializing...");
-  // Set default period to 'thisMonth' and update date inputs
-  const periodSelect = document.getElementById("periodSelect");
-  if (periodSelect) {
-    periodSelect.value = "thisMonth";
-    updateDatesForPeriod("thisMonth");
-  }
-  // Initialize common dashboard elements, including rendering filters.
-  // The refreshDashboard function is now passed as the callback.
-  initCommonDashboard(refreshDashboard);
+    console.log("TAT Dashboard initializing...");
+    // Set default period to 'thisMonth' and update date inputs
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth");
+    }
+    // Initialize common dashboard elements, including rendering filters.
+    // The refreshDashboard function is now passed as the callback.
+    initCommonDashboard(refreshDashboard);
 
-  // FIX: This line was missing. Call the data loading function.
-  loadAndRender();
+    // FIX: Call the data loading function. This was a missing line.
+    loadDatabaseData();
 });
 
 /**
