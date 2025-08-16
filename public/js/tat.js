@@ -725,6 +725,7 @@ function renderPieChart(data) {
  * Renders or updates the Line Chart for Daily TAT Performance Trend.
  * @param {Array<Object>} data - The filtered data to display.
  */
+// tat.js - renderLineChart function
 function renderLineChart(data) {
   const ctx = document.getElementById("tatLineChart")?.getContext("2d");
   if (!ctx) return;
@@ -732,24 +733,21 @@ function renderLineChart(data) {
   data.forEach((r) => {
     const day = r.parsedDate?.format("YYYY-MM-DD");
     if (!day) return;
-    // Initialize for each day if not present
     if (!dailyCounts[day])
       dailyCounts[day] = { delayed: 0, onTime: 0, notUploaded: 0 };
     if (r.tat === "Over Delayed" || r.tat === "Delayed <15min")
       dailyCounts[day].delayed++;
     if (r.tat === "On Time") dailyCounts[day].onTime++;
-    // Add Not Uploaded count
     if (r.tat === "Not Uploaded") dailyCounts[day].notUploaded++;
   });
 
   const labels = Object.keys(dailyCounts).sort();
   const delayedData = labels.map((d) => dailyCounts[d].delayed);
   const onTimeData = labels.map((d) => dailyCounts[d].onTime);
-  const notUploadedData = labels.map((d) => dailyCounts[d].notUploaded); // New data array for Not Uploaded
+  const notUploadedData = labels.map((d) => dailyCounts[d].notUploaded);
 
-  tatLineChart?.destroy(); // Destroy existing chart
+  tatLineChart?.destroy();
   tatLineChart = new Chart(ctx, {
-    // Create new chart
     type: "line",
     data: {
       labels,
@@ -760,10 +758,10 @@ function renderLineChart(data) {
           borderColor: "#f44336",
           backgroundColor: "#f44336",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
         {
           label: "On Time",
@@ -771,22 +769,21 @@ function renderLineChart(data) {
           borderColor: "#4caf50",
           backgroundColor: "#4caf50",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
-        // NEW DATASET FOR NOT UPLOADED
         {
           label: "Not Uploaded",
           data: notUploadedData,
-          borderColor: "#9E9E9E", // Grey color
+          borderColor: "#9E9E9E",
           backgroundColor: "#9E9E9E",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
       ],
     },
@@ -794,9 +791,15 @@ function renderLineChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: 10, // Small padding around the chart
+        padding: 10,
       },
-      plugins: { legend: { position: "bottom" } },
+      plugins: {
+        legend: { position: "bottom" },
+        // ADD THIS LINE
+        datalabels: {
+            display: false,
+        },
+      },
       scales: {
         x: {
           title: { display: true, text: "Date" },
@@ -804,7 +807,7 @@ function renderLineChart(data) {
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: "Number of Requests" }, // Same as daily chart
+          title: { display: true, text: "Number of Requests" },
           grid: { color: "#e0e0e0" },
         },
       },
@@ -817,6 +820,7 @@ function renderLineChart(data) {
  * This chart is visually identical to the daily line chart, but uses hours on the x-axis.
  * @param {Array<Object>} data - The filtered data to display.
  */
+// tat.js - renderHourlyLineChart function
 function renderHourlyLineChart(data) {
   const ctx = document.getElementById("tatHourlyLineChart")?.getContext("2d");
   if (!ctx) {
@@ -824,13 +828,11 @@ function renderHourlyLineChart(data) {
       return;
   }
 
-  // Aggregate delayed, on-time, and not uploaded counts per hour (0-23)
   const hourlyCounts = Array(24)
     .fill()
     .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 }));
 
   data.forEach((r) => {
-    // Use 'timeInHour' which has been correctly parsed in loadDatabaseData
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
       if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
@@ -840,17 +842,16 @@ function renderHourlyLineChart(data) {
       } else if (r.tat === "Not Uploaded") {
         currentHourData.notUploaded++;
       }
-      // No need to reassign, as we're modifying the object reference in the array.
     }
   });
 
-  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`); // 0:00, 1:00, ..., 23:00
+  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
   const delayedData = hourlyCounts.map((h) => h.delayed);
   const onTimeData = hourlyCounts.map((h) => h.onTime);
   const notUploadedData = hourlyCounts.map((h) => h.notUploaded);
 
   if (tatHourlyLineChart) {
-      tatHourlyLineChart.destroy(); // Destroy previous chart instance
+      tatHourlyLineChart.destroy();
   }
 
   tatHourlyLineChart = new Chart(ctx, {
@@ -901,6 +902,10 @@ function renderHourlyLineChart(data) {
       },
       plugins: {
         legend: { display: true, position: "bottom" },
+        // ADD THIS LINE
+        datalabels: {
+            display: false,
+        },
       },
       scales: {
         x: {

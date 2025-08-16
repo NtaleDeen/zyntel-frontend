@@ -123,130 +123,6 @@ function processNumbersData() {
   renderHourlyNumbersLineChart();
 }
 
-// Render daily numbers bar chart
-function renderDailyNumbersBarChart() {
-  const ctx = document.getElementById("dailyNumbersBarChart");
-  if (!ctx) return;
-
-  const dailyCounts = {};
-  filteredData.forEach((row) => {
-    const date = row.parsedDate;
-    if (date && date.isValid()) {
-      const dateKey = date.format("YYYY-MM-DD");
-      dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
-    }
-  });
-
-  const sortedDates = Object.keys(dailyCounts).sort();
-  const data = sortedDates.map((date) => dailyCounts[date]);
-
-  if (dailyNumbersBarChart) dailyNumbersBarChart.destroy();
-
-  dailyNumbersBarChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: sortedDates,
-      datasets: [
-        {
-          label: "Daily Request Volume",
-          data: data,
-          backgroundColor: "#21336a",
-          borderColor: "#21336a",
-          borderWidth: 1,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.parsed.y} requests`,
-          },
-        },
-      },
-      scales: {
-        x: {
-          type: "time",
-          time: {
-            unit: "day",
-            tooltipFormat: "MMM D, YYYY",
-            displayFormats: { day: "MMM D" },
-          },
-          grid: { display: false },
-          title: { display: true, text: "Date" },
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: "Number of Requests" },
-        },
-      },
-    },
-  });
-}
-
-// Render hourly numbers line chart
-function renderHourlyNumbersLineChart() {
-  const ctx = document.getElementById("hourlyNumbersLineChart");
-  if (!ctx) return;
-
-  const hourlyCounts = Array(24).fill(0);
-  filteredData.forEach((row) => {
-    if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
-      hourlyCounts[row.timeInHour]++;
-    }
-  });
-
-  if (hourlyNumbersLineChart) hourlyNumbersLineChart.destroy();
-
-  hourlyNumbersLineChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
-      datasets: [
-        {
-          label: "Hourly Request Volume",
-          data: hourlyCounts,
-          borderColor: "#21336a",
-          backgroundColor: "rgba(33, 51, 106, 0.2)",
-          fill: true,
-          tension: 0.4,
-          borderWidth: 2,
-          pointRadius: 3,
-          pointBackgroundColor: "#21336a",
-          pointBorderColor: "#fff",
-          pointBorderWidth: 1,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "bottom" },
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.parsed.y} requests`,
-          },
-        },
-      },
-      scales: {
-        x: {
-          title: { display: true, text: "Hour of Day" },
-          grid: { display: false },
-        },
-        y: {
-          beginAtZero: true,
-          title: { display: true, text: "Number of Requests" },
-          grid: { color: "#e0e0e0" },
-        },
-      },
-    },
-  });
-}
-
 // Update all KPIs
 function updateNumberKPIs() {
   const currentPeriod = filteredData;
@@ -356,4 +232,136 @@ function updateTrend(elementId, value, isPositiveGood) {
   }
 
   element.innerHTML = `<span class="${colorClass}">${arrow} ${displayText}</span>`;
+}
+
+// numbers.js - renderDailyNumbersBarChart function
+function renderDailyNumbersBarChart() {
+  const ctx = document.getElementById("dailyNumbersBarChart");
+  if (!ctx) return;
+
+  const dailyCounts = {};
+  filteredData.forEach((row) => {
+    const date = row.parsedDate;
+    if (date && date.isValid()) {
+      const dateKey = date.format("YYYY-MM-DD");
+      dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+    }
+  });
+
+  const sortedDates = Object.keys(dailyCounts).sort();
+  const data = sortedDates.map((date) => dailyCounts[date]);
+
+  if (dailyNumbersBarChart) dailyNumbersBarChart.destroy();
+
+  dailyNumbersBarChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: sortedDates,
+      datasets: [
+        {
+          label: "Daily Request Volume",
+          data: data,
+          backgroundColor: "#21336a",
+          borderColor: "#21336a",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.parsed.y} requests`,
+          },
+        },
+        // ADD THIS LINE
+        datalabels: {
+            display: false,
+        },
+      },
+      scales: {
+        x: {
+          type: "time",
+          time: {
+            unit: "day",
+            tooltipFormat: "MMM D, YYYY",
+            displayFormats: { day: "MMM D" },
+          },
+          grid: { display: false },
+          title: { display: true, text: "Date" },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Number of Requests" },
+        },
+      },
+    },
+  });
+}
+
+// numbers.js - renderHourlyNumbersLineChart function
+function renderHourlyNumbersLineChart() {
+  const ctx = document.getElementById("hourlyNumbersLineChart");
+  if (!ctx) return;
+
+  const hourlyCounts = Array(24).fill(0);
+  filteredData.forEach((row) => {
+    if (row.timeInHour !== null && row.timeInHour >= 0 && row.timeInHour < 24) {
+      hourlyCounts[row.timeInHour]++;
+    }
+  });
+
+  if (hourlyNumbersLineChart) hourlyNumbersLineChart.destroy();
+
+  hourlyNumbersLineChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: Array.from({ length: 24 }, (_, i) => `${i}:00`),
+      datasets: [
+        {
+          label: "Hourly Request Volume",
+          data: hourlyCounts,
+          borderColor: "#21336a",
+          backgroundColor: "rgba(33, 51, 106, 0.2)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: "#21336a",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.parsed.y} requests`,
+          },
+        },
+        // ADD THIS LINE
+        datalabels: {
+            display: false,
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Hour of Day" },
+          grid: { display: false },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Number of Requests" },
+          grid: { color: "#e0e0e0" },
+        },
+      },
+    },
+  });
 }
