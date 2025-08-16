@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * @param {string} searchInputId - The ID of the search input element (e.g., 'searchInput').
  * @param {string} tableId - The ID of the table to filter (e.g., 'performanceTable').
  */
-function initializeTableSearch(searchInputId, tableId) {
+export function initializeTableSearch(searchInputId, tableId) {
     const searchInput = document.getElementById(searchInputId);
     const table = document.getElementById(tableId);
 
