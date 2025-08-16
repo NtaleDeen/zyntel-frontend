@@ -197,10 +197,20 @@ h1 {
 
 
 /* --- Search bar styles start --- */
+.search-main-container {
+    position: fixed;
+    top: 90px;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background-color: var(--background-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
 .search-container {
     position: relative; /* Essential for positioning the icon */
     max-width: 300px;
-    margin: 25px 0 20px 10px; /* Positions the bar on the left with a margin */
+    margin: 30px 0 20px 10px; /* Positions the bar on the left with a margin */
 }
 
 .search-input {
