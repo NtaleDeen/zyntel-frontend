@@ -124,6 +124,7 @@ function processNumbersData() {
 }
 
 // Update all KPIs
+// numbers.js - Corrected updateNumberKPIs function
 function updateNumberKPIs() {
   const currentPeriod = filteredData;
   const totalRequestsCurrent = currentPeriod.length;
@@ -207,9 +208,10 @@ function updateNumberKPIs() {
       busiestDay = moment(date).format("MMM D, YYYY");
     }
   });
-  document.getElementById("busiestDay").textContent = busiestDay;
-}
 
+  // FIX: Update this line to include the count
+  document.getElementById("busiestDay").textContent = `${busiestDay} (${maxCount} Patients)`;
+}
 // Update trend indicators
 function updateTrend(elementId, value, isPositiveGood) {
   const element = document.getElementById(elementId);
