@@ -3,6 +3,7 @@
 
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { initializeTableSearch } from "./menu.js";
 
 // Immediately check authentication on page load.
 checkAuthAndRedirect();
