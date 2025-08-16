@@ -1,7 +1,7 @@
 // numbers.js - Complete version sharing filters with TAT page
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 
 // Immediately check authentication on page load.
 // Ensure the plugin is registered before any chart is created

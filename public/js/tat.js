@@ -4,7 +4,7 @@
 // and to remove redundant code.
 
 // 1. Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 
 // 2. Immediately check authentication on page load.
 // This single call replaces all previous, duplicated auth checks.
@@ -57,27 +57,28 @@ function hideLoadingSpinner() {
 // Helper function to get the previous period's date range
 function getPreviousPeriodDates(selectedPeriod) {
     let now = moment();
-    let startDate, endDate;
+    let prevPeriodStartDate, prevPeriodEndDate;
 
     switch (selectedPeriod) {
         case "This Month":
-            startDate = now.startOf('month');
-            endDate = now.endOf('month');
+            prevPeriodStartDate = moment().subtract(1, 'months').startOf('month');
+            prevPeriodEndDate = moment().subtract(1, 'months').endOf('month');
             break;
         case "Last Month":
-            startDate = moment().subtract(1, 'months').startOf('month');
-            endDate = moment().subtract(1, 'months').endOf('month');
+            prevPeriodStartDate = moment().subtract(2, 'months').startOf('month');
+            prevPeriodEndDate = moment().subtract(2, 'months').endOf('month');
             break;
+        // Add more cases for other periods if needed, e.g., 'Last 7 Days', 'Last 30 Days'
         default:
-            // Default to a sensible period if an invalid one is selected
-            startDate = now.startOf('month');
-            endDate = now.endOf('month');
+            // Default to last month if the selected period is not handled
+            prevPeriodStartDate = moment().subtract(1, 'months').startOf('month');
+            prevPeriodEndDate = moment().subtract(1, 'months').endOf('month');
             break;
     }
 
     return {
-        startDate: startDate.format(),
-        endDate: endDate.format()
+        prevPeriodStartDate: prevPeriodStartDate.format(),
+        prevPeriodEndDate: prevPeriodEndDate.format()
     };
 }
 
@@ -87,7 +88,8 @@ function refreshDashboard() {
   filteredData = applyTATFilters(allData);
 
   // Get the previous period's date range for KPI trend calculation
-  const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates();
+  const selectedPeriod = document.getElementById("periodSelect")?.value || "This Month";
+  const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates(selectedPeriod);
 
   // Filter data for the previous period to calculate trends
   const previousFilteredData = applyTATFilters(
