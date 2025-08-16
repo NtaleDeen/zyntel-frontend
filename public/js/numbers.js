@@ -210,7 +210,7 @@ function updateNumberKPIs() {
   });
 
   // FIX: Update this line to include the count
-  document.getElementById("busiestDay").textContent = `${busiestDay} (${maxCount} Patients)`;
+  document.getElementById("busiestDay").textContent = `${busiestDay} (${maxCount} Requests)`;
 }
 // Update trend indicators
 function updateTrend(elementId, value, isPositiveGood) {
