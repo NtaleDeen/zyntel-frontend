@@ -25,7 +25,7 @@
               <button class="three-dots-button">...</button>
               <ul class="dropdown-menu">
                   <li><a href="javascript:void(0)" onclick="window.open('/path/to/charts.pdf', '_blank');">Export charts as PDF</a></li>
-                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/table.csv', '_blank');">Export table as CSV</a></li>
+                  <!-- <li><a href="javascript:void(0)" onclick="window.open('/path/to/table.csv', '_blank');">Export table as CSV</a></li> -->
                   <li><a href="meta.html">Go to meta table</a></li>
                   <li><a href="performance.html">Go to performance table</a></li>
                   <li><a href="developer_ui.html">Create client</a></li>
@@ -42,59 +42,6 @@
           <input type="text" id="searchInput" class="search-input" placeholder="Search Lab Number or Test...">
           <span class="search-icon">&#x1F50D;</span> <!-- Unicode magnifying glass icon -->
       </div>
-      <nav class="navbar">
-        <a href="dashboard.html">Home</a>
-        <a href="revenue.html">Revenue</a>
-        <a href="numbers.html">Numbers</a>
-        <a href="tat.html">TAT</a>
-      </nav>
-
-      <div class="dashboard-filters">
-        <div class="filter-group">
-          <label for="startDateFilter">Start Date:</label>
-          <input type="date" id="startDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="endDateFilter">End Date:</label>
-          <input type="date" id="endDateFilter" />
-        </div>
-        <div class="filter-group">
-          <label for="periodSelect">Period:</label>
-          <select id="periodSelect">
-            <option value="thisMonth">This Month</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="thisQuarter">This Quarter</option>
-            <option value="lastQuarter">Last Quarter</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="labSectionFilter">Lab Section:</label>
-          <select id="labSectionFilter">
-            <option value="all">All</option>
-            <option value="chemistry">Chemistry</option>
-            <option value="heamatology">Heamatology</option>
-            <option value="microbiology">Microbiology</option>
-            <option value="serology">Serology</option>
-            <option value="referral">Referral</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="shiftFilter">Shift:</label>
-          <select id="shiftFilter">
-            <option value="all">All</option>
-            <option value="day shift">Day Shift</option>
-            <option value="night shift">Night Shift</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="hospitalUnitFilter">Laboratory:</label>
-          <select id="hospitalUnitFilter">
-            <option value="all">All</option>
-            <option value="mainLab">Main Laboratory</option>
-            <option value="annex">Annex</option>
-          </select>
-        </div>
-      </div>
     </header>
 
     <div class="loader" id="loadingOverlay">
@@ -107,7 +54,7 @@
     <main>
         <section class="card">
                 <div class="table-container">
-                    <table id="meta" class="neon-table">
+                    <table id="meta" class="neon-table" id="myTable">
                         <thead>
                             <tr>
                                 <th>Test Name</th>
