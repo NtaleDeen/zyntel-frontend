@@ -198,19 +198,26 @@ h1 {
 
 /* --- Search bar styles start --- */
 .search-main-container {
-    position: fixed;
-    top: 90px;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background-color: var(--background-color);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: fixed; /* Keep fixed to stay at top with scrolling */
+  top: 100px; /* Below the header */
+  left: 0;
+  width: 100vw;
+  z-index: 999;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: left;
+  /* gap: 20px; */
+  padding: 17px 30px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: var(--background-color);
+  border-bottom: 1px solid var(--border-bottom);
+  box-shadow: 0 1px 2px var(--box-shadow);
 }
 
 .search-container {
     position: relative; /* Essential for positioning the icon */
     max-width: 300px;
-    margin: 30px 0 20px 10px; /* Positions the bar on the left with a margin */
 }
 
 .search-input {
@@ -225,8 +232,8 @@ h1 {
 }
 
 .search-input:focus {
-    border-color: #1a73e8;
-    box-shadow: 0 0 5px rgba(26, 115, 232, 0.5);
+    border-color: var(--main-color);
+    box-shadow: 0 0 5px var(--hover-color);
 }
 
 .search-icon {
