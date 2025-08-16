@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Client - Zyntel Admin</title>
-    <link rel="stylesheet" href="../css/general.css"> <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    <link rel="stylesheet" href="../css/general.css">
+    <style>
+        /* body { font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); width: 400px; }
-        h1 { text-align: center; color: #333; margin-bottom: 25px; }
+        h1 { text-align: center; color: #333; margin-bottom: 25px; } */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; color: #555; }
         .form-group input[type="text"],
@@ -16,7 +17,7 @@
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            box-sizing: border-box; 
         }
         button {
             width: 100%;
@@ -46,6 +47,28 @@
     </style>
 </head>
 <body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="../images/" alt="logo" />
+          </div>
+          <h1>Zyntel</h1>
+        </div>
+        <div class="page">
+          <span>Numbers</span>
+          <a href="#" class="logout-button" id="logout-button">Logout</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="loader" id="loadingOverlay">
+      <div class="loading one"></div>
+      <div class="loading two"></div>
+      <div class="loading three"></div>
+      <div class="loading four"></div>
+    </div>
+    
     <div class="container">
         <h1>Add New Zyntel Client</h1>
         <form id="addClientForm">
@@ -67,6 +90,14 @@
         <a id="backToDashboard" href="dashboard.html">Back to Dashboard</a>
     </div>
 
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="../images/zyntel_no_background.png" alt="logo" />
+      </div>
+    </footer>
+
     <script src="../js/add_client.js"></script>
+    <script src="../js/menu.js" type="module"></script>
 </body>
 </html>

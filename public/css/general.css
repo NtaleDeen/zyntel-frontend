@@ -131,6 +131,69 @@ h1 {
   border-bottom: 2px solid var(--hover-color);
 }
 
+/* Three dot styles begin. */
+.three-dots-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+.three-dots-button {
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    font-weight: bold;
+    color: #555;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.three-dots-button:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    z-index: 1000;
+    display: none; /* Hidden by default */
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+}
+
+.dropdown-menu.visible {
+    display: block;
+}
+
+.dropdown-menu li {
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: #333;
+    font-family: 'Roboto', sans-serif;
+    font-size: 14px;
+    transition: background-color 0.2s ease-in-out;
+}
+/* Three dot styles end. */
+
+.dropdown-menu a:hover {
+    background-color: #f0f0f0;
+}
+
 .navbar {
   display: flex;
   gap: 20px;

@@ -26,8 +26,22 @@
         </div>
         <div class="page">
           <span>TAT</span>
-          <!-- <button class="logout-button" id="showRevenueTableButton" onclick="window.location.href='performance.html'">Show Performance Table</button> -->
           <a href="#" class="logout-button" id="logout-button">Logout</a>
+          <span class="three-dots-menu-container">
+              <button class="three-dots-button">...</button>
+              <ul class="dropdown-menu">
+                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/charts.pdf', '_blank');">Export charts as PDF</a></li>
+                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/table.csv', '_blank');">Export table as CSV</a></li>
+                  <li><a href="meta.html">Go to meta table</a></li>
+                  <li><a href="performance.html">Go to performance table</a></li>
+                  <li><a href="developer_ui.html">Create client</a></li>
+                  <li><a href="manager_ui.html">Add user</a></li>
+                  <li><a href="tracker.html">Go to tracker table</a></li>
+                  <li><a href="reception.html">Go to reception table</a></li>
+                  <li><a href="progress.html">Go to progress table</a></li>
+                  <li><a href="dashboard.html">Go to dashboards</a></li>
+              </ul>
+          </span>
         </div>
       </div>
       <nav class="navbar">
@@ -178,5 +192,6 @@
     </footer>
 
     <script type="module" src="../js/tat.js"></script>
+    <script src="../js/menu.js" type="module"></script>
   </body>
 </html>

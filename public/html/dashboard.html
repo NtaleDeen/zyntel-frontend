@@ -24,6 +24,15 @@
         <div class="page">
           <span>Home</span>
           <a href="#" class="logout-button" id="logout-button">Logout</a>
+          <span class="three-dots-menu-container">
+              <button class="three-dots-button">...</button>
+              <ul class="dropdown-menu">
+                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/charts.pdf', '_blank');">Export charts as PDF</a></li>
+                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/table.csv', '_blank');">Export table as CSV</a></li>
+                  <li><a href="developer_ui.html">Create client</a></li>
+                  <li><a href="manager_ui.html">Add user</a></li>
+              </ul>
+          </span>
         </div>
       </div>
     </header>
@@ -83,5 +92,6 @@
     </footer>
     
     <script type="module" src="../js/dashboard.js"></script>
+    <script src="../js/menu.js" type="module"></script>
   </body>
 </html>
