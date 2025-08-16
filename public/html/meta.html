@@ -6,24 +6,24 @@
     <title>Zyntel Meta Data Table</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <!-- Tailwind CSS CDN -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../css/general.css" />
     <link rel="stylesheet" href="../css/table.css" />
 </head>
 <body>
-    <header>
-      <div class="header-container">
+<header>
+    <div class="header-container">
         <div class="header-left">
-          <div class="logo">
-            <img src="../images/logo-nakasero.png" alt="logo" />
-          </div>
-          <h1>Nakasero Hospital Laboratory</h1>
+            <div class="logo">
+                <img src="../images/logo-nakasero.png" alt="logo" />
+            </div>
+            <h1>Nakasero Hospital Laboratory</h1>
         </div>
         <div class="page page-table">
-          <span>Meta Table</span>
-          <a href="#" class="logout-button" id="logout-button">Logout</a>
-          <span class="three-dots-menu-container">
+            <span>Meta Table</span>
+            <a href="#" class="logout-button" id="logout-button">Logout</a>
+            <span class="three-dots-menu-container">
               <button class="three-dots-button">&#x22EE;</button>
               <ul class="dropdown-menu">
                   <li><a href="#" onclick="exportTableAsCsv('meta', 'meta_data'); return false;">Export table as CSV</a></li>
@@ -37,14 +37,15 @@
                   <li><a href="progress.html">Go to progress table</a></li>
                   <li><a href="dashboard.html">Go to dashboards</a></li>
               </ul>
-          </span>
+            </span>
         </div>
-      </div>
-      <div class="search-container">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-          <span class="search-icon">&#x1F50D;</span>
-      </div>
-    </header>
+    </div>
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+        <!-- Use the Font Awesome search icon -->
+        <i class="fas fa-search search-icon"></i>
+    </div>
+</header>
 
     <div class="loader" id="loadingOverlay">
       <div class="loading one"></div>
