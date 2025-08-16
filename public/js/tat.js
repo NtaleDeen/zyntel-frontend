@@ -84,27 +84,24 @@ function getPreviousPeriodDates(selectedPeriod) {
 
 // NEW: A central function to apply filters and render all charts.
 function refreshDashboard() {
-  // Apply filters from UI for current data after loading all data
   filteredData = applyTATFilters(allData);
 
-  // Get the previous period's date range for KPI trend calculation
-  const selectedPeriod = document.getElementById("periodSelect")?.value || "This Month";
-  const { prevPeriodStartDate, prevPeriodEndDate } = getPreviousPeriodDates(selectedPeriod);
+  // Corrected logic for getting previous period data, based on numbers.js
+  const currentPeriodStartDate = filteredData[0]?.parsedDate;
+  let previousFilteredData = [];
 
-  // Filter data for the previous period to calculate trends
-  const previousFilteredData = applyTATFilters(
-    allData,
-    prevPeriodStartDate,
-    prevPeriodEndDate
-  );
+  if (currentPeriodStartDate) {
+    const previousPeriodStartDate = currentPeriodStartDate.clone().subtract(1, 'month');
+    const previousPeriodEndDate = currentPeriodStartDate.clone().subtract(1, 'day');
 
-  // Update KPIs and render all charts with the currently filtered data
+    previousFilteredData = allData.filter(row => {
+      const rowDate = parseTATDate(row.date);
+      // Ensure the rowDate is valid and within the previous period's range
+      return rowDate && rowDate.isBetween(previousPeriodStartDate, previousPeriodEndDate, null, '[]');
+    });
+  }
+
   updateKPI(filteredData, previousFilteredData);
-  renderSummaryChart(filteredData);
-  renderOnTimeSummaryChart(filteredData);
-  renderPieChart(filteredData);
-  renderLineChart(filteredData);
-  renderHourlyLineChart(filteredData);
 }
 
 
@@ -160,8 +157,9 @@ async function loadDatabaseData() {
                     tatStatus = "Not Uploaded";
             }
 
-            const timeInParts = row.time_in ? row.time_in.split(":") : null;
-            const timeInHour = (timeInParts && timeInParts.length > 0) ? parseInt(timeInParts[0]) : null;
+            const timeInHour = row.time_in
+              ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
+              : null;
 
             return {
                 ...row,
@@ -339,12 +337,11 @@ function updateKPI(currentData, previousData) {
     const sortedDays = Object.entries(groupedByDay).sort(
       (a, b) => b[1].delayed - a[1].delayed
     );
-    const mostDelayedDayData = sortedDays[0][1]; // Access the object for the day
-    mostDelayedDay = sortedDays[0][0]; // Date in YYYY-MM-DD format
+    const mostDelayedDayData = sortedDays[0][1];
+    mostDelayedDay = sortedDays[0][0];
     maxDelayedCount = mostDelayedDayData.delayed;
     totalRequestsOnMostDelayedDay = mostDelayedDayData.total;
 
-    // MODIFIED: Format mostDelayedDay with new line and "out of", shorter month format
     mostDelayedDay = `${moment(mostDelayedDay).format(
       "MMM DD"
     )}<br>(${maxDelayedCount} delayed out of ${totalRequestsOnMostDelayedDay})`;
@@ -353,14 +350,13 @@ function updateKPI(currentData, previousData) {
   // Calculate Most Delayed Hour
   const hourlyCounts = Array(24).fill(0);
   currentData.forEach((r) => {
-    if (r.timeInHour !== null) hourlyCounts[r.timeInHour]++; // Use timeInHour
+    if (r.timeInHour !== null) hourlyCounts[r.timeInHour]++;
   });
   let mostDelayedHour = "N/A";
   if (hourlyCounts.length > 0) {
     const maxHourCount = Math.max(...hourlyCounts);
     if (maxHourCount > 0) {
       const hourIndex = hourlyCounts.indexOf(maxHourCount);
-      // MODIFIED: Simplified text, put count on a new line
       mostDelayedHour = `${hourIndex}:00<br>(${maxHourCount} samples)`;
     }
   }
@@ -403,32 +399,29 @@ function updateKPI(currentData, previousData) {
   document.getElementById("delayedPercentageValue").textContent = total
     ? ((delayed / total) * 100).toFixed(1) + "%"
     : "0%";
-  // Set color for delayed percentage
-  document.getElementById("delayedPercentageValue").style.color = "#f44336"; // Red
+  document.getElementById("delayedPercentageValue").style.color = "#f44336";
   document.getElementById("totalDelayedCount").textContent = delayed;
   document.getElementById("totalRequestsCount").textContent = total;
 
   document.getElementById("onTimePercentage").textContent =
-    avg(dailyOnTimeCounts); // Average Daily On-Time KPI
+    avg(dailyOnTimeCounts);
   document.getElementById("avgDailyDelayed").textContent =
     avg(dailyDelayedCounts);
   document.getElementById("avgDailyNotUploaded").textContent = avg(
     dailyNotUploadedCounts
   );
 
-  document.getElementById("mostDelayedDay").innerHTML = mostDelayedDay; // Use innerHTML for <br> tag
-  document.getElementById("mostDelayedHour").innerHTML = mostDelayedHour; // Use innerHTML for <br> tag
+  document.getElementById("mostDelayedDay").innerHTML = mostDelayedDay;
+  document.getElementById("mostDelayedHour").innerHTML = mostDelayedHour;
 
   document.getElementById("onTimeSummaryValue").textContent = total
     ? ((onTime / total) * 100).toFixed(1) + "%"
     : "0%";
-  // Set color for on-time percentage
-  document.getElementById("onTimeSummaryValue").style.color = "#4caf50"; // Green
+  document.getElementById("onTimeSummaryValue").style.color = "#4caf50";
   document.getElementById("totalOnTimeCount").textContent = onTime;
   document.getElementById("totalRequestsCount_2").textContent = total;
 
   // --- Set Trend Arrows ---
-  // Delayed percentage trend: good if % decreases (type = 'negativeIsGood')
   const currentDelayedPercentage = total ? delayed / total : 0;
   const prevDelayedPercentage = prevTotal ? prevDelayed / prevTotal : 0;
   setTrendArrow(
@@ -438,7 +431,6 @@ function updateKPI(currentData, previousData) {
     "negativeIsGood"
   );
 
-  // Average Daily On-Time KPI trend: good if increases (type = 'positiveIsGood')
   setTrendArrow(
     "onTimePercentageTrend",
     avg(dailyOnTimeCounts),
@@ -446,7 +438,6 @@ function updateKPI(currentData, previousData) {
     "positiveIsGood"
   );
 
-  // Average Daily Delayed: good if decreases (type = 'negativeIsGood')
   setTrendArrow(
     "avgDailyDelayedTrend",
     avg(dailyDelayedCounts),
@@ -454,7 +445,6 @@ function updateKPI(currentData, previousData) {
     "negativeIsGood"
   );
 
-  // Average Daily Not Uploaded: good if decreases (type = 'negativeIsGood')
   setTrendArrow(
     "avgDailyNotUploadedTrend",
     avg(dailyNotUploadedCounts),
@@ -462,14 +452,11 @@ function updateKPI(currentData, previousData) {
     "negativeIsGood"
   );
 
-  // No specific trend for Most Delayed Day/Hour (as they are specific values, not averages)
-
-  // --- Render Charts ---
-  renderSummaryChart(filteredData); // Use filteredData
-  renderOnTimeSummaryChart(filteredData); // Use filteredData
-  renderPieChart(filteredData); // Use filteredData
-  renderLineChart(filteredData); // Use filteredData
-  renderHourlyLineChart(filteredData); // Calling the new hourly line chart function
+  renderSummaryChart(currentData);
+  renderOnTimeSummaryChart(currentData);
+  renderPieChart(currentData);
+  renderLineChart(currentData);
+  renderHourlyLineChart(currentData);
 }
 
 /**
