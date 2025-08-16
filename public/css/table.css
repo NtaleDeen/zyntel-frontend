@@ -90,7 +90,7 @@
   border: none;
 }
 
-#pagination-container button:hover, #pagination-container button.active {
+#pagination-container:hover, #pagination-container.active {
   border-color: var(--hover-color);
   border-radius: 10px;
 }
