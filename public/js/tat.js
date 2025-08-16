@@ -60,22 +60,6 @@ function getPreviousPeriodDates(selectedPeriod) {
     let startDate, endDate;
 
     switch (selectedPeriod) {
-        case "Today":
-            startDate = now.startOf('day');
-            endDate = now.endOf('day');
-            break;
-        case "Yesterday":
-            startDate = moment().subtract(1, 'days').startOf('day');
-            endDate = moment().subtract(1, 'days').endOf('day');
-            break;
-        case "This Week":
-            startDate = now.startOf('isoWeek');
-            endDate = now.endOf('isoWeek');
-            break;
-        case "Last Week":
-            startDate = moment().subtract(1, 'weeks').startOf('isoWeek');
-            endDate = moment().subtract(1, 'weeks').endOf('isoWeek');
-            break;
         case "This Month":
             startDate = now.startOf('month');
             endDate = now.endOf('month');
@@ -84,14 +68,10 @@ function getPreviousPeriodDates(selectedPeriod) {
             startDate = moment().subtract(1, 'months').startOf('month');
             endDate = moment().subtract(1, 'months').endOf('month');
             break;
-        case "Last 30 Days":
-            startDate = moment().subtract(30, 'days').startOf('day');
-            endDate = now.endOf('day');
-            break;
         default:
-            // Default to today if an invalid period is selected
-            startDate = now.startOf('day');
-            endDate = now.endOf('day');
+            // Default to a sensible period if an invalid one is selected
+            startDate = now.startOf('month');
+            endDate = now.endOf('month');
             break;
     }
 
@@ -100,6 +80,7 @@ function getPreviousPeriodDates(selectedPeriod) {
         endDate: endDate.format()
     };
 }
+
 // NEW: A central function to apply filters and render all charts.
 function refreshDashboard() {
   // Apply filters from UI for current data after loading all data
@@ -140,21 +121,9 @@ async function loadDatabaseData() {
     showLoadingSpinner();
 
     try {
-        const startDate = document.getElementById("startDateFilter")?.value;
-        const endDate = document.getElementById("endDateFilter")?.value;
-        const labSection = document.getElementById("labSectionFilter")?.value;
-        const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
-        const shift = document.getElementById("shiftFilter")?.value;
-
-        // Build query string
-        let url = new URL(API_URL);
-        if (startDate) url.searchParams.append('start_date', startDate);
-        if (endDate) url.searchParams.append('end_date', endDate);
-        if (labSection !== "all") url.searchParams.append('lab_section', labSection);
-        if (hospitalUnit !== "all") url.searchParams.append('hospital_unit', hospitalUnit);
-        if (shift !== "all") url.searchParams.append('shift', shift);
-
-        const response = await fetch(url, {
+        // Corrected: Removed date and other filters from the API call.
+        // The numbers.js file correctly fetches all data first.
+        const response = await fetch(API_URL, {
             headers: {
                 "Authorization": `Bearer ${token}`
             }
@@ -162,6 +131,8 @@ async function loadDatabaseData() {
 
         if (response.status === 401) {
             console.error("401 Unauthorized");
+            // Clear session and redirect to login page
+            clearSession();
             window.location.href = "/index.html";
             return;
         }
@@ -187,16 +158,20 @@ async function loadDatabaseData() {
                     tatStatus = "Not Uploaded";
             }
 
+            const timeInParts = row.time_in ? row.time_in.split(" ") : null;
+            const timeInHour = (timeInParts && timeInParts.length > 1) ? parseInt(timeInParts[1].split(":")[0]) : null;
+
             return {
                 ...row,
                 parsedDate: parseTATDate(row.date),
-                timeInHour: row.time_in ? parseInt(row.time_in.split(" ")[1]?.split(":")[0]) || null : null,
+                timeInHour: timeInHour,
                 tat: tatStatus,
                 minutesDelayed: row.daily_tat || 0,
             };
         });
 
-        // The refreshDashboard function will now handle the remaining client-side filtering (e.g., Hospital Unit)
+        // After loading the data, the refreshDashboard function will now handle
+        // the remaining client-side filtering (e.g., Hospital Unit).
         refreshDashboard();
 
     } catch (err) {
@@ -208,22 +183,24 @@ async function loadDatabaseData() {
 
 // Main function to fetch, process, and render all dashboard elements.
 async function loadAndRender() {
-  await loadDatabaseData();
+    await loadDatabaseData();
 }
 
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("TAT Dashboard initializing...");
-  // Set default period to 'thisMonth' and update date inputs
-  const periodSelect = document.getElementById("periodSelect");
-  if (periodSelect) {
-    periodSelect.value = "thisMonth";
-    updateDatesForPeriod("thisMonth");
-  }
+    console.log("TAT Dashboard initializing...");
+    // Set default period to 'thisMonth' and update date inputs
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth");
+    }
+    // Initialize common dashboard elements, including rendering filters.
+    // The refreshDashboard function is now passed as the callback.
+    initCommonDashboard(refreshDashboard);
 
-  // Initialize common dashboard elements, including rendering filters.
-  // The refreshDashboard function is now passed as the callback.
-  initCommonDashboard(refreshDashboard);
+    // FIX: Call the data loading function. This was a missing line.
+    loadDatabaseData();
 });
 
 /**
@@ -853,39 +830,42 @@ function renderLineChart(data) {
  */
 function renderHourlyLineChart(data) {
   const ctx = document.getElementById("tatHourlyLineChart")?.getContext("2d");
-  if (!ctx) return;
+  if (!ctx) {
+      console.error("Could not find canvas element with id 'tatHourlyLineChart'");
+      return;
+  }
 
-  // Aggregate delayed and on-time counts per hour (0-23)
+  // Aggregate delayed, on-time, and not uploaded counts per hour (0-23)
   const hourlyCounts = Array(24)
     .fill()
-    .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 })); // Initialize with objects and notUploaded
+    .map(() => ({ delayed: 0, onTime: 0, notUploaded: 0 }));
+
   data.forEach((r) => {
-    // Use 'timeInHour' extracted from 'Time_In'
+    // Use 'timeInHour' which has been correctly parsed in loadDatabaseData
     if (r.timeInHour !== null && r.timeInHour >= 0 && r.timeInHour < 24) {
       const currentHourData = hourlyCounts[r.timeInHour];
       if (r.tat === "Over Delayed" || r.tat === "Delayed <15min") {
         currentHourData.delayed++;
-      }
-      if (r.tat === "On Time") {
+      } else if (r.tat === "On Time") {
         currentHourData.onTime++;
-      }
-      // Add Not Uploaded count
-      if (r.tat === "Not Uploaded") {
+      } else if (r.tat === "Not Uploaded") {
         currentHourData.notUploaded++;
       }
-      hourlyCounts[r.timeInHour] = currentHourData; // Update the array element
+      // No need to reassign, as we're modifying the object reference in the array.
     }
   });
 
-  const labels = Array.from({ length: 24 }, (_, i) => i + ":00"); // 0:00, 1:00, ..., 23:00
+  const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`); // 0:00, 1:00, ..., 23:00
   const delayedData = hourlyCounts.map((h) => h.delayed);
   const onTimeData = hourlyCounts.map((h) => h.onTime);
-  const notUploadedData = hourlyCounts.map((h) => h.notUploaded); // New data array for Not Uploaded
+  const notUploadedData = hourlyCounts.map((h) => h.notUploaded);
 
-  tatHourlyLineChart?.destroy(); // Destroy previous chart instance
+  if (tatHourlyLineChart) {
+      tatHourlyLineChart.destroy(); // Destroy previous chart instance
+  }
+
   tatHourlyLineChart = new Chart(ctx, {
-    // Create new chart instance
-    type: "line", // Changed to line chart
+    type: "line",
     data: {
       labels,
       datasets: [
@@ -895,10 +875,10 @@ function renderHourlyLineChart(data) {
           borderColor: "#f44336",
           backgroundColor: "#f44336",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
         {
           label: "On Time",
@@ -906,22 +886,21 @@ function renderHourlyLineChart(data) {
           borderColor: "#4caf50",
           backgroundColor: "#4caf50",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
-        // NEW DATASET FOR NOT UPLOADED
         {
           label: "Not Uploaded",
           data: notUploadedData,
-          borderColor: "#9E9E9E", // Grey color
+          borderColor: "#9E9E9E",
           backgroundColor: "#9E9E9E",
           fill: false,
-          tension: 0, // Rigid line
+          tension: 0,
           borderWidth: 2,
-          pointRadius: 0, // No dots
-          pointHitRadius: 0, // Make dots unclickable
+          pointRadius: 0,
+          pointHitRadius: 0,
         },
       ],
     },
@@ -929,19 +908,19 @@ function renderHourlyLineChart(data) {
       responsive: true,
       maintainAspectRatio: false,
       layout: {
-        padding: 10, // Small padding around the chart
+        padding: 10,
       },
       plugins: {
-        legend: { display: true, position: "bottom" }, // Show legend
+        legend: { display: true, position: "bottom" },
       },
       scales: {
         x: {
-          title: { display: true, text: "Hour of Day" }, // Horizontal axis label
+          title: { display: true, text: "Hour of Day" },
           grid: { display: false },
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: "Number of Requests" }, // Vertical axis label (same as daily chart)
+          title: { display: true, text: "Number of Requests" },
           grid: { color: "#e0e0e0" },
         },
       },
