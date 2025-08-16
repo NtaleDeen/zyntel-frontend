@@ -29,3 +29,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+/**
+ * Initializes a search bar to filter a specific HTML table.
+ * @param {string} searchInputId - The ID of the search input element (e.g., 'searchInput').
+ * @param {string} tableId - The ID of the table to filter (e.g., 'performanceTable').
+ */
+function initializeTableSearch(searchInputId, tableId) {
+    const searchInput = document.getElementById(searchInputId);
+    const table = document.getElementById(tableId);
+
+    if (!searchInput || !table) {
+        console.error(`Could not find search input '${searchInputId}' or table '${tableId}'.`);
+        return;
+    }
+
+    // Get all the rows in the table body, excluding the header row.
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+    // Add an event listener to the search input.
+    searchInput.addEventListener('input', (event) => {
+        const query = event.target.value.toLowerCase().trim();
+
+        rows.forEach(row => {
+            const rowText = row.textContent.toLowerCase();
+            
+            if (rowText.includes(query)) {
+                row.classList.remove('hidden-row');
+            } else {
+                row.classList.add('hidden-row');
+            }
+        });
+    });
+}

@@ -188,11 +188,57 @@ h1 {
     font-size: 14px;
     transition: background-color 0.2s ease-in-out;
 }
-/* Three dot styles end. */
 
 .dropdown-menu a:hover {
-    background-color: #f0f0f0;
+  background-color: #f0f0f0;
 }
+
+/* Three dot styles end. */
+
+
+
+/* Search bar styles start */ 
+        .search-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .search-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 40px 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 16px;
+            outline: none;
+            transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            background-color: #f1f1f1;
+            position: relative;
+        }
+
+        .search-input:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 0 5px rgba(26, 115, 232, 0.5);
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+            font-size: 20px;
+            pointer-events: none;
+        }
+
+        /* Styles for the table rows that are hidden */
+        .hidden-row {
+            display: none;
+        }
+
+       /* Search bar styles end */ 
 
 .navbar {
   display: flex;
