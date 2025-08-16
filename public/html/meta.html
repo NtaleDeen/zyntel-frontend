@@ -1,83 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Meta Data Table</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    <link rel="icon" href="/favicon.ico">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/general.css" />
-    <link rel="stylesheet" href="../css/table.css" />
-</head>
-<body>
-<header>
-    <div class="header-container">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Zyntel Meta Data Table</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+      <link rel="icon" href="/favicon.ico">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="../css/general.css" />
+      <link rel="stylesheet" href="../css/table.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
         <div class="header-left">
-            <div class="logo">
-                <img src="../images/logo-nakasero.png" alt="logo" />
-            </div>
-            <h1>Nakasero Hospital Laboratory</h1>
+          <div class="logo">
+              <img src="../images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>Nakasero Hospital Laboratory</h1>
         </div>
         <div class="page page-table">
-            <span>Meta Table</span>
-            <a href="#" class="logout-button" id="logout-button">Logout</a>
-            <span class="three-dots-menu-container">
-              <button class="three-dots-button">&#x22EE;</button>
-              <ul class="dropdown-menu">
-                  <li><a href="#" id="export-csv-link">Export table as CSV</a></li>
-                  <li><a href="#" id="export-pdf-link">Export charts as PDF</a></li>
-                  <li><a href="meta.html">Go to meta table</a></li>
-                  <li><a href="performance.html">Go to performance table</a></li>
-                  <li><a href="developer_ui.html">Create client</a></li>
-                  <li><a href="manager_ui.html">Add user</a></li>
-                  <li><a href="tracker.html">Go to tracker table</a></li>
-                  <li><a href="reception.html">Go to reception table</a></li>
-                  <li><a href="progress.html">Go to progress table</a></li>
-                  <li><a href="dashboard.html">Go to dashboards</a></li>
-              </ul>
-            </span>
+          <span>Meta Table</span>
+          <a href="#" class="logout-button" id="logout-button">Logout</a>
+          <span class="three-dots-menu-container">
+            <button class="three-dots-button">&#x22EE;</button>
+            <ul class="dropdown-menu">
+              <li><a href="#" id="export-csv-link">Export table as CSV</a></li>
+              <li><a href="#" id="export-pdf-link">Export charts as PDF</a></li>
+              <li><a href="meta.html">Go to meta table</a></li>
+              <li><a href="performance.html">Go to performance table</a></li>
+              <li><a href="developer_ui.html">Create client</a></li>
+              <li><a href="manager_ui.html">Add user</a></li>
+              <li><a href="tracker.html">Go to tracker table</a></li>
+              <li><a href="reception.html">Go to reception table</a></li>
+              <li><a href="progress.html">Go to progress table</a></li>
+              <li><a href="dashboard.html">Go to dashboards</a></li>
+            </ul>
+          </span>
         </div>
-    </div>
-</header>
-<section class="search-main-container">
-    <div class="search-container">
-      <label for="searchInput">Search:</label>
-      <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-      <i class="fas fa-search search-icon"></i>
-    </div>
-    </section>
+      </div>
+    </header>
 
-    <div class="loader" id="loadingOverlay">
-      <div class="loading one"></div>
-      <div class="loading two"></div>
-      <div class="loading three"></div>
-      <div class="loading four"></div>
-    </div>
-    
     <main>
-        <section class="card">
-                <div class="table-container">
-                    <table id="meta" class="neon-table" id="myTable">
-                        <thead>
-                            <tr>
-                                <th>Test Name</th>
-                                <th>Lab Section</th>
-                                <th>TAT</th>
-                                <th>Price</th>
-                            </tr>
-                        </thead>
-                        <tbody id="metaBody">
-                            <tr>
-                                <td>Loading data...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div id="pagination-container"></div>
-                </div>
-                <div id="metaMessage" class="message-box hidden"></div>
-        </section>
+      <section class="search-main-container">
+        <div class="search-container">
+          <label for="searchInput">Search:</label>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+      </section>
+
+      <div class="loader" id="loadingOverlay">
+        <div class="loading one"></div>
+        <div class="loading two"></div>
+        <div class="loading three"></div>
+        <div class="loading four"></div>
+      </div>
+      
+      <section class="card">
+        <div class="table-container">
+          <table id="meta" class="neon-table" id="myTable">
+            <thead>
+              <tr>
+                <th>Test Name</th>
+                <th>Lab Section</th>
+                <th>TAT</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody id="metaBody">
+              <tr>
+                <td>Loading data...</td>
+              </tr>
+            </tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+        <div id="metaMessage" class="message-box hidden"></div>
+      </section>
     </main>
 
     <div class="notice">
@@ -94,5 +95,5 @@
 
     <script type="module" src="../js/meta.js"></script>
     <script type="module" src="../js/menu.js"></script>
-</body>
+  </body>
 </html>
