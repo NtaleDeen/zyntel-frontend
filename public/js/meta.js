@@ -1,5 +1,4 @@
-// meta.js - Refactored to use a centralized auth module.
-// This file is the main logic for the meta dashboard.
+// meta.js - Refactored to use a centralized auth module and improved search/pagination.
 
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
@@ -25,10 +24,12 @@ const API_URL = "https://zyntel-data-updater.onrender.com/api/meta";
 const metaBody = document.getElementById('metaBody');
 const metaMessage = document.getElementById('metaMessage');
 const paginationContainer = document.getElementById('pagination-container');
+const searchInput = document.getElementById('searchInput');
 
 let allmetaData = [];
 let currentPage = 1;
 const rowsPerPage = 25;
+let currentSearchQuery = ''; // Store the search query globally
 
 // ----------------------------------------------------
 // LOADING SPINNER FUNCTIONS
@@ -95,7 +96,8 @@ async function fetchmetaData() {
             metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
-            rendermeta(allmetaData, currentPage);
+            // Initial render with all data
+            rendermeta(allmetaData);
         }
 
     } catch (error) {
@@ -105,25 +107,28 @@ async function fetchmetaData() {
     } finally {
         hideLoadingSpinner();
     }
-    
-    // Move the initialization to the very end of the try block to ensure it only runs on success.
-    // This is because the 'meta' table needs to be populated with data before it can be searched.
-    if (allmetaData.length > 0) {
-        initializeTableSearch('searchInput', 'meta');
-    }
 }
 
 /**
  * Renders the fetched metadata into the table with pagination.
  */
-function rendermeta(data, page) {
+function rendermeta(data) {
     metaBody.innerHTML = '';
-    const start = (page - 1) * rowsPerPage;
+    
+    // 1. Filter the data based on the current search query.
+    const filteredData = data.filter(row => {
+        const rowText = `${row.test_name || ''} ${row.lab_section || ''} ${row.tat || ''} ${row.price || ''}`.toLowerCase();
+        return rowText.includes(currentSearchQuery.toLowerCase());
+    });
+
+    // 2. Paginate the filtered data.
+    const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    const paginatedData = data.slice(start, end);
+    const paginatedData = filteredData.slice(start, end);
 
     if (paginatedData.length === 0) {
-        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data for this page.</td></tr>`;
+        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
+        setupPagination(filteredData);
         return;
     }
 
@@ -139,7 +144,8 @@ function rendermeta(data, page) {
         metaBody.appendChild(tr);
     });
 
-    setupPagination(data);
+    // 3. Set up pagination for the filtered data, not the entire dataset.
+    setupPagination(filteredData);
 }
 
 /**
@@ -158,12 +164,11 @@ function setupPagination(data) {
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            rendermeta(data, currentPage);
+            rendermeta(allmetaData); // Pass the original data
         }
     });
     paginationContainer.appendChild(prevButton);
 
-    // Logic to show a maximum of 5 page buttons
     const maxButtons = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
     let endPage = Math.min(pageCount, startPage + maxButtons - 1);
@@ -178,7 +183,7 @@ function setupPagination(data) {
         btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
-            rendermeta(data, currentPage);
+            rendermeta(allmetaData); // Pass the original data
         });
         paginationContainer.appendChild(btn);
     }
@@ -190,7 +195,7 @@ function setupPagination(data) {
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
             currentPage++;
-            rendermeta(data, currentPage);
+            rendermeta(allmetaData); // Pass the original data
         }
     });
     paginationContainer.appendChild(nextButton);
@@ -201,13 +206,24 @@ function setupPagination(data) {
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;
-        rendermeta(data, currentPage);
+        rendermeta(allmetaData); // Pass the original data
     });
     paginationContainer.appendChild(endButton);
 }
 
-// Attach the main function call to the DOMContentLoaded event
+// ----------------------------------------------------
+// EVENT LISTENERS
+// ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     // Initial data fetch
     fetchmetaData();
+
+    // Attach search event listener only once.
+    if (searchInput) {
+        searchInput.addEventListener('input', (event) => {
+            currentSearchQuery = event.target.value.trim();
+            currentPage = 1; // Reset to the first page on a new search
+            rendermeta(allmetaData); // Re-render the data with the new search query
+        });
+    }
 });
