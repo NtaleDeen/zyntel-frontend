@@ -74,7 +74,7 @@ export function initializeTableSearch(searchInputId, tableId) {
  * @param {string} tableId - The ID of the table to export.
  * @param {string} filename - The name of the CSV file.
  */
-function exportTableAsCsv(tableId, filename) {
+export function exportTableAsCsv(tableId, filename) {
     const table = document.getElementById(tableId);
     if (!table) {
         console.error(`Table with ID "${tableId}" not found.`);
@@ -106,7 +106,7 @@ function exportTableAsCsv(tableId, filename) {
  * @param {string} tableId - The ID of the table to export.
  * @param {string} filename - The name of the PDF file.
  */
-function exportTableAsPdf(tableId, filename) {
+export function exportTableAsPdf(tableId, filename) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, 'a4' page size
 
@@ -144,12 +144,31 @@ function exportTableAsPdf(tableId, filename) {
             fillColor: '#21336a',
             textColor: '#fff',
             fontStyle: 'bold',
-        },
-        alternateRowStyles: {
-            fillColor: '#f5f5f5'
         }
     });
 
     // Save the PDF
     doc.save(`${filename}.pdf`);
 }
+
+// Event listeners for the export buttons, moved from the HTML file
+document.addEventListener('DOMContentLoaded', () => {
+    // Get the export links
+    const exportCsvLink = document.getElementById('export-csv-link');
+    const exportPdfLink = document.getElementById('export-pdf-link');
+
+    // Add event listeners to the links
+    if (exportCsvLink) {
+        exportCsvLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            exportTableAsCsv('meta', 'meta_data');
+        });
+    }
+
+    if (exportPdfLink) {
+        exportPdfLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            exportTableAsPdf('meta', 'meta_data');
+        });
+    }
+});

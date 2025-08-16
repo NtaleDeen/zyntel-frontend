@@ -26,8 +26,8 @@
             <span class="three-dots-menu-container">
               <button class="three-dots-button">&#x22EE;</button>
               <ul class="dropdown-menu">
-                  <li><a href="#" onclick="exportTableAsCsv('meta', 'meta_data'); return false;">Export table as CSV</a></li>
-                  <li><a href="#" onclick="exportTableAsPdf('meta', 'meta_data'); return false;">Export charts as PDF</a></li>
+                  <li><a href="#" id="export-csv-link">Export table as CSV</a></li>
+                  <li><a href="#" id="export-pdf-link">Export charts as PDF</a></li>
                   <li><a href="meta.html">Go to meta table</a></li>
                   <li><a href="performance.html">Go to performance table</a></li>
                   <li><a href="developer_ui.html">Create client</a></li>
@@ -42,7 +42,6 @@
     </div>
     <div class="search-container">
         <input type="text" id="searchInput" class="search-input" placeholder="Search...">
-        <!-- Use the Font Awesome search icon -->
         <i class="fas fa-search search-icon"></i>
     </div>
 </header>
@@ -91,6 +90,6 @@
     </footer>
 
     <script type="module" src="../js/meta.js"></script>
-    <script src="../js/menu.js" type="module"></script>
+    <script type="module" src="../js/menu.js"></script>
 </body>
 </html>
