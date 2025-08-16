@@ -158,8 +158,8 @@ async function loadDatabaseData() {
                     tatStatus = "Not Uploaded";
             }
 
-            const timeInParts = row.time_in ? row.time_in.split(" ") : null;
-            const timeInHour = (timeInParts && timeInParts.length > 1) ? parseInt(timeInParts[1].split(":")[0]) : null;
+            const timeInParts = row.time_in ? row.time_in.split(":") : null;
+            const timeInHour = (timeInParts && timeInParts.length > 0) ? parseInt(timeInParts[0]) : null;
 
             return {
                 ...row,
