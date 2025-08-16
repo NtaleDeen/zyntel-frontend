@@ -1,3 +1,7 @@
+// menu.js - Updated with PDF export functionality.
+// It also includes a search function to maintain the last changes.
+
+// The following functions are for the three-dot menu logic.
 document.addEventListener('DOMContentLoaded', () => {
     const menuButtons = document.querySelectorAll('.three-dots-button');
 
@@ -6,17 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Toggle the menu visibility on button click
         button.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevents the window click listener from immediately closing it
+            event.stopPropagation();
             menu.classList.toggle('visible');
         });
 
         // Handle clicks on menu items
         menu.addEventListener('click', (event) => {
-            // Check if the clicked element or its parent is a link
             const link = event.target.closest('a');
             if (link) {
                 // The default link behavior will handle navigation
-                // The menu will be closed by the window click event listener below
             }
         });
     });
@@ -29,6 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// ------------------------------------------------------------------
+// Reusable Table Functions: Search & Export
+// ------------------------------------------------------------------
 
 /**
  * Initializes a search bar to filter a specific HTML table.
@@ -91,4 +97,59 @@ function exportTableAsCsv(tableId, filename) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+
+/**
+ * Exports an HTML table to a PDF file.
+ * This function requires the 'jsPDF' and 'jspdf-autotable' libraries.
+ * @param {string} tableId - The ID of the table to export.
+ * @param {string} filename - The name of the PDF file.
+ */
+function exportTableAsPdf(tableId, filename) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, 'a4' page size
+
+    doc.setFont('helvetica'); // Use a standard font for a clean look
+
+    // Get the table element
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error(`Table with ID "${tableId}" not found.`);
+        return;
+    }
+
+    // Prepare table headers and data
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+    const data = Array.from(table.querySelectorAll('tbody tr')).map(tr => {
+        return Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+    });
+    
+    // Check if there is data to export
+    if (data.length === 0 || headers.length === 0) {
+        console.warn("No data or headers found in the table. PDF will be empty.");
+        // Optionally, alert the user or show a message
+    }
+
+    // AutoTable plugin options
+    doc.autoTable({
+        head: [headers],
+        body: data,
+        startY: 50, // Start table 50 points from the top
+        styles: {
+            fontSize: 10,
+            cellPadding: 5,
+        },
+        headStyles: {
+            fillColor: '#21336a',
+            textColor: '#fff',
+            fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+            fillColor: '#f5f5f5'
+        }
+    });
+
+    // Save the PDF
+    doc.save(`${filename}.pdf`);
 }

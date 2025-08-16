@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zyntel Meta Data Table</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <!-- Tailwind CSS CDN -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/general.css" />
@@ -24,8 +26,8 @@
           <span class="three-dots-menu-container">
               <button class="three-dots-button">...</button>
               <ul class="dropdown-menu">
-                  <li><a href="#" onclick="exportTableAsCsv('myTable', 'meta_data'); return false;">Export table as CSV</a></li>
-                  <li><a href="#" onclick="alert('PDF export function not implemented.'); return false;">Export charts as PDF</a></li>
+                  <li><a href="#" onclick="exportTableAsCsv('meta', 'meta_data'); return false;">Export table as CSV</a></li>
+                  <li><a href="#" onclick="exportTableAsPdf('meta', 'meta_data'); return false;">Export charts as PDF</a></li>
                   <li><a href="meta.html">Go to meta table</a></li>
                   <li><a href="performance.html">Go to performance table</a></li>
                   <li><a href="developer_ui.html">Create client</a></li>
