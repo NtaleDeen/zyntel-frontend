@@ -62,3 +62,33 @@ function initializeTableSearch(searchInputId, tableId) {
         });
     });
 }
+
+/**
+ * Exports an HTML table to a CSV file.
+ * @param {string} tableId - The ID of the table to export.
+ * @param {string} filename - The name of the CSV file.
+ */
+function exportTableAsCsv(tableId, filename) {
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error(`Table with ID "${tableId}" not found.`);
+        return;
+    }
+
+    const rows = table.querySelectorAll('tr');
+    let csvContent = "data:text/csv;charset=utf-8,";
+
+    rows.forEach(row => {
+        const cols = row.querySelectorAll('td, th');
+        const rowData = Array.from(cols).map(col => `"${col.innerText.replace(/"/g, '""')}"`).join(',');
+        csvContent += rowData + '\r\n';
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${filename}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}

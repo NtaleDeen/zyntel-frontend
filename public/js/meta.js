@@ -104,6 +104,12 @@ async function fetchmetaData() {
     } finally {
         hideLoadingSpinner();
     }
+    
+    // Move the initialization to the very end of the try block to ensure it only runs on success.
+    // This is because the 'meta' table needs to be populated with data before it can be searched.
+    if (allmetaData.length > 0) {
+        initializeTableSearch('searchInput', 'meta');
+    }
 }
 
 /**

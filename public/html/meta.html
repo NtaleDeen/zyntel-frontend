@@ -24,8 +24,8 @@
           <span class="three-dots-menu-container">
               <button class="three-dots-button">...</button>
               <ul class="dropdown-menu">
-                  <li><a href="javascript:void(0)" onclick="window.open('/path/to/charts.pdf', '_blank');">Export charts as PDF</a></li>
-                  <!-- <li><a href="javascript:void(0)" onclick="window.open('/path/to/table.csv', '_blank');">Export table as CSV</a></li> -->
+                  <li><a href="#" onclick="exportTableAsCsv('myTable', 'meta_data'); return false;">Export table as CSV</a></li>
+                  <li><a href="#" onclick="alert('PDF export function not implemented.'); return false;">Export charts as PDF</a></li>
                   <li><a href="meta.html">Go to meta table</a></li>
                   <li><a href="performance.html">Go to performance table</a></li>
                   <li><a href="developer_ui.html">Create client</a></li>
@@ -39,8 +39,8 @@
         </div>
       </div>
       <div class="search-container">
-          <input type="text" id="searchInput" class="search-input" placeholder="Search Lab Number or Test...">
-          <span class="search-icon">&#x1F50D;</span> <!-- Unicode magnifying glass icon -->
+          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+          <span class="search-icon">&#x1F50D;</span>
       </div>
     </header>
 
