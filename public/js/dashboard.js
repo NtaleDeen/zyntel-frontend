@@ -1,4 +1,4 @@
-// dashboard.js - Updated with the carousel removed
+// dashboard.js
 
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
@@ -6,6 +6,7 @@ import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 document.addEventListener('DOMContentLoaded', () => {
     // Immediately check authentication on page load.
     // If the user isn't authenticated, this will redirect.
+    // The rest of the script will only run if a valid session exists.
     checkAuthAndRedirect();
 
     // Select elements from the DOM
@@ -27,6 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardLinks = Array.from(dashboardDropdownMenu.querySelectorAll('a'));
     const tatLinks = Array.from(tatDropdownMenu.querySelectorAll('a'));
     const logoutButton = document.getElementById('logout-button');
+
+    // Variables for the animation and idle timer
+    // Use a single index to synchronize both dashboard and TAT panels
+    let currentIndex = 0;
+    const updateInterval = 6000; // 6 seconds
+    const idleTimeout = 30000; // 30 seconds
+    let idleTimer = null;
+    let animationInterval = null;
 
     // Function to update a panel's main display
     function updatePanel(links, mainDisplay, viewBtn, imageTitleElement, index) {
@@ -51,22 +60,75 @@ document.addEventListener('DOMContentLoaded', () => {
         imageTitleElement.querySelector('span').textContent = links[index].textContent;
     }
 
+    // Function to update both panels simultaneously to ensure they are synchronized
+    function updatePanels() {
+        const dashboardTotal = dashboardLinks.length;
+        const tatTotal = tatLinks.length;
+        const dashboardIndex = currentIndex % dashboardTotal;
+        const tatIndex = currentIndex % tatTotal;
+
+        // Use the synchronized update function
+        updatePanel(dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, dashboardIndex);
+        updatePanel(tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle, tatIndex);
+        console.log(`Panels updated to index: ${currentIndex}`);
+    }
+
     // Function to initialize the panels with the default values
     function initializePanels() {
         // Set default to the first link if our target is missing
         const defaultDashboardLink = dashboardLinks.find(link => link.href.includes('revenue.html')) || dashboardLinks[0];
         const defaultTatLink = tatLinks.find(link => link.href.includes('reception.html')) || tatLinks[0];
-        
-        const dashboardIndex = dashboardLinks.indexOf(defaultDashboardLink);
-        const tatIndex = tatLinks.indexOf(defaultTatLink);
+
+        if (defaultDashboardLink) {
+            currentIndex = dashboardLinks.indexOf(defaultDashboardLink);
+        } else if (defaultTatLink) {
+            currentIndex = tatLinks.indexOf(defaultTatLink);
+        }
 
         // Update both panels once with the initial values
-        updatePanel(dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, dashboardIndex);
-        updatePanel(tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle, tatIndex);
+        updatePanels();
+    }
+
+    // Function to animate the panels
+    function startAnimation() {
+        // Clear any existing interval to prevent duplicates
+        if (animationInterval) clearInterval(animationInterval);
+
+        const dashboardTotal = dashboardLinks.length;
+        const tatTotal = tatLinks.length;
+
+        animationInterval = setInterval(() => {
+            currentIndex = (currentIndex + 1) % Math.max(dashboardTotal, tatTotal);
+
+            // Use the synchronized update function
+            updatePanels();
+        }, updateInterval);
+    }
+
+    function stopAnimation() {
+        if (animationInterval) {
+            clearInterval(animationInterval);
+            animationInterval = null;
+        }
+    }
+
+    // Function to reset the idle timer and stop animation
+    function resetIdleTimer() {
+        clearTimeout(idleTimer);
+        stopAnimation();
+        idleTimer = setTimeout(startAnimation, idleTimeout);
     }
 
     // Initialize panels on page load
     initializePanels();
+
+    // Start the idle timer after the initial page load
+    idleTimer = setTimeout(startAnimation, idleTimeout);
+
+    // Event listeners to handle user interaction
+    document.addEventListener('click', resetIdleTimer);
+    document.addEventListener('mousemove', resetIdleTimer);
+    document.addEventListener('keypress', resetIdleTimer);
 
     // Select the logout button and add an event listener
     logoutButton.addEventListener('click', (e) => {
@@ -81,12 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         dashboardDropdownMenu.classList.toggle('show');
         tatDropdownMenu.classList.remove('show');
+        resetIdleTimer();
     });
 
     tatDropdownBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         tatDropdownMenu.classList.toggle('show');
         dashboardDropdownMenu.classList.remove('show');
+        resetIdleTimer();
     });
 
     document.addEventListener('click', (e) => {
@@ -101,7 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             dashboardDropdownMenu.classList.remove('show');
-            updatePanel(dashboardLinks, dashboardMainDisplay, dashboardViewBtn, dashboardImageTitle, index);
+            currentIndex = index; // Set the single index
+            updatePanels();
+            resetIdleTimer();
         });
     });
 
@@ -110,7 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             tatDropdownMenu.classList.remove('show');
-            updatePanel(tatLinks, tatMainDisplay, tatViewBtn, tatImageTitle, index);
+            currentIndex = index; // Set the single index
+            updatePanels();
+            resetIdleTimer();
         });
     });
 });
