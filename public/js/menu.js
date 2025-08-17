@@ -25,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Hide the menu when clicking anywhere on the page
     window.addEventListener('click', (event) => {
-        const openMenus = document.querySelectorAll('.dropdown-menu.visible');
+        // Only target the specific three-dot menus
+        const openMenus = document.querySelectorAll('.three-dots-menu-container .dropdown-menu.visible');
         openMenus.forEach(menu => {
             menu.classList.remove('visible');
         });
@@ -108,7 +109,7 @@ export function exportTableAsCsv(tableId, filename) {
  */
 export function exportTableAsPdf(tableId, filename) {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, 'a4' page size
+    const doc = new jsPDF('p', 'pt', 'a4'); // 'p' for portrait, 'pt' for points, a4 page size
 
     doc.setFont('helvetica'); // Use a standard font for a clean look
 
