@@ -1,95 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zyntel Progress Data</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/general.css" />
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem;
-        }
-        .card {
-            background-color: #fff;
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-        }
-        .table-container {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        th {
-            background-color: #e5e7eb; /* gray-200 */
-            font-weight: 600;
-        }
-        tbody tr:nth-child(even) {
-            background-color: #f9fafb; /* gray-50 */
-        }
-        .message-box {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-            font-weight: 500;
-        }
-        .message-box.error {
-            background-color: #fee2e2; /* red-100 */
-            color: #991b1b; /* red-800 */
-        }
-        .btn-back {
-            background-color: #6b7280; /* gray-500 */
-            color: #fff;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem; /* rounded-lg */
-            font-weight: 600;
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-        .btn-back:hover {
-            background-color: #4b5563; /* gray-600 */
-        }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col">
-    <header class="bg-blue-700 text-white p-4 shadow-md">
-        <div class="header-container flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Zyntel Progress Data</h1>
-            <nav>
-                <a href="revenue.html" class="text-white hover:text-blue-200 mx-2">Revenue</a>
-                <a href="tat.html" class="text-white hover:text-blue-200 mx-2">TAT</a>
-                <a href="progress.html" class="text-white hover:text-blue-200 mx-2">Progress</a>
-                <a href="reception.html" class="text-white hover:text-blue-200 mx-2">Reception</a>
-                <a href="tracker.html" class="text-white hover:text-blue-200 mx-2">Tracker</a>
-            </nav>
+  <head>
+      <progress charset="UTF-8">
+      <progress name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Zyntel Progress Data Table</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+      <link rel="icon" href="/favicon.ico">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+      <link rel="stylesheet" href="../css/general.css" />
+      <link rel="stylesheet" href="../css/table.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+              <img src="../images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>Nakasero Hospital Laboratory</h1>
         </div>
+        <div class="page page-table">
+          <span>Progress Table</span>
+          <a href="#" class="logout-button" id="logout-button">Logout</a>
+          <span class="three-dots-menu-container">
+            <button class="three-dots-button">&#x22EE;</button>
+            <ul class="dropdown-menu">
+              <li><a href="#" id="export-csv-link">Export table as CSV</a></li>
+              <li><a href="#" id="export-pdf-link">Export charts as PDF</a></li>
+              <li><a href="progress.html">progress table</a></li>
+              <li><a href="performance.html">Performance table</a></li>
+              <li><a href="developer_ui.html">Create client</a></li>
+              <li><a href="manager_ui.html">Add user</a></li>
+              <li><a href="tracker.html">Tracker table</a></li>
+              <li><a href="reception.html">Reception table</a></li>
+              <li><a href="progress.html">Progress table</a></li>
+              <li><a href="dashboard.html">Dashboards</a></li>
+            </ul>
+          </span>
+        </div>
+      </div>
+      <nav class="navbar">
+        <div class="search-container">
+          <label for="searchInput">Search:</label>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search...">
+          <i class="fas fa-search search-icon"></i>
+        </div>
+      </nav>
     </header>
 
-    <main class="flex-grow container py-8">
-        <section>
-            <h2 class="text-3xl font-bold text-gray-800 mb-6">Patient Progress</h2>
-            <div class="card">
-                <div class="table-container">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead>
-                            <tr>
+    <main>
+
+      <div class="loader" id="loadingOverlay">
+        <div class="loading one"></div>
+        <div class="loading two"></div>
+        <div class="loading three"></div>
+        <div class="loading four"></div>
+      </div>
+
+      <section class="card">
+        <div class="table-container">
+          <table id="progress" class="neon-table" id="myTable">
+            <thead>
+              <tr>
                                 <th>Date</th>
                                 <th>Shift</th>
                                 <th>Lab Number</th>
@@ -100,25 +73,31 @@
                                 <th>Request Progress</th>
                             </tr>
                         </thead>
-                        <tbody id="progressTableBody">
+                        <tbody id="progressBody">
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-gray-500">Loading data...</td>
+                                <td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="progressTableMessage" class="message-box hidden"></div>
-            </div>
-        </section>
+            </tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+        <div id="progressMessage" class="message-box hidden"></div>
+      </section>
     </main>
 
-    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
-        <div class="container">
-            &copy; 2025 Zyntel Data Agent. All rights reserved.
-        </div>
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
+    </div>
+
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="../images/zyntel_no_background.png" alt="logo" />
+      </div>
     </footer>
 
     <script type="module" src="../js/progress.js"></script>
-    <script src="../js/menu.js" type="module"></script>
-</body>
+    <script type="module" src="../js/menu.js"></script>
+  </body>
 </html>

@@ -7,12 +7,13 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/general.css" />
     <style>
-        body {
+        /* body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
             color: #333;
-        }
+        } */
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -83,14 +84,29 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
-    <header class="bg-white shadow-sm">
-        <div class="container flex justify-between items-center py-4">
-            <h1 class="text-3xl font-bold text-blue-600">Zyntel</h1>
-            <nav>
-                <a href="#" class="text-gray-600 hover:text-blue-600 font-medium">Dashboard</a>
-            </nav>
+<body>
+    <header>
+      <div class="header-container">
+        <div class="header-left">
+          <div class="logo">
+            <img src="../images/logo-nakasero.png" alt="logo" />
+          </div>
+          <h1>NHL Laboratory Dashboard</h1>
         </div>
+        <div class="page">
+          <span>Admin</span>
+          <a href="#" class="logout-button" id="logout-button">Logout</a>
+          <span class="three-dots-menu-container">
+              <button class="three-dots-button">&#x22EE;</button>
+              <ul class="dropdown-menu">
+                  <li><a href="javascript:void(0)" data-export="pdf">Export charts as PDF</a></li>
+                  <li><a href="javascript:void(0)" data-export="csv">Export table as CSV</a></li>
+                  <li><a href="developer_ui.html">Create client</a></li>
+                  <li><a href="manager_ui.html">Add user</a></li>
+              </ul>
+          </span>
+        </div>
+      </div>
     </header>
 
     <main class="container py-8">
@@ -201,10 +217,15 @@
         </section>
     </main>
 
-    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
-        <div class="container">
-            &copy; 2025 Zyntel Data Agent. All rights reserved.
-        </div>
+    <div class="notice">
+      <p>Sorry!</p>
+      You need a wider screen to view the charts.
+    </div>
+    <footer>
+      <p>&copy;2025 Zyntel</p>
+      <div class="zyntel">
+        <img src="../images/zyntel_no_background.png" alt="logo" />
+      </div>
     </footer>
 
     <script src="../js/auth.js"></script>
