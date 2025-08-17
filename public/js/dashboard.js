@@ -141,22 +141,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dashboardDropdownBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        dashboardDropdownMenu.classList.toggle('show');
-        tatDropdownMenu.classList.remove('show');
+        dashboardDropdownMenu.classList.toggle('visible');
+        tatDropdownMenu.classList.remove('visible');
         resetIdleTimer();
     });
 
     tatDropdownBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        tatDropdownMenu.classList.toggle('show');
-        dashboardDropdownMenu.classList.remove('show');
+        tatDropdownMenu.classList.toggle('visible');
+        dashboardDropdownMenu.classList.remove('visible');
         resetIdleTimer();
     });
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.dropdown-container')) {
-            dashboardDropdownMenu.classList.remove('show');
-            tatDropdownMenu.classList.remove('show');
+            dashboardDropdownMenu.classList.remove('visible');
+            tatDropdownMenu.classList.remove('visible');
         }
     });
 
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dashboardLinks.forEach((link, index) => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            dashboardDropdownMenu.classList.remove('show');
+            dashboardDropdownMenu.classList.remove('visible');
             currentIndex = index; // Set the single index
             updatePanels();
             resetIdleTimer();
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tatLinks.forEach((link, index) => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            tatDropdownMenu.classList.remove('show');
+            tatDropdownMenu.classList.remove('visible');
             currentIndex = index; // Set the single index
             updatePanels();
             resetIdleTimer();
