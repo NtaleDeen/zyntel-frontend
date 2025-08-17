@@ -140,14 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     dashboardDropdownBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // <-- Add this line
         dashboardDropdownMenu.classList.toggle('visible');
         tatDropdownMenu.classList.remove('visible');
         resetIdleTimer();
     });
 
     tatDropdownBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+        e.stopPropagation(); // <-- Add this line
         tatDropdownMenu.classList.toggle('visible');
         dashboardDropdownMenu.classList.remove('visible');
         resetIdleTimer();

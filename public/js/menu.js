@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // The default link behavior will handle navigation
             }
         });
+
+        // Toggle the menu visibility on button click
+        button.addEventListener('click', (event) => {
+            event.stopPropagation(); // <-- Add this line
+            menu.classList.toggle('visible');
+        });
     });
 
     // Hide the menu when clicking anywhere on the page
