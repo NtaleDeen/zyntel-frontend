@@ -4,8 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NHL Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
     </style>
@@ -27,10 +25,16 @@
           <span class="three-dots-menu-container">
               <button class="three-dots-button">&#x22EE;</button>
               <ul class="dropdown-menu">
-                  <li><a href="javascript:void(0)" data-export="pdf">Export charts as PDF</a></li>
-                  <li><a href="javascript:void(0)" data-export="csv">Export table as CSV</a></li>
-                  <li><a href="developer_ui.html">Create client</a></li>
-                  <li><a href="manager_ui.html">Add user</a></li>
+              <li><a href="#" id="export-csv-link">Export table as CSV</a></li>
+              <li><a href="#" id="export-pdf-link">Export charts as PDF</a></li>
+              <li><a href="meta.html">Meta table</a></li>
+              <li><a href="performance.html">Performance table</a></li>
+              <li><a href="developer_ui.html">Create client</a></li>
+              <li><a href="manager_ui.html">Add user</a></li>
+              <li><a href="tracker.html">Tracker table</a></li>
+              <li><a href="reception.html">Reception table</a></li>
+              <li><a href="progress.html">Progress table</a></li>
+              <li><a href="dashboard.html">Dashboards</a></li>
               </ul>
           </span>
         </div>
@@ -38,52 +42,34 @@
     </header>
 
     <div class="main-container">
-      <div class="panel" id="dashboard-panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Dashboards</h2>
-          <div class="image-title" id="dashboard-image-title">
-            <span>Dashboard Title</span>
-          </div>
-          <div class="main-display" id="dashboard-main-display">
-            <a href="#" class="view-page-button" id="dashboard-view-btn">View</a>
-          </div>
-          <div class="dropdown-container">
-            <button class="dropdown-button" id="dashboard-dropdown-btn">
-              <span>Select a Dashboard</span>
-              <span class="arrow">&#9662;</span>
-            </button>
-            <div class="dropdown-menu" id="dashboard-dropdown-menu">
-              <a href="revenue.html" data-image="../images/stats-concept-with-wood-blocks.jpg">Revenue</a>
-              <a href="numbers.html" data-image="../images/e35316c2-b391-4bd4-ac99-06214bc0193b.jpg">Numbers</a>
-              <a href="tat.html" data-image="../images/vecteezy_close-up-of-laptop-screen-showing-colorful-website-traffic_50054370.jpg">TAT</a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel" id="tat-panel">
-        <div class="panel-header">
-          <h2 class="panel-title">Tables</h2>
-          <div class="image-title" id="tat-image-title">
-            <span>Table Title</span>
-          </div>
-          <div class="main-display" id="tat-main-display">
-            <a href="#" class="view-page-button" id="tat-view-btn">View</a>
-          </div>
-          <div class="dropdown-container">
-            <button class="dropdown-button" id="tat-dropdown-btn">
-              <span>Select a Table</span>
-              <span class="arrow">&#9662;</span>
-            </button>
-            <div class="dropdown-menu" id="tat-dropdown-menu">
-              <a href="reception.html" data-image="../images/dark-skinned-woman-colleagues-corporate-start-up-office-working-finish-project-diverse-team-business-people-analyzing-company-financial-reports-from-computer.jpg">Reception</a>
-              <a href="progress.html" data-image="../images/business-person-looking-finance-graphs.jpg">Progress</a>
-              <a href="perfomance.html" data-image="../images/young-woman-analysing-charts-laptop-start-up-business-meeting-room.jpg">Performance</a>
-              <a href="tracker.html" data-image="../images/close-up-executive-working-with-his-tablet.jpg">Tracker</a>
-              <a href="meta.html" data-image="../images/pexels-fauxels-3183153.jpg">Meta</a>
-            </div>
-          </div>
-        </div>
+      <div class="dice-grid">
+        <!-- Dashboard Dice -->
+        <a href="revenue.html" class="dice-tile">
+          <span class="dice-label">Revenue</span>
+        </a>
+        <a href="numbers.html" class="dice-tile">
+          <span class="dice-label">Numbers</span>
+        </a>
+        <a href="tat.html" class="dice-tile">
+          <span class="dice-label">TAT</span>
+        </a>
+        
+        <!-- Tables Dice -->
+        <a href="reception.html" class="dice-tile">
+          <span class="dice-label">Reception</span>
+        </a>
+        <a href="progress.html" class="dice-tile">
+          <span class="dice-label">Progress</span>
+        </a>
+        <a href="perfomance.html" class="dice-tile">
+          <span class="dice-label">Performance</span>
+        </a>
+        <a href="tracker.html" class="dice-tile">
+          <span class="dice-label">Tracker</span>
+        </a>
+        <a href="meta.html" class="dice-tile">
+          <span class="dice-label">Meta</span>
+        </a>
       </div>
     </div>
     
@@ -92,6 +78,6 @@
     </footer>
     
     <script type="module" src="../js/dashboard.js"></script>
-    <script src="../js/menu.js" type="module"></script>
+    <script type="module" src="../js/menu.js"></script>
   </body>
 </html>

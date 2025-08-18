@@ -1,47 +1,47 @@
 // frontend/js/index.js
 
-// Enforce session-bound user consistency
-document.addEventListener('DOMContentLoaded', () => {
-    const session = JSON.parse(sessionStorage.getItem('session'));
-    const lastUser = localStorage.getItem('zyntelUser');
+// // Enforce session-bound user consistency
+// document.addEventListener('DOMContentLoaded', () => {
+//     const session = JSON.parse(sessionStorage.getItem('session'));
+//     const lastUser = localStorage.getItem('zyntelUser');
 
-    if (session && lastUser && session.username !== lastUser) {
-        // Another user logged in in a different tab or after browser relaunch
-        sessionStorage.clear();
-        localStorage.removeItem('zyntelUser');
-        window.location.href = '/index.html'; // Redirect to login
-    }
-});
+//     if (session && lastUser && session.username !== lastUser) {
+//         // Another user logged in in a different tab or after browser relaunch
+//         sessionStorage.clear();
+//         localStorage.removeItem('zyntelUser');
+//         window.location.href = '/index.html'; // Redirect to login
+//     }
+// });
 
-// --- Pulsing Icon Animation Logic ---
-const icon = document.getElementById('pulsingIcon');
-const loginBox = document.querySelector('.login-box');
+// // --- Pulsing Icon Animation Logic ---
+// const icon = document.getElementById('pulsingIcon');
+// const loginBox = document.querySelector('.login-box');
 
-const iconColors = [
-    '../images/VividCyan(00f0ff).png',
-    '../images/PastelYellow(ffe066).png',
-    '../images/Green(7de19a).png',
-    '../images/LightGray(c0c0c0).png'
-];
+// const iconColors = [
+//     '../images/VividCyan(00f0ff).png',
+//     '../images/PastelYellow(ffe066).png',
+//     '../images/Green(7de19a).png',
+//     '../images/LightGray(c0c0c0).png'
+// ];
 
-const glowColors = [
-    'rgba(0, 240, 255, 0.7)',  // Vivid Cyan
-    'rgba(255, 224, 102, 0.7)', // Pastel Yellow
-    'rgba(125, 225, 154, 0.7)', // Green
-    'rgba(192, 192, 192, 0.7)'  // Light Gray
-];
+// const glowColors = [
+//     'rgba(0, 240, 255, 0.7)',  // Vivid Cyan
+//     'rgba(255, 224, 102, 0.7)', // Pastel Yellow
+//     'rgba(125, 225, 154, 0.7)', // Green
+//     'rgba(192, 192, 192, 0.7)'  // Light Gray
+// ];
 
-let currentColorIndex = 0;
-const transitionInterval = 2000; // Time in milliseconds for color change (e.g., 2 seconds)
+// let currentColorIndex = 0;
+// const transitionInterval = 2000; // Time in milliseconds for color change (e.g., 2 seconds)
 
-function updateColors() {
-    currentColorIndex = (currentColorIndex + 1) % iconColors.length;
-    icon.src = iconColors[currentColorIndex];
-    loginBox.style.boxShadow = `0 0 40px ${glowColors[currentColorIndex]}`;
-}
+// function updateColors() {
+//     currentColorIndex = (currentColorIndex + 1) % iconColors.length;
+//     icon.src = iconColors[currentColorIndex];
+//     loginBox.style.boxShadow = `0 0 40px ${glowColors[currentColorIndex]}`;
+// }
 
-setInterval(updateColors, transitionInterval);
-updateColors(); // Initial call to set the first color immediately
+// setInterval(updateColors, transitionInterval);
+// updateColors(); // Initial call to set the first color immediately
 
 
 // --- Login Form Handling Logic ---
@@ -103,8 +103,14 @@ document.getElementById('togglePassword').addEventListener('click', function () 
                 localStorage.setItem('zyntelUser', username);
                 
                 messageDiv.style.color = 'green';
-                messageDiv.textContent = data.message + ". Redirecting...";
+                messageDiv.textContent = data.message + ". Longing in...";
                 window.location.href = '/html/dashboard.html';
+            } else {
+                // If the response is not OK, it means the login failed.
+                // The server should send a message in the response body.
+                messageDiv.style.color = 'red';
+                // Display the error message from the backend, or a generic one if not available.
+                messageDiv.textContent = data.message || "Invalid username or password. Please try again.";
             }
             
         } catch (error) {

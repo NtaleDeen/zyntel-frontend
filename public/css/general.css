@@ -86,7 +86,8 @@ h1 {
 
 .logout-button:hover {
   background-color: var(--hover-color);
-  transform: scale(1.05);
+  /* transform: scale(1.05); */
+  color: var(--main-color);
 }
 
 .page-table {
