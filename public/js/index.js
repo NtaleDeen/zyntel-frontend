@@ -47,34 +47,31 @@
 // --- Login Form Handling Logic ---
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.querySelector('form');
-    // Ensure your HTML input fields have id="username" and id="password"
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
-    const messageDiv = document.createElement('div'); // For displaying messages
+    const messageDiv = document.createElement('div');
     messageDiv.style.marginTop = '10px';
-    messageDiv.style.color = 'red'; // Default to red for errors
+    messageDiv.style.color = 'red';
     loginForm.appendChild(messageDiv);
 
-document.getElementById('togglePassword').addEventListener('click', function () {
-    const passwordField = document.getElementById('password');
-    const type = passwordField.type === 'password' ? 'text' : 'password';
-    passwordField.type = type;
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const passwordField = document.getElementById('password');
+        const type = passwordField.type === 'password' ? 'text' : 'password';
+        passwordField.type = type;
 
-    // Toggle the icon
-    this.classList.toggle('fa-eye');
-    this.classList.toggle('fa-eye-slash');
-});
+        this.classList.toggle('fa-eye');
+        this.classList.toggle('fa-eye-slash');
+    });
 
-    // IMPORTANT: Replace with your actual Render backend URL
     const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
 
     loginForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // Prevent default form submission
+        event.preventDefault();
 
         const username = usernameInput.value;
         const password = passwordInput.value;
 
-        messageDiv.textContent = ''; // Clear previous messages
+        messageDiv.textContent = '';
 
         try {
             const response = await fetch(`${BACKEND_URL}/api/login`, {
@@ -90,7 +87,7 @@ document.getElementById('togglePassword').addEventListener('click', function () 
             if (response.ok) {
                 const existingUser = localStorage.getItem('zyntelUser');
                 if (existingUser && existingUser !== username) {
-                    sessionStorage.clear(); // Kill old session if new user logs in
+                    sessionStorage.clear();
                 }
 
                 const sessionData = {
@@ -103,14 +100,17 @@ document.getElementById('togglePassword').addEventListener('click', function () 
                 localStorage.setItem('zyntelUser', username);
                 
                 messageDiv.style.color = 'green';
-                messageDiv.textContent = data.message + ". Longing in...";
+                messageDiv.textContent = data.message + ". Logging in...";
                 window.location.href = '/html/dashboard.html';
             } else {
-                // If the response is not OK, it means the login failed.
-                // The server should send a message in the response body.
+                // More specific error handling based on status code
                 messageDiv.style.color = 'red';
-                // Display the error message from the backend, or a generic one if not available.
-                messageDiv.textContent = data.message || "Invalid username or password. Please try again.";
+                if (response.status >= 500) {
+                    messageDiv.textContent = "Server error. The database may be down or a connection issue has occurred. Please try again later.";
+                } else {
+                    // For 4xx errors (e.g., 401 Unauthorized, 403 Forbidden)
+                    messageDiv.textContent = data.message || "Invalid username or password. Please try again.";
+                }
             }
             
         } catch (error) {
