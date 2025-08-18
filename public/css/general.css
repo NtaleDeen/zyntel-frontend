@@ -242,7 +242,7 @@ h1 {
     top: 50%;
     transform: translateY(-50%); /* Vertically centers the icon */
     color: #777;
-    font-size: 20px;
+    font-size: 15px;
     pointer-events: none; /* Prevents the icon from intercepting mouse clicks */
 }
 
