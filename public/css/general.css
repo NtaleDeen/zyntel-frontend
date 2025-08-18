@@ -105,37 +105,11 @@ h1 {
   padding: 0 25px;
 }
 
-#menuToggle {
-  /* display: none;
-  color: var(--main-color);
-  border: none;
-  background-color: unset;
-  padding: 3px 5px;
-  margin-right: 10px;
-  cursor: pointer;
-  font-size: 0.7rem !important;
-  font-weight: normal !important; */
-  padding: 10px 20px;
-  margin-right: 10px;
-  cursor: pointer;
-  background-color: var(--background-2-color);
-  border-radius: 10px;
-  text-decoration: none;
-  font-weight: 400;
-  transition: background-color 0.2s, transform 0.2s;
-  font-size: 15px;
-  box-shadow: 0 4px 6px var(--box-shadow);
-  align-items: center;
-}
-
-#menuToggle:hover {
-  border-bottom: 2px solid var(--hover-color);
-}
-
 /* Three dot styles begin. */
 .three-dots-menu-container {
     position: relative;
     display: inline-block;
+    padding: 0;
 }
 
 .three-dots-button {
@@ -145,7 +119,6 @@ h1 {
     font-size: 24px;
     font-weight: bold;
     color: #555;
-    padding: 8px 8px;
     border-radius: 8px;
     transition: background-color 0.2s ease-in-out;
 }
@@ -198,27 +171,21 @@ h1 {
 
 
 /* --- Search bar styles start --- */
-.search-main-container {
-  position: fixed; /* Keep fixed to stay at top with scrolling */
-  top: 100px; /* Below the header */
-  left: 0;
-  width: 100vw;
-  z-index: 999;
+.main-search-container {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: left;
-  /* gap: 20px; */
-  padding: 17px 30px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  background-color: var(--background-color);
-  border-bottom: 1px solid var(--border-bottom);
-  box-shadow: 0 1px 2px var(--box-shadow);
+  gap: 20px;
+  justify-content: end;
+  align-items: center;
+  line-height: 1;
+  background-color: #21336a;
+  padding: 10px 20px;
+  margin-top: 0;
 }
 
 .search-container {
     position: relative; /* Essential for positioning the icon */
-    max-width: 300px;
+    /* max-width: 1000px; */
+  margin-right: 2rem;
 }
 
 .search-input {
