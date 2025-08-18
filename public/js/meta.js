@@ -1,7 +1,7 @@
 // meta.js - Refactored to use a centralized auth module and improved search/pagination.
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 import { initializeTableSearch } from "./menu.js";
 
 // Immediately check authentication on page load.
@@ -85,11 +85,7 @@ async function fetchmetaData() {
             },
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
+        const data = await handleResponse(response);
         allmetaData = data;
 
         if (!Array.isArray(allmetaData) || allmetaData.length === 0) {

@@ -2,7 +2,7 @@
 // This file centralizes all authentication and session management logic.
 
 let inactivityTimer;
-const inactivityTime = 30 * 60 * 1000; // 10 minutes in milliseconds
+const inactivityTime = 30 * 60 * 1000; // 30 minutes in milliseconds
 
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
@@ -54,6 +54,26 @@ export function saveSession(username, token) {
 export function clearSession() {
     sessionStorage.removeItem("session");
     localStorage.removeItem("zyntelUser");
+}
+
+/**
+ * Handles API responses, specifically checking for token expiration.
+ * @param {Response} response - The fetch API response object.
+ * @returns {Promise<any>} A promise that resolves with the parsed JSON data or rejects with an error.
+ */
+export async function handleResponse(response) {
+    if (response.status === 401) {
+        // Token has expired or is invalid
+        clearSession();
+        window.location.replace("/index.html");
+        throw new Error("Authentication failed. Redirecting to login.");
+    }
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return response.json();
 }
 
 // ----------------------------------------------------

@@ -1,4 +1,4 @@
-import { checkAuthAndRedirect, getToken } from "../js/auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthAndRedirect(); // Ensure user is authenticated

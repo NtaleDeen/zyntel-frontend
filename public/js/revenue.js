@@ -2,7 +2,7 @@
 // This file is the main logic for the revenue dashboard.
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 
 // Immediately check authentication on page load.
 checkAuthAndRedirect();

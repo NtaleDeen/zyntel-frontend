@@ -1,7 +1,7 @@
 // dashboard.js
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // Immediately check authentication on page load.

@@ -4,7 +4,7 @@
 // and to remove redundant code.
 
 // 1. Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 
 // 2. Immediately check authentication on page load.
 // This single call replaces all previous, duplicated auth checks.

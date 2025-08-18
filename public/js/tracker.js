@@ -1,7 +1,7 @@
 // tracker.js - Refactored to use a centralized auth module and improved search/pagination.
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
 import { initializeTableSearch } from "./menu.js";
 
 // Immediately check authentication on page load.
@@ -89,7 +89,7 @@ async function fetchtrackerData() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const data = await handleResponse(response);
         alltrackerData = data;
 
         if (!Array.isArray(alltrackerData) || alltrackerData.length === 0) {
@@ -101,6 +101,8 @@ async function fetchtrackerData() {
         }
 
     } catch (error) {
+        // The handleResponse function will automatically clear the session and redirect on a 401 error.
+        // This catch block will handle other network or server errors.
         console.error('Error fetching data:', error);
         showMessage(trackerMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
         trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
