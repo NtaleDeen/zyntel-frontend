@@ -28,7 +28,7 @@ const searchInput = document.getElementById('searchInput');
 
 let allperformanceData = [];
 let currentPage = 1;
-const rowsPerPage = 25;
+const rowsPerPage = 50;
 let currentSearchQuery = ''; // Store the search query globally
 
 // ----------------------------------------------------

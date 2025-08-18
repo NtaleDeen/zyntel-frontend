@@ -29,7 +29,7 @@ const searchInput = document.getElementById('searchInput');
 
 let allreceptionData = [];
 let currentPage = 1;
-const rowsPerPage = 25;
+const rowsPerPage = 50;
 let currentSearchQuery = ''; // Store the search query globally
 let selectedRows = {}; // Object to store selected lab numbers and test names
 

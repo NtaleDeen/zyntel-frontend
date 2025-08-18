@@ -15,7 +15,7 @@
 }
 
 body {
-  padding-top: 130px; /* Adjusted padding-to... */
+  padding-top: 150px; /* Adjusted padding-to... */
 }
 
 .table-container {
@@ -30,12 +30,19 @@ body {
     box-shadow: 0 0 2px var(--border-color);
 }
 
+.neon-table th {
+    padding: 7px 15px;
+}
+
 .neon-table th, .neon-table td {
-    padding: 3px 15px;
     text-align: left;
     color: var(--border-color);
     font-size: 13px;
     border: 0.1px solid var(--border-color);
+}
+
+.neon-table th, .neon-table td {
+    padding: 4px 15px;
 }
 
 .neon-table th {
