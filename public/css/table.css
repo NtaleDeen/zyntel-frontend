@@ -27,7 +27,7 @@
 }
 
 .neon-table th, .neon-table td {
-    padding: 10px 15px;
+    padding: 8px 15px;
     text-align: left;
     color: var(--border-color);
     font-size: 13px;
