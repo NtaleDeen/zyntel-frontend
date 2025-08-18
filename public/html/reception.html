@@ -63,14 +63,11 @@
           <table id="reception" class="neon-table" id="myTable">
             <thead>
               <tr>
-                <th class="cursor-pointer" data-sort-by="date">
-                  Date
-                  <span class="sort-icon fas fa-sort text-gray-400 ml-2"></span>
+                <th class="py-2 px-4">
+                  <input type="checkbox" id="selectAll" class="form-checkbox h-4 w-4 text-blue-600">
                 </th>
-                <th class="cursor-pointer" data-sort-by="lab_number">
-                  Lab Number
-                  <span class="sort-icon fas fa-sort text-gray-400 ml-2"></span>
-                </th>
+                <th>Date</th>
+                <th>Lab Number</th>
                 <th>Shift</th>
                 <th>Unit</th>
                 <th>Lab Section</th>
@@ -90,6 +87,13 @@
         </div>
         <div id="receptionMessage" class="message-box hidden"></div>
       </section>
+
+      <!-- Multi-select action buttons container -->
+      <div id="multi-select-actions" class="mt-4 flex justify-center space-x-4 hidden">
+        <button id="multi-urgent-btn" class="p-2 rounded-md bg-red-500 text-white font-bold transition duration-300 transform hover:scale-105">Mark as Urgent</button>
+        <button id="multi-receive-btn" class="p-2 rounded-md bg-blue-500 text-white font-bold transition duration-300 transform hover:scale-105">Receive Selected</button>
+        <button id="multi-result-btn" class="p-2 rounded-md bg-green-500 text-white font-bold transition duration-300 transform hover:scale-105">Result Selected</button>
+      </div>
     </main>
 
     <div class="notice">

@@ -31,8 +31,7 @@ let allreceptionData = [];
 let currentPage = 1;
 const rowsPerPage = 25;
 let currentSearchQuery = ''; // Store the search query globally
-let sortColumn = 'date'; // Default sort column
-let sortDirection = 'desc'; // Default sort direction
+let selectedRows = {}; // Object to store selected lab numbers and test names
 
 // ----------------------------------------------------
 // LOADING SPINNER FUNCTIONS
@@ -57,13 +56,6 @@ function showMessage(element, message, type = 'info') {
 }
 
 /**
- * Helper function to capitalize the first letter of each word in a string.
- */
-function capitalizeWords(str) {
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-/**
  * Fetches reception data from the API and calls the render function.
  */
 async function fetchreceptionData() {
@@ -80,10 +72,8 @@ async function fetchreceptionData() {
     }
 
     try {
-        // Add sort parameters to the API URL
-        const apiUrlWithSort = `${API_URL}?sort_by=${sortColumn}&order=${sortDirection}`;
-
-        const response = await fetch(apiUrlWithSort, {
+        // Fetch data without sorting parameters, as the backend now handles the default sort and date range
+        const response = await fetch(API_URL, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -116,11 +106,11 @@ async function fetchreceptionData() {
 }
 
 /**
- * Sends a request to the backend to update a specific record.
- * @param {string} labNumber - The unique lab number for the record.
+ * Sends a request to the backend to update one or more records.
+ * @param {Array<Object>} records - An array of objects, where each object contains a lab_number and test_name.
  * @param {string} updateType - The type of update ('urgent', 'receive', or 'result').
  */
-async function updateRecord(labNumber, testName, updateType) {
+async function updateRecords(records, updateType) {
     const token = getToken();
     if (!token) {
         showMessage(receptionMessage, 'Authentication required for this action.', 'error');
@@ -135,8 +125,7 @@ async function updateRecord(labNumber, testName, updateType) {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                lab_number: labNumber,
-                test_name: testName,
+                records: records, // Send an array of records to the backend
                 update_type: updateType
             })
         });
@@ -146,14 +135,17 @@ async function updateRecord(labNumber, testName, updateType) {
         }
 
         const result = await response.json();
-        showMessage(receptionMessage, `Successfully updated ${labNumber} for ${updateType}.`, 'success');
+        showMessage(receptionMessage, result.message, 'success');
 
+        // Clear selections after update
+        selectedRows = {};
+        
         // Re-fetch data to reflect the changes in the table
         fetchreceptionData();
 
     } catch (error) {
         console.error('Error updating record:', error);
-        showMessage(receptionMessage, `Failed to update record: ${error.message}`, 'error');
+        showMessage(receptionMessage, `Failed to update records: ${error.message}`, 'error');
     }
 }
 
@@ -163,18 +155,6 @@ async function updateRecord(labNumber, testName, updateType) {
 function renderreception(data) {
     receptionBody.innerHTML = '';
 
-    // Update sort icon classes
-    document.querySelectorAll('[data-sort-by]').forEach(header => {
-      const icon = header.querySelector('.sort-icon');
-      if (header.dataset.sortBy === sortColumn) {
-        icon.classList.remove('fa-sort');
-        icon.classList.add(sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
-      } else {
-        icon.classList.remove('fa-sort-up', 'fa-sort-down');
-        icon.classList.add('fa-sort');
-      }
-    });
-    
     // 1. Filter the data based on the current search query.
     const filteredData = data.filter(row => {
         const rowText = `${row.date || ''} ${row.lab_number || ''} ${row.shift || ''} ${row.unit || ''} ${row.lab_section || ''} ${row.test_name || ''}`.toLowerCase();
@@ -196,11 +176,26 @@ function renderreception(data) {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-100';
 
-        const urgencyButtonClass = row.urgency === 'urgent' ? 'bg-red-500 text-white' : 'bg-gray-200';
-        const receiveButtonText = row.time_received ? new Date(row.time_received).toLocaleTimeString() : 'Receive';
-        const resultButtonText = row.test_time_out ? new Date(row.test_time_out).toLocaleTimeString() : 'Result';
+        // Check if the current row is in the selectedRows object
+        const rowId = `${row.lab_number}-${row.test_name}`;
+        const isSelected = selectedRows[rowId] ? 'checked' : '';
+
+        // Determine button state and text
+        const isReceived = !!row.time_received;
+        const isResulted = !!row.test_time_out;
+
+        const receiveButtonText = isReceived ? 'Received' : 'Receive';
+        const resultButtonText = isResulted ? 'Resulted' : 'Result';
+        
+        const urgencyButtonClass = row.urgency === 'urgent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800';
 
         tr.innerHTML = `
+            <td>
+                <input type="checkbox" class="row-checkbox h-4 w-4 text-blue-600 cursor-pointer" 
+                    data-lab-number="${row.lab_number}" 
+                    data-test-name="${row.test_name}"
+                    ${isSelected}>
+            </td>
             <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
             <td>${row.lab_number || 'N/A'}</td>
             <td>${row.shift || 'N/A'}</td>
@@ -209,30 +204,33 @@ function renderreception(data) {
             <td>${row.test_name || 'N/A'}</td>
             <td>
                 <button 
-                    class="p-2 rounded-md ${urgencyButtonClass}" 
+                    class="p-2 rounded-md ${urgencyButtonClass} transition duration-300 transform hover:scale-105" 
                     data-lab-number="${row.lab_number}" 
                     data-test-name="${row.test_name}"
-                    data-action="urgent">
+                    data-action="urgent"
+                    style="cursor: pointer;">
                     Urgent
                 </button>
             </td>
             <td>
                 <button 
-                    class="p-2 rounded-md bg-blue-500 text-white" 
+                    class="p-2 rounded-md bg-blue-500 text-white transition duration-300 transform hover:scale-105" 
                     data-lab-number="${row.lab_number}"
                     data-test-name="${row.test_name}"
                     data-action="receive" 
-                    ${row.time_received ? 'disabled' : ''}>
+                    ${isReceived ? 'disabled' : ''}
+                    style="cursor: ${isReceived ? 'not-allowed' : 'pointer'};">
                     ${receiveButtonText}
                 </button>
             </td>
             <td>
                 <button 
-                    class="p-2 rounded-md bg-green-500 text-white" 
+                    class="p-2 rounded-md bg-green-500 text-white transition duration-300 transform hover:scale-105" 
                     data-lab-number="${row.lab_number}" 
                     data-test-name="${row.test_name}"
                     data-action="result" 
-                    ${row.test_time_out ? 'disabled' : ''}>
+                    ${isResulted ? 'disabled' : ''}
+                    style="cursor: ${isResulted ? 'not-allowed' : 'pointer'};">
                     ${resultButtonText}
                 </button>
             </td>
@@ -241,18 +239,35 @@ function renderreception(data) {
         receptionBody.appendChild(tr);
     });
 
-    // Add event listeners for the new buttons
+    // Add event listeners for single-record buttons
     receptionBody.querySelectorAll('button').forEach(button => {
         button.addEventListener('click', () => {
             const labNumber = button.dataset.labNumber;
             const testName = button.dataset.testName;
             const action = button.dataset.action;
-            updateRecord(labNumber, testName, action);
+            updateRecords([{ lab_number: labNumber, test_name: testName }], action);
+        });
+    });
+    
+    // Add event listeners for row checkboxes
+    receptionBody.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', (e) => {
+            const labNumber = e.target.dataset.labNumber;
+            const testName = e.target.dataset.testName;
+            const rowId = `${labNumber}-${testName}`;
+            if (e.target.checked) {
+                selectedRows[rowId] = { lab_number: labNumber, test_name: testName };
+            } else {
+                delete selectedRows[rowId];
+            }
+            updateMultiSelectButtonVisibility();
         });
     });
 
     // 3. Set up pagination for the filtered data, not the entire dataset.
     setupPagination(filteredData);
+    updateMultiSelectButtonVisibility();
+    updateSelectAllCheckbox();
 }
 
 /**
@@ -318,6 +333,26 @@ function setupPagination(data) {
     paginationContainer.appendChild(endButton);
 }
 
+// Function to update the visibility of the multi-select action buttons
+function updateMultiSelectButtonVisibility() {
+    const multiSelectActions = document.getElementById('multi-select-actions');
+    if (Object.keys(selectedRows).length > 0) {
+        multiSelectActions.classList.remove('hidden');
+    } else {
+        multiSelectActions.classList.add('hidden');
+    }
+}
+
+// Function to update the state of the "Select All" checkbox
+function updateSelectAllCheckbox() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const allChecked = Array.from(rowCheckboxes).every(cb => cb.checked);
+    if (selectAllCheckbox) {
+        selectAllCheckbox.checked = allChecked && rowCheckboxes.length > 0;
+    }
+}
+
 // ----------------------------------------------------
 // EVENT LISTENERS
 // ----------------------------------------------------
@@ -334,22 +369,62 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Add event listeners for sortable headers
-    document.querySelectorAll('[data-sort-by]').forEach(header => {
-      header.addEventListener('click', () => {
-        const newSortColumn = header.dataset.sortBy;
-        if (newSortColumn === sortColumn) {
-          // If the same column is clicked, toggle the direction
-          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-          // If a new column is clicked, set it as the sort column and default to ascending
-          sortColumn = newSortColumn;
-          sortDirection = 'asc';
-        }
-        
-        // Reset to page 1 for the new sort order
-        currentPage = 1;
-        fetchreceptionData();
-      });
-    });
+    // Event listener for the "Select All" checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const labNumber = checkbox.dataset.labNumber;
+                const testName = checkbox.dataset.testName;
+                const rowId = `${labNumber}-${testName}`;
+                if (isChecked) {
+                    selectedRows[rowId] = { lab_number: labNumber, test_name: testName };
+                } else {
+                    delete selectedRows[rowId];
+                }
+            });
+            updateMultiSelectButtonVisibility();
+        });
+    }
+    
+    // Event listeners for multi-select action buttons
+    const multiUrgentBtn = document.getElementById('multi-urgent-btn');
+    const multiReceiveBtn = document.getElementById('multi-receive-btn');
+    const multiResultBtn = document.getElementById('multi-result-btn');
+
+    if (multiUrgentBtn) {
+        multiUrgentBtn.addEventListener('click', () => {
+            const recordsToUpdate = Object.values(selectedRows);
+            if (recordsToUpdate.length > 0) {
+                updateRecords(recordsToUpdate, 'urgent');
+            } else {
+                showMessage(receptionMessage, 'No records selected to update.', 'warning');
+            }
+        });
+    }
+    
+    if (multiReceiveBtn) {
+        multiReceiveBtn.addEventListener('click', () => {
+            const recordsToUpdate = Object.values(selectedRows);
+            if (recordsToUpdate.length > 0) {
+                updateRecords(recordsToUpdate, 'receive');
+            } else {
+                showMessage(receptionMessage, 'No records selected to update.', 'warning');
+            }
+        });
+    }
+
+    if (multiResultBtn) {
+        multiResultBtn.addEventListener('click', () => {
+            const recordsToUpdate = Object.values(selectedRows);
+            if (recordsToUpdate.length > 0) {
+                updateRecords(recordsToUpdate, 'result');
+            } else {
+                showMessage(receptionMessage, 'No records selected to update.', 'warning');
+            }
+        });
+    }
+
 });
