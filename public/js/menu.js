@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     menuButtons.forEach(button => {
         const menu = button.nextElementSibling;
 
-        // Toggle the menu visibility on button click
+        // Toggle the menu visibility on button click and stop propagation
         button.addEventListener('click', (event) => {
             event.stopPropagation();
             menu.classList.toggle('visible');
@@ -20,12 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (link) {
                 // The default link behavior will handle navigation
             }
-        });
-
-        // Toggle the menu visibility on button click
-        button.addEventListener('click', (event) => {
-            event.stopPropagation(); // <-- Add this line
-            menu.classList.toggle('visible');
         });
     });
 
