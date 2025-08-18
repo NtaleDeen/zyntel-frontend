@@ -313,7 +313,6 @@ body {
     background-color: var(--main-trans-color);
     align-items:center;
     justify-content:center;
-    flex-direction: column;
     z-index:9999;
 }
 
