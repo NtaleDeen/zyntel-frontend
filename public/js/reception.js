@@ -21,6 +21,7 @@ logoutButton.addEventListener('click', (e) => {
 // reception TABLE LOGIC
 // ----------------------------------------------------
 const API_URL = "https://zyntel-data-updater.onrender.com/api/reception";
+const UPDATE_API_URL = "https://zyntel-data-updater.onrender.com/api/reception/update";
 const receptionBody = document.getElementById('receptionBody');
 const receptionMessage = document.getElementById('receptionMessage');
 const paginationContainer = document.getElementById('pagination-container');
@@ -65,13 +66,13 @@ function capitalizeWords(str) {
  */
 async function fetchreceptionData() {
     showLoadingSpinner();
-    receptionBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+    receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
     receptionMessage.classList.add('hidden');
 
     const token = getToken();
     if (!token) {
         showMessage(receptionMessage, 'Authentication required. Please log in.', 'error');
-        receptionBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+        receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
         hideLoadingSpinner();
         return;
     }
@@ -93,7 +94,7 @@ async function fetchreceptionData() {
         allreceptionData = data;
 
         if (!Array.isArray(allreceptionData) || allreceptionData.length === 0) {
-            receptionBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
+            receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
             // Initial render with all data
@@ -103,9 +104,51 @@ async function fetchreceptionData() {
     } catch (error) {
         console.error('Error fetching data:', error);
         showMessage(receptionMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-        receptionBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+        receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
         hideLoadingSpinner();
+    }
+}
+
+/**
+ * Sends a request to the backend to update a specific record.
+ * @param {string} labNumber - The unique lab number for the record.
+ * @param {string} updateType - The type of update ('urgent', 'receive', or 'result').
+ */
+async function updateRecord(labNumber, testName, updateType) {
+    const token = getToken();
+    if (!token) {
+        showMessage(receptionMessage, 'Authentication required for this action.', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(UPDATE_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                lab_number: labNumber,
+                test_name: testName,
+                update_type: updateType
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        showMessage(receptionMessage, `Successfully updated ${labNumber} for ${updateType}.`, 'success');
+
+        // Re-fetch data to reflect the changes in the table
+        fetchreceptionData();
+
+    } catch (error) {
+        console.error('Error updating record:', error);
+        showMessage(receptionMessage, `Failed to update record: ${error.message}`, 'error');
     }
 }
 
@@ -117,7 +160,7 @@ function renderreception(data) {
     
     // 1. Filter the data based on the current search query.
     const filteredData = data.filter(row => {
-        const rowText = `${row.test_name || ''} ${row.lab_section || ''} ${row.tat || ''} ${row.price || ''}`.toLowerCase();
+        const rowText = `${row.date || ''} ${row.lab_number || ''} ${row.shift || ''} ${row.unit || ''} ${row.lab_section || ''} ${row.test_name || ''}`.toLowerCase();
         return rowText.includes(currentSearchQuery.toLowerCase());
     });
 
@@ -127,7 +170,7 @@ function renderreception(data) {
     const paginatedData = filteredData.slice(start, end);
 
     if (paginatedData.length === 0) {
-        receptionBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
+        receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
         setupPagination(filteredData);
         return;
     }
@@ -135,16 +178,60 @@ function renderreception(data) {
     paginatedData.forEach(row => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-100';
-            tr.innerHTML = `
-                <td>${row.id || 'N/A'}</td>
-                <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
-                <td>${row.shift || 'N/A'}</td>
-                <td>${row.lab_number || 'N/A'}</td>
-                <td>${row.unit || 'N/A'}</td>
-                <td>${row.lab_section || 'N/A'}</td>
-                <td>${row.test_name || 'N/A'}</td>
-            `;
+
+        const urgencyButtonClass = row.urgency === 'urgent' ? 'bg-red-500 text-white' : 'bg-gray-200';
+        const receiveButtonText = row.time_received ? new Date(row.time_received).toLocaleTimeString() : 'Receive';
+        const resultButtonText = row.test_time_out ? new Date(row.test_time_out).toLocaleTimeString() : 'Result';
+
+        tr.innerHTML = `
+            <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
+            <td>${row.lab_number || 'N/A'}</td>
+            <td>${row.shift || 'N/A'}</td>
+            <td>${row.unit || 'N/A'}</td>
+            <td>${row.lab_section || 'N/A'}</td>
+            <td>${row.test_name || 'N/A'}</td>
+            <td>
+                <button 
+                    class="p-2 rounded-md ${urgencyButtonClass}" 
+                    data-lab-number="${row.lab_number}" 
+                    data-test-name="${row.test_name}"
+                    data-action="urgent">
+                    Urgent
+                </button>
+            </td>
+            <td>
+                <button 
+                    class="p-2 rounded-md bg-blue-500 text-white" 
+                    data-lab-number="${row.lab_number}"
+                    data-test-name="${row.test_name}"
+                    data-action="receive" 
+                    ${row.time_received ? 'disabled' : ''}>
+                    ${receiveButtonText}
+                </button>
+            </td>
+            <td>
+                <button 
+                    class="p-2 rounded-md bg-green-500 text-white" 
+                    data-lab-number="${row.lab_number}" 
+                    data-test-name="${row.test_name}"
+                    data-action="result" 
+                    ${row.test_time_out ? 'disabled' : ''}>
+                    ${resultButtonText}
+                </button>
+            </td>
+        `;
+
         receptionBody.appendChild(tr);
+    });
+
+    // Add event listeners for the new buttons
+    receptionBody.querySelectorAll('button').forEach(button => {
+        button.addEventListener('click', () => {
+            const labNumber = button.dataset.labNumber;
+            const testName = button.dataset.testName;
+            const action = button.dataset.action;
+            updateRecord(labNumber, testName, action);
+        });
     });
 
     // 3. Set up pagination for the filtered data, not the entire dataset.

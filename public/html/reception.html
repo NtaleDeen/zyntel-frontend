@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-      <reception charset="UTF-8">
-      <reception name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Zyntel Reception Data Table</title>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -63,19 +63,21 @@
           <table id="reception" class="neon-table" id="myTable">
             <thead>
               <tr>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>Shift</th>
-                                <th>Lab Number</th>
-                                <th>Unit</th>
-                                <th>Lab Section</th>
-                                <th>Test Name</th>
-                            </tr>
-                        </thead>
-                        <tbody id="receptionBody">
-                            <tr>
-                                <td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td>
-                            </tr>
+                <th>Date</th>
+                <th>Lab Number</th>
+                <th>Shift</th>
+                <th>Unit</th>
+                <th>Lab Section</th>
+                <th>Test Name</th>
+                <th>Urgency</th>
+                <th>Receive</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="receptionBody">
+              <tr>
+                <td colspan="10" class="text-center py-4 text-gray-500">Loading data...</td>
+              </tr>
             </tbody>
           </table>
           <div id="pagination-container"></div>
