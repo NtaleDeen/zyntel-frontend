@@ -87,7 +87,7 @@ body {
   display: flex;
   gap: 10px;
   justify-content: center;
-  align-items: left;
+  align-items: center;
   margin-top: 20px;
 }
 
@@ -102,7 +102,7 @@ body {
   border: none;
 }
 
-#pagination-container:hover, #pagination-container.active {
+#pagination-container button:hover, #pagination-container button.active {
   border-color: var(--hover-color);
   border-radius: 10px;
 }

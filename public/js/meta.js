@@ -127,14 +127,14 @@ function rendermeta(data) {
     const paginatedData = filteredData.slice(start, end);
 
     if (paginatedData.length === 0) {
-        metaBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
+        metaBody.innerHTML = `<tr><td colspan="4">No matching data found.</td></tr>`;
         setupPagination(filteredData);
         return;
     }
 
     paginatedData.forEach(row => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-100';
+        tr.className = 'table-row'; // Use a generic class for styling
         tr.innerHTML = `
             <td>${row.test_name || 'N/A'}</td>
             <td>${row.lab_section || 'N/A'}</td>
@@ -159,7 +159,7 @@ function setupPagination(data) {
 
     const prevButton = document.createElement('button');
     prevButton.textContent = 'Previous';
-    prevButton.className = 'px-4 py-2 border rounded-md mx-1';
+    prevButton.className = 'pagination-button'; // Use a generic class for styling
     prevButton.disabled = currentPage === 1;
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -180,7 +180,7 @@ function setupPagination(data) {
     for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
+        btn.className = `pagination-button ${i === currentPage ? 'active-page' : ''}`; // Use generic classes
         btn.addEventListener('click', () => {
             currentPage = i;
             rendermeta(allmetaData); // Pass the original data
@@ -190,7 +190,7 @@ function setupPagination(data) {
 
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Next';
-    nextButton.className = 'px-4 py-2 border rounded-md mx-1';
+    nextButton.className = 'pagination-button'; // Use a generic class for styling
     nextButton.disabled = currentPage === pageCount;
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
@@ -202,7 +202,7 @@ function setupPagination(data) {
 
     const endButton = document.createElement('button');
     endButton.textContent = 'End';
-    endButton.className = 'px-4 py-2 border rounded-md mx-1';
+    endButton.className = 'pagination-button'; // Use a generic class for styling
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;
