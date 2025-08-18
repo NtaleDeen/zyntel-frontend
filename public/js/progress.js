@@ -142,7 +142,7 @@ function renderprogress(data) {
                 <td>${row.shift || 'N/A'}</td>
                 <td>${row.lab_number || 'N/A'}</td>
                 <td>${row.unit || 'N/A'}</td>
-                <td>${row.request_time_in ? new Date(row.request_time_in).toLocaleString() : 'N/A'}</td>
+                <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
                 <td>${row.daily_tat || 'N/A'}</td>
                 <td>${row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
                 <td>${row.request_delay_status || 'N/A'}</td> <!-- Mapping Request_Delay_Status to Request_Progress -->

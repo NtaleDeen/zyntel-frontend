@@ -145,7 +145,7 @@ function rendertracker(data) {
                 <td>${row.unit || 'N/A'}</td>
                 <td>${row.lab_section || 'N/A'}</td>
                 <td>${row.test_name || 'N/A'}</td>
-                <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td> <!-- Assuming time_in is Test_Time_In for tests table -->
+                <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
                 <td>${row.urgency || 'N/A'}</td>
                 <td>${row.time_received ? new Date(row.time_received).toLocaleString() : 'N/A'}</td>
                 <td>${row.tat || 'N/A'}</td>

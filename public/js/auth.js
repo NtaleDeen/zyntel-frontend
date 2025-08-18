@@ -2,7 +2,7 @@
 // This file centralizes all authentication and session management logic.
 
 let inactivityTimer;
-const inactivityTime = 30 * 60 * 1000; // 30 minutes in milliseconds
+const inactivityTime = 120 * 120 * 1000; // 60 minutes in milliseconds
 
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
