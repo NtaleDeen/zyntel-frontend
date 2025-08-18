@@ -31,6 +31,8 @@ let allreceptionData = [];
 let currentPage = 1;
 const rowsPerPage = 25;
 let currentSearchQuery = ''; // Store the search query globally
+let sortColumn = 'date'; // Default sort column
+let sortDirection = 'desc'; // Default sort direction
 
 // ----------------------------------------------------
 // LOADING SPINNER FUNCTIONS
@@ -78,7 +80,10 @@ async function fetchreceptionData() {
     }
 
     try {
-        const response = await fetch(API_URL, {
+        // Add sort parameters to the API URL
+        const apiUrlWithSort = `${API_URL}?sort_by=${sortColumn}&order=${sortDirection}`;
+
+        const response = await fetch(apiUrlWithSort, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -157,6 +162,18 @@ async function updateRecord(labNumber, testName, updateType) {
  */
 function renderreception(data) {
     receptionBody.innerHTML = '';
+
+    // Update sort icon classes
+    document.querySelectorAll('[data-sort-by]').forEach(header => {
+      const icon = header.querySelector('.sort-icon');
+      if (header.dataset.sortBy === sortColumn) {
+        icon.classList.remove('fa-sort');
+        icon.classList.add(sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+      } else {
+        icon.classList.remove('fa-sort-up', 'fa-sort-down');
+        icon.classList.add('fa-sort');
+      }
+    });
     
     // 1. Filter the data based on the current search query.
     const filteredData = data.filter(row => {
@@ -316,4 +333,23 @@ document.addEventListener('DOMContentLoaded', () => {
             renderreception(allreceptionData); // Re-render the data with the new search query
         });
     }
+
+    // Add event listeners for sortable headers
+    document.querySelectorAll('[data-sort-by]').forEach(header => {
+      header.addEventListener('click', () => {
+        const newSortColumn = header.dataset.sortBy;
+        if (newSortColumn === sortColumn) {
+          // If the same column is clicked, toggle the direction
+          sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+          // If a new column is clicked, set it as the sort column and default to ascending
+          sortColumn = newSortColumn;
+          sortDirection = 'asc';
+        }
+        
+        // Reset to page 1 for the new sort order
+        currentPage = 1;
+        fetchreceptionData();
+      });
+    });
 });

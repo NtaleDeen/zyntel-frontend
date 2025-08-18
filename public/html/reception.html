@@ -63,8 +63,14 @@
           <table id="reception" class="neon-table" id="myTable">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Lab Number</th>
+                <th class="cursor-pointer" data-sort-by="date">
+                  Date
+                  <span class="sort-icon fas fa-sort text-gray-400 ml-2"></span>
+                </th>
+                <th class="cursor-pointer" data-sort-by="lab_number">
+                  Lab Number
+                  <span class="sort-icon fas fa-sort text-gray-400 ml-2"></span>
+                </th>
                 <th>Shift</th>
                 <th>Unit</th>
                 <th>Lab Section</th>
