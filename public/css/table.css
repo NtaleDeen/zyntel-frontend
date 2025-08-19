@@ -137,8 +137,8 @@ body {
 }
 
 .urgent-btn {
-  background-color: #ef4444; /* A shade of red for urgency */
-  color: white;
+  color: #ffffff; 
+  background-color: var(--background-2-color); 
 }
 
 .urgent-btn:hover,
@@ -211,8 +211,8 @@ body {
 }
 
 #multi-urgent-btn {
-  background-color: #ef4444; /* A shade of red for urgency */
-  color: white;
+  color: #ffffff; 
+  background-color: var(--background-2-color); 
 }
 
 #multi-receive-btn {
