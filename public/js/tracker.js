@@ -139,21 +139,14 @@ function rendertracker(data) {
         tr.className = 'hover:bg-gray-100';
             tr.innerHTML = `
                 <td>${row.id || 'N/A'}</td>
-                <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
-                <td>${row.shift || 'N/A'}</td>
                 <td>${row.lab_number || 'N/A'}</td>
-                <td>${row.unit || 'N/A'}</td>
                 <td>${row.lab_section || 'N/A'}</td>
                 <td>${row.test_name || 'N/A'}</td>
-                <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
                 <td>${row.urgency || 'N/A'}</td>
                 <td>${row.time_received ? new Date(row.time_received).toLocaleString() : 'N/A'}</td>
                 <td>${row.tat || 'N/A'}</td>
                 <td>${row.test_time_expected ? new Date(row.test_time_expected).toLocaleString() : 'N/A'}</td>
-                <td>${row.test_delay_status || 'N/A'}</td> <!-- Mapping test_delay_status to Test_Progress -->
                 <td>${row.test_time_out ? new Date(row.test_time_out).toLocaleString() : 'N/A'}</td>
-                <td>${row.test_delay_status || 'N/A'}</td>
-                <td>${row.test_time_range || 'N/A'}</td>
             `;
         trackerBody.appendChild(tr);
     });
