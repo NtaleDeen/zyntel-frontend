@@ -65,13 +65,13 @@ function capitalizeWords(str) {
  */
 async function fetchtrackerData() {
     showLoadingSpinner();
-    trackerBody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
+    trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">Loading data...</td></tr>`;
     trackerMessage.classList.add('hidden');
 
     const token = getToken();
     if (!token) {
         showMessage(trackerMessage, 'Authentication required. Please log in.', 'error');
-        trackerBody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
+        trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Authentication failed.</td></tr>`;
         hideLoadingSpinner();
         return;
     }
@@ -93,7 +93,7 @@ async function fetchtrackerData() {
         alltrackerData = data;
 
         if (!Array.isArray(alltrackerData) || alltrackerData.length === 0) {
-            trackerBody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
+            trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
             // Initial render with all data
@@ -105,7 +105,7 @@ async function fetchtrackerData() {
         // This catch block will handle other network or server errors.
         console.error('Error fetching data:', error);
         showMessage(trackerMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
-        trackerBody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
+        trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
     } finally {
         hideLoadingSpinner();
     }
@@ -119,7 +119,7 @@ function rendertracker(data) {
     
     // 1. Filter the data based on the current search query.
     const filteredData = data.filter(row => {
-        const rowText = `${row.test_name || ''} ${row.lab_section || ''} ${row.lab_number || ''} ${row.unit || ''}`.toLowerCase();
+        const rowText = `${row.test_name || ''} ${row.lab_section || ''} ${row.tat || ''} ${row.price || ''}`.toLowerCase();
         return rowText.includes(currentSearchQuery.toLowerCase());
     });
 
@@ -129,7 +129,7 @@ function rendertracker(data) {
     const paginatedData = filteredData.slice(start, end);
 
     if (paginatedData.length === 0) {
-        trackerBody.innerHTML = `<tr><td colspan="14" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
+        trackerBody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
         setupPagination(filteredData);
         return;
     }

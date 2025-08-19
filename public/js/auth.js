@@ -1,17 +1,17 @@
 // auth.js
 // This file centralizes all authentication and session management logic.
 
-let inactivityTimer;
-const inactivityTime = 120 * 120 * 1000; // 60 minutes in milliseconds
+// let inactivityTimer;
+// const inactivityTime = 120 * 120 * 1000; // 60 minutes in milliseconds
 
-function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-        // Clear the session and redirect to the login page
-        clearSession();
-        window.location.replace("/index.html");
-    }, inactivityTime);
-}
+// function resetInactivityTimer() {
+//     clearTimeout(inactivityTimer);
+//     inactivityTimer = setTimeout(() => {
+//         // Clear the session and redirect to the login page
+//         clearSession();
+//         window.location.replace("/index.html");
+//     }, inactivityTime);
+// }
 
 /**
  * Checks for a valid session and redirects to the login page if none is found.
