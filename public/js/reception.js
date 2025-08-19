@@ -189,8 +189,6 @@ function renderreception(data) {
         const receiveButtonText = isReceived ? 'Received' : 'Receive';
         const resultButtonText = isResulted ? 'Resulted' : 'Result';
         
-        const urgencyButtonClass = row.urgency === 'urgent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-800';
-
         tr.innerHTML = `
             <td>
                 <input type="checkbox" class="row-checkbox h-4 w-4 text-blue-600 cursor-pointer" 
@@ -206,7 +204,7 @@ function renderreception(data) {
             <td>${row.test_name || 'N/A'}</td>
             <td>
                 <button 
-                    class="p-2 rounded-md ${urgencyButtonClass} transition duration-300 transform hover:scale-105" 
+                    class="urgent-btn" 
                     data-lab-number="${row.lab_number}" 
                     data-test-name="${row.test_name}"
                     data-action="urgent"
@@ -216,7 +214,7 @@ function renderreception(data) {
             </td>
             <td>
                 <button 
-                    class="p-2 rounded-md bg-blue-500 text-white transition duration-300 transform hover:scale-105" 
+                    class="receive-btn" 
                     data-lab-number="${row.lab_number}"
                     data-test-name="${row.test_name}"
                     data-action="receive" 
@@ -227,7 +225,7 @@ function renderreception(data) {
             </td>
             <td>
                 <button 
-                    class="p-2 rounded-md bg-green-500 text-white transition duration-300 transform hover:scale-105" 
+                    class="result-btn" 
                     data-lab-number="${row.lab_number}" 
                     data-test-name="${row.test_name}"
                     data-action="result" 
@@ -237,6 +235,13 @@ function renderreception(data) {
                 </button>
             </td>
         `;
+
+        // The urgency button's class is dynamic based on the row's 'urgency' property.
+        // We'll handle this with a separate line to not pollute the innerHTML string.
+        const urgentBtn = tr.querySelector('.urgent-btn');
+        if (urgentBtn && row.urgency === 'urgent') {
+            urgentBtn.classList.add('urgent');
+        }
 
         receptionBody.appendChild(tr);
     });
@@ -283,7 +288,7 @@ function setupPagination(data) {
 
     const prevButton = document.createElement('button');
     prevButton.textContent = 'Previous';
-    prevButton.className = 'px-4 py-2 border rounded-md mx-1';
+    prevButton.className = 'pagination-btn';
     prevButton.disabled = currentPage === 1;
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -304,7 +309,7 @@ function setupPagination(data) {
     for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
+        btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
             renderreception(allreceptionData); // Pass the original data
@@ -314,7 +319,7 @@ function setupPagination(data) {
 
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Next';
-    nextButton.className = 'px-4 py-2 border rounded-md mx-1';
+    nextButton.className = 'pagination-btn';
     nextButton.disabled = currentPage === pageCount;
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
@@ -326,7 +331,7 @@ function setupPagination(data) {
 
     const endButton = document.createElement('button');
     endButton.textContent = 'End';
-    endButton.className = 'px-4 py-2 border rounded-md mx-1';
+    endButton.className = 'pagination-btn';
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;

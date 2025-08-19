@@ -83,7 +83,7 @@ body {
     cursor: pointer;
 }
 
-#pagination-container {
+/* #pagination-container {
   display: flex;
   gap: 10px;
   justify-content: center;
@@ -110,4 +110,98 @@ body {
 #pagination-container button:disabled {
     color: #666;
     cursor: not-allowed;
+} */
+
+/* Styling for the Urgent button */
+.urgent-btn {
+  padding: 5px 10px;
+  color: var(--main-color);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 15px;
+  align-items: center;
+  border: none;
+}
+
+.urgent-btn:hover {
+  background-color: var(--hover-color);
+  color: var(--main-color);
+}
+
+/* Styling for the Urgent button when the urgency is set */
+.urgent-btn.urgent {
+  color: #ffffff; 
+  background-color: red; 
+}
+
+/* Styling for the Receive button */
+.receive-btn {
+  padding: 5px 10px;
+  color: var(--main-color);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 15px;
+  align-items: center;
+  border: none;
+}
+
+.receive-btn:hover {
+  background-color: var(--hover-color);
+  color: var(--main-color);
+}
+
+.receive-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Styling for the Result button */
+.result-btn {
+  padding: 5px 10px;
+  color: var(--main-color);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 15px;
+  align-items: center;
+  border: none;
+}
+
+.result-btn:hover {
+  background-color: var(--hover-color);
+  color: var(--main-color);
+}
+
+.result-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Styling for pagination buttons */
+.pagination-btn {
+  padding: 5px 10px;
+  color: var(--main-color);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 400;
+  font-size: 15px;
+  align-items: center;
+  border: none;
+}
+
+.pagination-btn:hover {
+  background-color: var(--hover-color);
+  color: var(--main-color);
+}
+
+.pagination-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.pagination-btn.active {
+  background-color: #3b82f6;
+  color: #ffffff;
 }
