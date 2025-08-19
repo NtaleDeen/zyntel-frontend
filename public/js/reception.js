@@ -138,12 +138,29 @@ async function updateRecords(records, updateType) {
 
         const result = await response.json();
         showMessage(receptionMessage, result.message, 'success');
-
+        
+        // This is the key change: instead of re-fetching all data,
+        // we'll update the local data array and re-render.
+        // This prevents the entire table from refreshing.
+        records.forEach(record => {
+            const index = allreceptionData.findIndex(item => 
+                item.lab_number === record.lab_number && item.test_name === record.test_name
+            );
+            if (index !== -1) {
+                if (updateType === 'receive') {
+                    allreceptionData[index].time_received = new Date().toISOString();
+                } else if (updateType === 'result') {
+                    allreceptionData[index].test_time_out = new Date().toISOString();
+                } else if (updateType === 'urgent') {
+                    allreceptionData[index].urgency = 'urgent';
+                }
+            }
+        });
+        
         // Clear selections after update
         selectedRows = {};
         
-        // Re-fetch data to reflect the changes in the table
-        fetchreceptionData();
+        renderreception(allreceptionData);
 
     } catch (error) {
         console.error('Error updating record:', error);
@@ -189,6 +206,9 @@ function renderreception(data) {
         const receiveButtonText = isReceived ? 'Received' : 'Receive';
         const resultButtonText = isResulted ? 'Resulted' : 'Result';
         
+        // Disable result button if not received
+        const isResultBtnDisabled = !isReceived || isResulted;
+        
         tr.innerHTML = `
             <td>
                 <input type="checkbox" class="row-checkbox h-4 w-4 text-blue-600 cursor-pointer" 
@@ -229,8 +249,8 @@ function renderreception(data) {
                     data-lab-number="${row.lab_number}" 
                     data-test-name="${row.test_name}"
                     data-action="result" 
-                    ${isResulted ? 'disabled' : ''}
-                    style="cursor: ${isResulted ? 'not-allowed' : 'pointer'};">
+                    ${isResultBtnDisabled ? 'disabled' : ''}
+                    style="cursor: ${isResultBtnDisabled ? 'not-allowed' : 'pointer'}; display: ${isReceived ? 'inline-block' : 'none'};">
                     ${resultButtonText}
                 </button>
             </td>
