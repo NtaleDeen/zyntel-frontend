@@ -113,22 +113,41 @@ body {
 } */
 
 /* Styling for the Urgent button */
-.urgent-btn {
-  /* padding: 5px 10px; */
-  color: var(--main-color);
+.urgent-btn,
+.receive-btn,
+.result-btn,
+.pagination-btn,
+#multi-urgent-btn,
+#multi-receive-btn,
+#multi-result-btn {
   cursor: pointer;
   text-decoration: none;
   font-weight: 400;
   font-size: 15px;
   align-items: center;
   border: none;
-  padding: 8px; /* p-2 */
-  background-color: #e2e8f0;
+  padding: 8px;
   transition: all 0.3s ease;
   transform: scale(1);
+  color: var(--canvas-color);
+  cursor: pointer;
+  background-color: var(--background-2-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 6px var(--box-shadow);
 }
 
-.urgent-btn:hover {
+.urgent-btn {
+  background-color: #ef4444; /* A shade of red for urgency */
+  color: white;
+}
+
+.urgent-btn:hover,
+.receive-btn:hover,
+.result-btn:hover,
+.pagination-btn:hover,
+#multi-urgent-btn:hover,
+#multi-receive-btn:hover,
+#multi-result-btn:hover {
   background-color: var(--hover-color);
   color: var(--main-color);
 }
@@ -141,19 +160,8 @@ body {
 
 /* Styling for the Receive button */
 .receive-btn {
-  padding: 5px 10px;
-  color: var(--main-color);
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 400;
-  font-size: 15px;
-  align-items: center;
-  border: none;
-}
-
-.receive-btn:hover {
-  background-color: var(--hover-color);
-  color: var(--main-color);
+  background-color: #3b82f6; /* A shade of blue for receiving */
+  color: white;
 }
 
 .receive-btn:disabled {
@@ -163,19 +171,8 @@ body {
 
 /* Styling for the Result button */
 .result-btn {
-  padding: 5px 10px;
-  color: var(--main-color);
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 400;
-  font-size: 15px;
-  align-items: center;
-  border: none;
-}
-
-.result-btn:hover {
-  background-color: var(--hover-color);
-  color: var(--main-color);
+  background-color: #22c55e; /* A shade of green for results */
+  color: white;
 }
 
 .result-btn:disabled {
@@ -184,7 +181,7 @@ body {
 }
 
 /* Styling for pagination buttons */
-.pagination-btn {
+/* .pagination-btn {
   padding: 5px 10px;
   color: var(--main-color);
   cursor: pointer;
@@ -193,13 +190,8 @@ body {
   font-size: 15px;
   align-items: center;
   border: none;
-}
-
-.pagination-btn:hover {
-  background-color: var(--hover-color);
-  color: var(--main-color);
-}
-
+} */
+ 
 .pagination-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -208,4 +200,32 @@ body {
 .pagination-btn.active {
   background-color: #3b82f6;
   color: #ffffff;
+}
+
+/* Styling for multi-select action buttons */
+#multi-select-actions {
+  display: flex;
+  gap: 1rem; /* Adjust this value to control the space between buttons */
+  justify-content: flex-end;
+  margin-top: 1rem; /* Add some space above the buttons */
+}
+
+#multi-urgent-btn {
+  background-color: #ef4444; /* A shade of red for urgency */
+  color: white;
+}
+
+#multi-receive-btn {
+  background-color: #3b82f6; /* A shade of blue for receiving */
+  color: white;
+}
+
+#multi-result-btn {
+  background-color: #22c55e; /* A shade of green for results */
+  color: white;
+}
+
+/* Hide the buttons by default */
+.hidden {
+  display: none;
 }
