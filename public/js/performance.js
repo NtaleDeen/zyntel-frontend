@@ -141,8 +141,8 @@ function renderperformance(data) {
                 <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
                 <td>${row.shift || 'N/A'}</td>
                 <td>${row.lab_number || 'N/A'}</td>
-                <td>${row.unit || 'N/A'}</td>
-                <td>${row.request_time_in ? new Date(row.request_time_in).toLocaleString() : 'N/A'}</td>
+                <td>${row.Hospital_Unit || 'N/A'}</td>
+                <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
                 <td>${row.daily_tat || 'N/A'}</td>
                 <td>${row.request_time_expected ? new Date(row.request_time_expected).toLocaleString() : 'N/A'}</td>
                 <td>${row.request_time_out ? new Date(row.request_time_out).toLocaleString() : 'N/A'}</td>
