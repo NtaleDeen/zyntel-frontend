@@ -139,7 +139,7 @@ function renderperformance(data) {
         tr.className = 'hover:bg-gray-100';
             tr.innerHTML = `
                 <td>${row.date ? new Date(row.date).toLocaleDateString() : 'N/A'}</td>
-                <td>${row.shift || 'N/A'}</td>
+                <td>${row.Shift || 'N/A'}</td>
                 <td>${row.lab_number || 'N/A'}</td>
                 <td>${row.Hospital_Unit || 'N/A'}</td>
                 <td>${row.time_in ? new Date(row.time_in).toLocaleString() : 'N/A'}</td>
