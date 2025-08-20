@@ -26,8 +26,10 @@ const receptionBody = document.getElementById('receptionBody');
 const receptionMessage = document.getElementById('receptionMessage');
 const paginationContainer = document.getElementById('pagination-container');
 const searchInput = document.getElementById('searchInput');
+const multiUrgentBtn = document.getElementById('multi-urgent-btn');
+const multiReceiveBtn = document.getElementById('multi-receive-btn');
+const multiResultBtn = document.getElementById('multi-result-btn');
 
-let allreceptionData = [];
 let currentPage = 1;
 const rowsPerPage = 50;
 let currentSearchQuery = ''; // Store the search query globally
@@ -56,7 +58,7 @@ function showMessage(element, message, type = 'info') {
 }
 
 /**
- * Fetches reception data from the API and calls the render function.
+ * Fetches paginated and filtered reception data from the API.
  */
 async function fetchreceptionData() {
     showLoadingSpinner();
@@ -70,10 +72,17 @@ async function fetchreceptionData() {
         hideLoadingSpinner();
         return;
     }
+    
+    // Construct the URL with query parameters for pagination and search
+    const url = new URL(API_URL);
+    url.searchParams.append('page', currentPage);
+    url.searchParams.append('limit', rowsPerPage);
+    if (currentSearchQuery) {
+        url.searchParams.append('searchQuery', currentSearchQuery);
+    }
 
     try {
-        // Fetch data without sorting parameters, as the backend now handles the default sort and date range
-        const response = await fetch(API_URL, {
+        const response = await fetch(url.toString(), {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -86,19 +95,18 @@ async function fetchreceptionData() {
         }
 
         const data = await handleResponse(response);
-        allreceptionData = data;
+        // The backend now returns an object with totalRecords and data
+        const { totalRecords, data: paginatedData } = data;
 
-        if (!Array.isArray(allreceptionData) || allreceptionData.length === 0) {
+        if (!Array.isArray(paginatedData) || paginatedData.length === 0) {
             receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No data found.</td></tr>`;
             if (paginationContainer) paginationContainer.innerHTML = '';
         } else {
-            // Initial render with all data
-            renderreception(allreceptionData);
+            // Render the paginated data directly
+            renderreception(paginatedData, totalRecords);
         }
 
     } catch (error) {
-        // The handleResponse function will automatically clear the session and redirect on a 401 error.
-        // This catch block will handle other network or server errors.
         console.error('Error fetching data:', error);
         showMessage(receptionMessage, `Failed to load data: ${error.message}. Please check the backend API.`, 'error');
         receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-red-500">Error loading data.</td></tr>`;
@@ -160,7 +168,7 @@ async function updateRecords(records, updateType) {
         // Clear selections after update
         selectedRows = {};
         
-        renderreception(allreceptionData);
+        fetchreceptionData();
 
     } catch (error) {
         console.error('Error updating record:', error);
@@ -171,27 +179,17 @@ async function updateRecords(records, updateType) {
 /**
  * Renders the fetched receptiondata into the table with pagination.
  */
-function renderreception(data) {
+function renderreception(data, totalRecords) {
     receptionBody.innerHTML = '';
 
-    // 1. Filter the data based on the current search query.
-    const filteredData = data.filter(row => {
-        const rowText = `${row.date || ''} ${row.lab_number || ''} ${row.shift || ''} ${row.unit || ''} ${row.lab_section || ''} ${row.test_name || ''}`.toLowerCase();
-        return rowText.includes(currentSearchQuery.toLowerCase());
-    });
-
-    // 2. Paginate the filtered data.
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const paginatedData = filteredData.slice(start, end);
-
-    if (paginatedData.length === 0) {
+    // No need to filter or slice the data here, it's already paginated from the backend
+    if (data.length === 0) {
         receptionBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No matching data found.</td></tr>`;
-        setupPagination(filteredData);
+        setupPagination(totalRecords);
         return;
     }
 
-    paginatedData.forEach(row => {
+    data.forEach(row => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-100';
 
@@ -292,7 +290,7 @@ function renderreception(data) {
     });
 
     // 3. Set up pagination for the filtered data, not the entire dataset.
-    setupPagination(filteredData);
+    setupPagination(totalRecords);
     updateMultiSelectButtonVisibility();
     updateSelectAllCheckbox();
 }
@@ -300,11 +298,11 @@ function renderreception(data) {
 /**
  * Creates and renders the pagination controls with a limited number of buttons.
  */
-function setupPagination(data) {
+function setupPagination(totalRecords) {
     if (!paginationContainer) return;
 
     paginationContainer.innerHTML = '';
-    const pageCount = Math.ceil(data.length / rowsPerPage);
+    const pageCount = Math.ceil(totalRecords / rowsPerPage);
 
     const prevButton = document.createElement('button');
     prevButton.textContent = 'Previous';
@@ -313,7 +311,7 @@ function setupPagination(data) {
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            renderreception(allreceptionData); // Pass the original data
+            fetchreceptionData(); // Re-fetch data for the new page
         }
     });
     paginationContainer.appendChild(prevButton);
@@ -332,7 +330,7 @@ function setupPagination(data) {
         btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
-            renderreception(allreceptionData); // Pass the original data
+            fetchreceptionData(); // Re-fetch data for the new page
         });
         paginationContainer.appendChild(btn);
     }
@@ -344,7 +342,7 @@ function setupPagination(data) {
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
             currentPage++;
-            renderreception(allreceptionData); // Pass the original data
+            fetchreceptionData(); // Re-fetch data for the new page
         }
     });
     paginationContainer.appendChild(nextButton);
@@ -355,7 +353,7 @@ function setupPagination(data) {
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;
-        renderreception(allreceptionData); // Pass the original data
+        fetchreceptionData(); // Re-fetch data for the new page
     });
     paginationContainer.appendChild(endButton);
 }
@@ -392,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.addEventListener('input', (event) => {
             currentSearchQuery = event.target.value.trim();
             currentPage = 1; // Reset to the first page on a new search
-            renderreception(allreceptionData); // Re-render the data with the new search query
+            fetchreceptionData(); // Re-fetch the data with the new search query
         });
     }
 
@@ -416,11 +414,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Event listeners for multi-select action buttons
-    const multiUrgentBtn = document.getElementById('multi-urgent-btn');
-    const multiReceiveBtn = document.getElementById('multi-receive-btn');
-    const multiResultBtn = document.getElementById('multi-result-btn');
-
     if (multiUrgentBtn) {
         multiUrgentBtn.addEventListener('click', () => {
             const recordsToUpdate = Object.values(selectedRows);
