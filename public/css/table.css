@@ -5,7 +5,7 @@
   --main-trans-color: rgb(33, 51, 106, 0.7);
   --primary-color: #000;
   --background-2-color: #0a0a0a;
-  --canvas-color: #ffffff;
+  --pure-white: #ffffff;
   --hover-color: #deab5f;
   --hover-color-2: #21336a1a;
   --background-color: rgba(250, 250, 250, 0.9);
@@ -68,7 +68,7 @@ body {
 } */
 
 .neon-table tbody tr:nth-child(odd) {
-    background-color: var(--canvas-color);
+    background-color: var(--pure-white);
 }
 
 .neon-table tbody tr:nth-child(even) {
@@ -82,35 +82,6 @@ body {
     /* box-shadow: 0 5px 5px var(--hover-color); */
     cursor: pointer;
 }
-
-/* #pagination-container {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-  margin-top: 20px;
-}
-
-#pagination-container button {
-  padding: 5px 10px;
-  color: var(--main-color);
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: 400;
-  font-size: 15px;
-  align-items: center;
-  border: none;
-}
-
-#pagination-container button:hover, #pagination-container button.active {
-  border-color: var(--hover-color);
-  border-radius: 10px;
-}
-
-#pagination-container button:disabled {
-    color: #666;
-    cursor: not-allowed;
-} */
 
 /* Styling for the Urgent button */
 .urgent-btn,
@@ -128,7 +99,7 @@ body {
   padding: 8px;
   transition: all 0.3s ease;
   transform: scale(1);
-  color: var(--canvas-color);
+  color: var(--pure-white);
   cursor: pointer;
   background-color: var(--background-2-color);
   border-radius: 10px;
@@ -179,8 +150,16 @@ body {
 }
 
 /* Styling for pagination buttons */
+.pagination-container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  padding: 10px 20px;
+}
+
 .pagination-btn {
-  padding: 5px 10px;
   color: var(--main-color);
   cursor: pointer;
   text-decoration: none;
@@ -188,6 +167,8 @@ body {
   font-size: 15px;
   align-items: center;
   border: none;
+  margin: 0 40px;
+  padding: 5px;
 }
 
 .pagination-btn:hover {
@@ -200,8 +181,10 @@ body {
 }
 
 .pagination-btn.active {
-  background-color: #3b82f6;
   color: #ffffff;
+  background: none;
+  border: 1px solid var(--main-color);
+  border-radius: 5px;
 }
 
 /* Styling for multi-select action buttons */
