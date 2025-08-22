@@ -224,22 +224,22 @@ async function loadDatabaseData() {
 /**
  * Initializes the dashboard by loading data and attaching event listeners.
  */
-document.addEventListener("DOMContentLoaded", () => {
-  loadDatabaseData().then(() => {
-    attachRevenueFilterListeners(
-      allData,
-      processData,
-      "startDateFilter",
-      "endDateFilter",
-      "periodSelect",
-      "labSectionFilter",
-      "shiftFilter",
-      "hospitalUnitFilter",
-      "labSectionFilter_chart",
-      "hospitalUnitFilter_chart"
-    );
-  });
-});
+// document.addEventListener("DOMContentLoaded", () => {
+//   loadDatabaseData().then(() => {
+//     attachRevenueFilterListeners(
+//       allData,
+//       processData,
+//       "startDateFilter",
+//       "endDateFilter",
+//       "periodSelect",
+//       "labSectionFilter",
+//       "shiftFilter",
+//       "hospitalUnitFilter",
+//       "labSectionFilter_chart",
+//       "hospitalUnitFilter_chart"
+//     );
+//   });
+// });
 
 // Function to process data after filtering (replaces the old inline logic)
 function processData() {
