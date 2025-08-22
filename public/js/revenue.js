@@ -244,6 +244,7 @@ async function loadDatabaseData() {
 document.addEventListener("DOMContentLoaded", () => {
   loadDatabaseData().then(() => {
     attachRevenueFilterListeners(
+      allData,
       processData,
       "startDateFilter",
       "endDateFilter",
