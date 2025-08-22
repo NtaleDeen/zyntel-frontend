@@ -242,10 +242,19 @@ async function loadDatabaseData() {
  * Initializes the dashboard by loading data and attaching event listeners.
  */
 document.addEventListener("DOMContentLoaded", () => {
-    loadDatabaseData().then(() => {
-        // Pass the processData function to the listener
-        attachRevenueFilterListeners(processData);
-    });
+  loadDatabaseData().then(() => {
+    attachRevenueFilterListeners(
+      processData,
+      "startDateFilter",
+      "endDateFilter",
+      "periodSelect",
+      "labSectionFilter",
+      "shiftFilter",
+      "hospitalUnitFilter",
+      "labSectionFilter_chart",
+      "hospitalUnitFilter_chart"
+    );
+  });
 });
 
 // Function to process data after filtering (replaces the old inline logic)
