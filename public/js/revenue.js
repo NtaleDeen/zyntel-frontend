@@ -110,7 +110,7 @@ function capitalizeWords(str) {
 }
 
 /**
- * Main function to load data from the database.
+ * Main function to load data from the database with server-side filtering.
  * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
@@ -122,10 +122,28 @@ async function loadDatabaseData() {
     return;
   }
 
-  showLoadingSpinner(); // <— Start the animation here
+  showLoadingSpinner(); // Start the animation here
 
   try {
-    const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
+    // Collect current filter values from the UI
+    const startDate = document.getElementById("startDateFilter").value;
+    const endDate = document.getElementById("endDateFilter").value;
+    const labSection = document.getElementById("labSectionFilter").value;
+    const shift = document.getElementById("shiftFilter").value;
+    const hospitalUnit = document.getElementById("hospitalUnitFilter").value;
+
+    // Build the query string with parameters
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    // Only append parameters if they are not the 'all' default value
+    if (labSection && labSection !== 'all') params.append("labSection", labSection);
+    if (shift && shift !== 'all') params.append("shift", shift);
+    if (hospitalUnit && hospitalUnit !== 'all') params.append("hospitalUnit", hospitalUnit);
+
+    const url = `https://zyntel-data-updater.onrender.com/api/revenue?${params.toString()}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +153,6 @@ async function loadDatabaseData() {
 
     if (response.status === 401) {
       console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
-      // Handle unauthorized access, e.g., by redirecting the user
       window.location.href = "/index.html";
       return;
     }
@@ -184,25 +201,15 @@ async function loadDatabaseData() {
         console.log("Sample processed row:", allData[0]);
       }
 
-      // Call filter initialization functions from the imported module
-      populateLabSectionFilter(allData);
-      populateShiftFilter(allData);
-      populateHospitalUnitFilter(allData); // For the main filter dropdown
-      populateChartUnitSelect(); // Custom function for the chart's unit select
-
-      // Set default dates
-      const periodSelect = document.getElementById("periodSelect");
-      if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod(periodSelect.value);
-      }
-
-      // Initial filtering and data processing
-      filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+      // The `applyRevenueFilters` function is no longer needed for the initial data load
+      // since the data is now pre-filtered by the server. We can directly use the
+      // returned data to process the charts.
+      filteredData = allData;
       processData();
     }
   } catch (err) {
     console.error("Data load failed:", err);
+    // Error handling to clear chart data and display a message
     const totalRevenueElem = document.getElementById("totalRevenue");
     if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
 
@@ -229,14 +236,52 @@ async function loadDatabaseData() {
       testCountChart,
     ].forEach((chart) => {
       if (chart) {
-        chart.data.datasets[0].data = [];
+        if (chart.data.datasets && chart.data.datasets.length > 0) {
+          chart.data.datasets[0].data = [];
+        }
         chart.update();
       }
     });
   } finally {
-    hideLoadingSpinner(); // <— Stop the animation here
+    hideLoadingSpinner(); // Stop the animation here
   }
 }
+
+// The following functions related to filter population and initial date setting
+// should be moved to the appropriate event listeners for filter changes, as they
+// were originally called inside loadDatabaseData which is no longer correct.
+// The `loadDatabaseData` function should be called initially and whenever a filter changes.
+// The initial call should set the default 'thisMonth' period before fetching data.
+// Here is how you can set the initial state and attach listeners:
+
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthAndRedirect();
+    
+    // Set default dates to "thisMonth" before the initial data load
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod(periodSelect.value);
+    }
+    
+    // Initial data load with the default period
+    loadDatabaseData();
+    
+    // Attach event listeners for the filters, which will call loadDatabaseData again
+    attachRevenueFilterListeners(loadDatabaseData);
+
+    // The functions to populate filter dropdowns should be called once the
+    // initial data is loaded. For this to work correctly with server-side filtering,
+    // the API would need a separate endpoint to fetch all possible values for each filter.
+    // As a temporary measure, these can be called on the initial (potentially large)
+    // dataset or you can modify the API to provide these as separate endpoints.
+    // The current implementation in filters-revenue.js assumes client-side filtering.
+    // Let's keep these calls here for now.
+    // populateLabSectionFilter(allData);
+    // populateShiftFilter(allData);
+    // populateHospitalUnitFilter(allData);
+    // populateChartUnitSelect();
+});
 
 /**
  * Initializes the dashboard by loading data and attaching event listeners.
