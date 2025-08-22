@@ -126,11 +126,18 @@ async function loadDatabaseData() {
 
   try {
     const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
-      method: 'GET',
+      method: 'POST', // The server expects a POST request, not a GET request.
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
+      // Your backend expects a POST request, which means it should have a body
+      // You must add a request body here, for example:
+      body: JSON.stringify({
+        startDate: "2025-08-01",
+        endDate: "2025-08-31",
+        filters: {} // Include any filters you need
+      })
     });
 
     if (response.status === 401) {
