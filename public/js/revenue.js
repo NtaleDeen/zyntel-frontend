@@ -2,7 +2,7 @@
 // This file is the main logic for the revenue dashboard.
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession, handleResponse } from "./auth.js";
+import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
 
 // Immediately check authentication on page load.
 checkAuthAndRedirect();
@@ -111,135 +111,152 @@ function capitalizeWords(str) {
 
 /**
  * Main function to load data from the database.
- * This version fetches data with filters applied on the server.
+ * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-    const token = getToken();
-    if (!token) {
-        console.error("No JWT token found. Aborting data load.");
-        return;
+  // Get the JWT token using the centralized function
+  const token = getToken();
+  if (!token) {
+    console.error("No JWT token found. Aborting data load.");
+    // Stop execution if no token is found
+    return;
+  }
+
+  showLoadingSpinner(); // <— Start the animation here
+
+  try {
+    const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+
+    if (response.status === 401) {
+      console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+      // Handle unauthorized access, e.g., by redirecting the user
+      window.location.href = "/index.html";
+      return;
     }
 
-    showLoadingSpinner();
-
-    try {
-        // Get filter values from the HTML elements
-        const startDate = document.getElementById('startDateFilter').value;
-        const endDate = document.getElementById('endDateFilter').value;
-        const labSection = document.getElementById('labSectionFilter').value;
-        const shift = document.getElementById('shiftFilter').value;
-        const unit = document.getElementById('hospitalUnitFilter').value;
-
-        // Build the URL with query parameters for server-side filtering
-        const queryParams = new URLSearchParams();
-        if (startDate) queryParams.append('start_date', startDate);
-        if (endDate) queryParams.append('end_date', endDate);
-        if (labSection && labSection !== 'all') queryParams.append('lab_section', labSection);
-        if (shift && shift !== 'all') queryParams.append('shift', shift);
-        if (unit && unit !== 'all') queryParams.append('unit', unit);
-
-        const apiURL = `https://zyntel-data-updater.onrender.com/api/revenue?${queryParams.toString()}`;
-
-        const response = await fetch(apiURL, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-        });
-
-        if (response.status === 401) {
-            console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
-            window.location.href = "/index.html";
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! ${response.status}`);
-        }
-
-        const dbData = await response.json();
-
-        if (!Array.isArray(dbData) || dbData.length === 0) {
-            console.warn("⚠️ Database returned empty or invalid data for charts.");
-            allData = [];
-        } else {
-            // No need to create a `filteredData` copy as the data is already filtered
-            allData = dbData.map((row) => {
-                const processedRow = { ...row
-                };
-                processedRow.parsedEncounterDate = row.date ? moment.utc(row.date) : null;
-                processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
-                const parsedPriceValue = parseFloat(row.price);
-                processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
-                processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
-                processedRow.LabSection = (row.lab_section || "").toLowerCase();
-                processedRow.Shift = (row.shift || "").toLowerCase();
-                processedRow.TestName = row.test_name || "";
-                return processedRow;
-            });
-            console.log(`✅ Loaded ${allData.length} rows from database for chart aggregation.`);
-            if (allData.length > 0) {
-                console.log("Sample processed row:", allData[0]);
-            }
-        }
-        
-        // Populate filters with the returned data
-        populateLabSectionFilter(allData);
-        populateShiftFilter(allData);
-        populateHospitalUnitFilter(allData);
-        populateChartUnitSelect();
-
-        // No need for a separate applyRevenueFilters function call here,
-        // as the data is already filtered by the API.
-        filteredData = allData;
-        
-        processData();
-        
-    } catch (err) {
-        console.error("Data load failed:", err);
-        const totalRevenueElem = document.getElementById("totalRevenue");
-        if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
-
-        const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
-        if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
-
-        const totalTestsPerformedElem = document.getElementById("totalTestsPerformed");
-        if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
-
-        const avgDailyTestsPerformedElem = document.getElementById("avgDailyTestsPerformed");
-        if (avgDailyTestsPerformedElem) avgDailyTestsPerformedElem.textContent = "N/A";
-
-        [revenueChart, sectionRevenueChart, hospitalUnitRevenueChart, topTestsChart, testRevenueChart, testCountChart, ].forEach((chart) => {
-            if (chart) {
-                chart.data.datasets[0].data = [];
-                chart.update();
-            }
-        });
-    } finally {
-        hideLoadingSpinner();
+    if (!response.ok) {
+      throw new Error(`HTTP error! ${response.status}`);
     }
+
+    const dbData = await response.json();
+
+    if (!Array.isArray(dbData) || dbData.length === 0) {
+      console.warn("⚠️ Database returned empty or invalid data for charts.");
+      allData = [];
+      filteredData = [];
+    } else {
+      allData = dbData.map((row) => {
+        const processedRow = { ...row };
+
+        processedRow.parsedEncounterDate = row.date
+          ? moment.utc(row.date)
+          : null;
+        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+
+        const parsedPriceValue = parseFloat(row.price);
+        processedRow.parsedPrice = isNaN(parsedPriceValue)
+          ? 0
+          : parsedPriceValue;
+
+        processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+        processedRow.LabSection = (row.lab_section || "").toLowerCase();
+        processedRow.Shift = (row.shift || "").toLowerCase();
+        processedRow.TestName = row.test_name || "";
+
+        processedRow.Minutes_Delayed_Calculated = null;
+        processedRow.Delay_Status_Calculated = "Not Uploaded";
+        processedRow.Progress_Calculated = "Not Uploaded";
+
+        return processedRow;
+      });
+
+      console.log(
+        `✅ Loaded ${allData.length} rows from database for chart aggregation.`
+      );
+
+      if (allData.length > 0) {
+        console.log("Sample processed row:", allData[0]);
+      }
+
+      // Call filter initialization functions from the imported module
+      populateLabSectionFilter(allData);
+      populateShiftFilter(allData);
+      populateHospitalUnitFilter(allData); // For the main filter dropdown
+      populateChartUnitSelect(); // Custom function for the chart's unit select
+
+      // Set default dates
+      const periodSelect = document.getElementById("periodSelect");
+      if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod(periodSelect.value);
+      }
+
+      // Initial filtering and data processing
+      filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+      processData();
+    }
+  } catch (err) {
+    console.error("Data load failed:", err);
+    const totalRevenueElem = document.getElementById("totalRevenue");
+    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
+
+    const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
+    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
+
+    const totalTestsPerformedElem = document.getElementById(
+      "totalTestsPerformed"
+    );
+    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
+
+    const avgDailyTestsPerformedElem = document.getElementById(
+      "avgDailyTestsPerformed"
+    );
+    if (avgDailyTestsPerformedElem)
+      avgDailyTestsPerformedElem.textContent = "N/A";
+
+    [
+      revenueChart,
+      sectionRevenueChart,
+      hospitalUnitRevenueChart,
+      topTestsChart,
+      testRevenueChart,
+      testCountChart,
+    ].forEach((chart) => {
+      if (chart) {
+        chart.data.datasets[0].data = [];
+        chart.update();
+      }
+    });
+  } finally {
+    hideLoadingSpinner(); // <— Stop the animation here
+  }
 }
 
 /**
  * Initializes the dashboard by loading data and attaching event listeners.
  */
-// document.addEventListener("DOMContentLoaded", () => {
-//   loadDatabaseData().then(() => {
-//     attachRevenueFilterListeners(
-//       allData,
-//       processData,
-//       "startDateFilter",
-//       "endDateFilter",
-//       "periodSelect",
-//       "labSectionFilter",
-//       "shiftFilter",
-//       "hospitalUnitFilter",
-//       "labSectionFilter_chart",
-//       "hospitalUnitFilter_chart"
-//     );
-//   });
-// });
+document.addEventListener("DOMContentLoaded", () => {
+  loadDatabaseData().then(() => {
+    attachRevenueFilterListeners(
+      allData,
+      processData,
+      "startDateFilter",
+      "endDateFilter",
+      "periodSelect",
+      "labSectionFilter",
+      "shiftFilter",
+      "hospitalUnitFilter",
+      "labSectionFilter_chart",
+      "hospitalUnitFilter_chart"
+    );
+  });
+});
 
 // Function to process data after filtering (replaces the old inline logic)
 function processData() {
