@@ -110,197 +110,70 @@ function capitalizeWords(str) {
 }
 
 /**
- * Main function to load data from the database with server-side filtering.
+ * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-  // Get the JWT token using the centralized function
   const token = getToken();
   if (!token) {
     console.error("No JWT token found. Aborting data load.");
-    // Stop execution if no token is found
     return;
   }
 
-  showLoadingSpinner(); // Start the animation here
+  showLoadingSpinner(); // <— start animation
 
   try {
-    // Collect current filter values from the UI
-    const startDate = document.getElementById("startDateFilter").value;
-    const endDate = document.getElementById("endDateFilter").value;
-    const labSection = document.getElementById("labSectionFilter").value;
-    const shift = document.getElementById("shiftFilter").value;
-    const hospitalUnit = document.getElementById("hospitalUnitFilter").value;
-
-    // Build the query string with parameters
-    const params = new URLSearchParams();
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
-    // Only append parameters if they are not the 'all' default value
-    if (labSection && labSection !== 'all') params.append("labSection", labSection);
-    if (shift && shift !== 'all') params.append("shift", shift);
-    if (hospitalUnit && hospitalUnit !== 'all') params.append("hospitalUnit", hospitalUnit);
-
-    const url = `https://zyntel-data-updater.onrender.com/api/revenue?${params.toString()}`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+    const response = await fetch(API_URL, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (response.status === 401) {
-      console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+      console.error("401 Unauthorized");
       window.location.href = "/index.html";
       return;
     }
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 
     const dbData = await response.json();
 
-    if (!Array.isArray(dbData) || dbData.length === 0) {
-      console.warn("⚠️ Database returned empty or invalid data for charts.");
-      allData = [];
-      filteredData = [];
-    } else {
-      allData = dbData.map((row) => {
-        const processedRow = { ...row };
+    allData = dbData.map(row => {
+      // Fix: Correctly parse time_in for 'T' separated format.
+      const timeInHour = row.time_in
+        ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
+        : null;
 
-        processedRow.parsedEncounterDate = row.date
-          ? moment.utc(row.date)
-          : null;
-        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+      return {
+        ...row,
+        parsedDate: parseTATDate(row.date),
+        timeInHour: timeInHour
+      };
+    });
 
-        const parsedPriceValue = parseFloat(row.price);
-        processedRow.parsedPrice = isNaN(parsedPriceValue)
-          ? 0
-          : parsedPriceValue;
+    filteredData = applyTATFilters(allData);
+    processNumbersData();
 
-        processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
-        processedRow.LabSection = (row.lab_section || "").toLowerCase();
-        processedRow.Shift = (row.shift || "").toLowerCase();
-        processedRow.TestName = row.test_name || "";
-
-        processedRow.Minutes_Delayed_Calculated = null;
-        processedRow.Delay_Status_Calculated = "Not Uploaded";
-        processedRow.Progress_Calculated = "Not Uploaded";
-
-        return processedRow;
-      });
-
-      console.log(
-        `✅ Loaded ${allData.length} rows from database for chart aggregation.`
-      );
-
-      if (allData.length > 0) {
-        console.log("Sample processed row:", allData[0]);
-      }
-
-      // The `applyRevenueFilters` function is no longer needed for the initial data load
-      // since the data is now pre-filtered by the server. We can directly use the
-      // returned data to process the charts.
-      filteredData = allData;
-      processData();
-    }
   } catch (err) {
     console.error("Data load failed:", err);
-    // Error handling to clear chart data and display a message
-    const totalRevenueElem = document.getElementById("totalRevenue");
-    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
-
-    const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
-    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
-
-    const totalTestsPerformedElem = document.getElementById(
-      "totalTestsPerformed"
-    );
-    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
-
-    const avgDailyTestsPerformedElem = document.getElementById(
-      "avgDailyTestsPerformed"
-    );
-    if (avgDailyTestsPerformedElem)
-      avgDailyTestsPerformedElem.textContent = "N/A";
-
-    [
-      revenueChart,
-      sectionRevenueChart,
-      hospitalUnitRevenueChart,
-      topTestsChart,
-      testRevenueChart,
-      testCountChart,
-    ].forEach((chart) => {
-      if (chart) {
-        if (chart.data.datasets && chart.data.datasets.length > 0) {
-          chart.data.datasets[0].data = [];
-        }
-        chart.update();
-      }
-    });
   } finally {
-    hideLoadingSpinner(); // Stop the animation here
+    hideLoadingSpinner(); // <— end animation
   }
 }
 
-// The following functions related to filter population and initial date setting
-// should be moved to the appropriate event listeners for filter changes, as they
-// were originally called inside loadDatabaseData which is no longer correct.
-// The `loadDatabaseData` function should be called initially and whenever a filter changes.
-// The initial call should set the default 'thisMonth' period before fetching data.
-// Here is how you can set the initial state and attach listeners:
-
-document.addEventListener('DOMContentLoaded', () => {
-    checkAuthAndRedirect();
-    
-    // Set default dates to "thisMonth" before the initial data load
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod(periodSelect.value);
-    }
-    
-    // Initial data load with the default period
-    loadDatabaseData();
-    
-    // Attach event listeners for the filters, which will call loadDatabaseData again
-    attachRevenueFilterListeners(loadDatabaseData);
-
-    // The functions to populate filter dropdowns should be called once the
-    // initial data is loaded. For this to work correctly with server-side filtering,
-    // the API would need a separate endpoint to fetch all possible values for each filter.
-    // As a temporary measure, these can be called on the initial (potentially large)
-    // dataset or you can modify the API to provide these as separate endpoints.
-    // The current implementation in filters-revenue.js assumes client-side filtering.
-    // Let's keep these calls here for now.
-    // populateLabSectionFilter(allData);
-    // populateShiftFilter(allData);
-    // populateHospitalUnitFilter(allData);
-    // populateChartUnitSelect();
-});
-
-/**
- * Initializes the dashboard by loading data and attaching event listeners.
- */
+// DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
-  loadDatabaseData().then(() => {
-    attachRevenueFilterListeners(
-      allData,
-      processData,
-      "startDateFilter",
-      "endDateFilter",
-      "periodSelect",
-      "labSectionFilter",
-      "shiftFilter",
-      "hospitalUnitFilter",
-      "labSectionFilter_chart",
-      "hospitalUnitFilter_chart"
-    );
-  });
+  console.log("Numbers Dashboard initializing...");
+  // Set default period to 'thisMonth' and update date inputs
+  const periodSelect = document.getElementById("periodSelect");
+  if (periodSelect) {
+    periodSelect.value = "thisMonth";
+    updateDatesForPeriod("thisMonth");
+  }
+
+  // Initialize common dashboard elements, including rendering filters.
+  initCommonDashboard(processNumbersData);
+  // Initial data load after filters are set
+  loadDatabaseData();
 });
 
 // Function to process data after filtering (replaces the old inline logic)
