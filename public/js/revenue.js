@@ -4,9 +4,6 @@
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken } from "./auth.js";
 
-// Immediately check authentication on page load.
-checkAuthAndRedirect();
-
 // Select the logout button and add an event listener
 const logoutButton = document.getElementById('logout-button');
 logoutButton.addEventListener('click', (e) => {
@@ -24,7 +21,6 @@ import {
   populateLabSectionFilter,
   populateShiftFilter,
   populateHospitalUnitFilter,
-  applyRevenueFilters,
   attachRevenueFilterListeners,
   updateDatesForPeriod
 } from "./filters-revenue.js";
@@ -170,7 +166,8 @@ async function loadDatabaseData() {
       allData = [];
       filteredData = [];
     } else {
-      allData = dbData.map((row) => {
+      // The server returns already filtered data, so we can use it directly
+      filteredData = dbData.map((row) => {
         const processedRow = { ...row
         };
 
@@ -197,30 +194,21 @@ async function loadDatabaseData() {
       });
 
       console.log(
-        `✅ Loaded ${allData.length} rows from database for chart aggregation.`
+        `✅ Loaded ${filteredData.length} rows from database for chart aggregation.`
       );
 
-      if (allData.length > 0) {
-        console.log("Sample processed row:", allData[0]);
+      if (filteredData.length > 0) {
+        console.log("Sample processed row:", filteredData[0]);
       }
 
-      // Populate filters and set default values
-      populateLabSectionFilter(allData);
-      populateShiftFilter(allData);
-      populateHospitalUnitFilter(allData); // For the main filter dropdown
+      // Populate filters from the loaded data
+      populateLabSectionFilter(filteredData);
+      populateShiftFilter(filteredData);
+      populateHospitalUnitFilter(filteredData); // For the main filter dropdown
       populateChartUnitSelect(); // Custom function for the chart's unit select
 
-      const periodSelect = document.getElementById("periodSelect");
-      if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod(periodSelect.value);
-      }
-
-      // The server is now responsible for filtering.
-      // We assign allData to filteredData directly since it's already filtered.
-      filteredData = allData;
-      processData();
     }
+    processData();
   } catch (err) {
     console.error("Data load failed:", err);
     const totalRevenueElem = document.getElementById("totalRevenue");
@@ -261,21 +249,26 @@ async function loadDatabaseData() {
 /**
  * Initializes the dashboard by loading data and attaching event listeners.
  */
-document.addEventListener("DOMContentLoaded", () => {
-  // Initial setup
-  checkAuthAndRedirect();
+function initializeDashboard() {
+    // Attach event listeners for the filters FIRST
+    attachRevenueFilterListeners(loadDatabaseData);
 
-  // Pass processData directly to attachRevenueFilterListeners
-  attachRevenueFilterListeners(processData);
+    // Set default period and trigger initial data load
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+      periodSelect.value = "thisMonth";
+      updateDatesForPeriod(periodSelect.value);
+    }
+    loadDatabaseData();
+}
 
-  // Initial data load and processing
-  loadDatabaseData();
-});
-
-// Function to process data after filtering (replaces the old inline logic)
+/**
+ * Corrected function to process data after filtering (replaces the old inline logic)
+ */
 function processData() {
-    filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
-
+    // No need to apply filters here, the API has already done it.
+    // The data is now in the `filteredData` global variable.
+    
     // Clear previous aggregations
     aggregatedRevenueByDate = {};
     aggregatedRevenueBySection = {};
@@ -1214,7 +1207,5 @@ function renderTestCountChart() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initial setup
     checkAuthAndRedirect();
-    loadDatabaseData();
-    // Attach event listeners for the filters
-    attachRevenueFilterListeners(processData);
+    initializeDashboard();
 });
