@@ -299,42 +299,45 @@ function processData() {
 
 // Function to populate the 'unitSelect' dropdown for the charts
 function populateChartUnitSelect(data) {
-    const unitSelect = document.getElementById("unitSelect");
-    if (!unitSelect) return;
+  const unitSelect = document.getElementById("unitSelect");
+  if (!unitSelect) return;
 
-    // Clear existing options
-    unitSelect.innerHTML = `<option value="all">All Units</option>`;
+  // Clear existing options
+  unitSelect.innerHTML = `<option value="all">All Units</option>`;
 
-    // Validate data
-    if (!Array.isArray(data) || data.length === 0) return;
+  // Defensive check: ensure data is an array
+  if (!Array.isArray(data) || data.length === 0) {
+    console.warn("No data provided to populateChartUnitSelect.");
+    return;
+  }
 
-    // Flatten all units arrays safely
-    const allUnits = [
-        ...new Set(
-            data
-                .map(row => Array.isArray(row.units) ? row.units : [])  // ensure it's an array
-                .flat()
-                .filter(u => u)               // remove null/undefined
-                .map(u => u.toUpperCase())
-        )
-    ];
+  // Safely flatten the array of units from the data
+  const allUnits = [
+    ...new Set(
+      data
+        .map(row => Array.isArray(row.units) ? row.units : []) // ensure row.units is an array before mapping
+        .flat()
+        .filter(u => u)
+        .map(u => u.toUpperCase())
+    )
+  ];
 
-    // Add options to dropdown
-    allUnits.forEach(unit => {
-        const option = document.createElement("option");
-        option.value = unit;
-        option.textContent = unit;
-        unitSelect.appendChild(option);
-    });
+  // Add options to dropdown
+  allUnits.forEach(unit => {
+    const option = document.createElement("option");
+    option.value = unit;
+    option.textContent = unit;
+    unitSelect.appendChild(option);
+  });
 
-    // Default selection
-    unitSelect.value = "ICU";
+  // Default selection
+  unitSelect.value = "ICU";
 
-    // On change, re-render top tests chart
-    unitSelect.onchange = () => {
-        const selectedUnit = unitSelect.value;
-        renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit);
-    };
+  // On change, re-render top tests chart
+  unitSelect.onchange = () => {
+    const selectedUnit = unitSelect.value;
+    renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit);
+  };
 }
 
 
