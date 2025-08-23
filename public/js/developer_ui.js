@@ -11,7 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const addUserForm = document.getElementById('addUserForm');
     const addUserMessage = document.getElementById('addUserMessage');
 
-    const API_URL = "https://zyntel-data-updater.onrender.com/api";
+    // Automatically determine the API base URL
+    const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+    const baseUrl = isLocal
+        ? "http://127.0.0.1:5000"
+        : "https://zyntel-data-updater.onrender.com";
+
+    const API_URL = `${baseUrl}/api`;
 
     // --- Message Box Utility ---
     function showMessage(element, message, type) {

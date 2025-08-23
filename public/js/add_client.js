@@ -11,7 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // The function will handle redirection if the user is not authorized
     checkAuthAndRole();
 
-    const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
+    // Automatically determine the API base URL
+    const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+    const baseUrl = isLocal
+        ? "http://127.0.0.1:5000"
+        : "https://zyntel-data-updater.onrender.com";
+
+    const BACKEND_URL = `${baseUrl}`;
     const addClientForm = document.getElementById('addClientForm');
     const messageDiv = document.getElementById('message');
 

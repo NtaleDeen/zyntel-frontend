@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         this.classList.toggle('fa-eye-slash');
     });
 
-    const BACKEND_URL = "https://zyntel-data-updater.onrender.com";
+    const BACKEND_URL = `${baseUrl}`;
 
     loginForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -72,6 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = passwordInput.value;
 
         messageDiv.textContent = '';
+
+        // Automatically determine the API base URL
+        const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+        const baseUrl = isLocal
+            ? "http://127.0.0.1:5000"
+        : "https://zyntel-data-updater.onrender.com";
 
         try {
             const response = await fetch(`${BACKEND_URL}/api/login`, {

@@ -20,7 +20,7 @@ logoutButton.addEventListener('click', (e) => {
 // ----------------------------------------------------
 // TRACKER TABLE LOGIC
 // ----------------------------------------------------
-const API_URL = "https://zyntel-data-updater.onrender.com/api/tracker";
+const API_URL = `${baseUrl}/api/tracker`;
 const trackerBody = document.getElementById('trackerBody');
 const trackerMessage = document.getElementById('trackerMessage');
 const paginationContainer = document.getElementById('pagination-container');

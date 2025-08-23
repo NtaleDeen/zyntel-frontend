@@ -20,8 +20,13 @@ logoutButton.addEventListener('click', (e) => {
 // ----------------------------------------------------
 // reception TABLE LOGIC
 // ----------------------------------------------------
-const API_URL = "https://zyntel-data-updater.onrender.com/api/reception";
-const UPDATE_API_URL = "https://zyntel-data-updater.onrender.com/api/reception/update";
+// Automatically determine the API base URL
+const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+const baseUrl = isLocal
+    ? "http://127.0.0.1:5000"
+    : "https://zyntel-data-updater.onrender.com";
+const API_URL = `${baseUrl}/api/reception`;
+const UPDATE_API_URL = `${baseUrl}/api/reception/update`;
 const receptionBody = document.getElementById('receptionBody');
 const receptionMessage = document.getElementById('receptionMessage');
 const paginationContainer = document.getElementById('pagination-container');

@@ -20,7 +20,12 @@ logoutButton.addEventListener('click', (e) => {
 // ----------------------------------------------------
 // PROGRESS TABLE LOGIC
 // ----------------------------------------------------
-const API_URL = "https://zyntel-data-updater.onrender.com/api/progress";
+// Automatically determine the API base URL
+const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+const baseUrl = isLocal
+    ? "http://127.0.0.1:5000"
+    : "https://zyntel-data-updater.onrender.com";
+const API_URL = `${baseUrl}/api/progress`;
 const progressBody = document.getElementById('progressBody');
 const progressMessage = document.getElementById('progressMessage');
 const paginationContainer = document.getElementById('pagination-container');

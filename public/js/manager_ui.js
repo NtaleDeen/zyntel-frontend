@@ -53,8 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Automatically determine the API base URL
+        const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+        const baseUrl = isLocal
+            ? "http://127.0.0.1:5000"
+            : "https://zyntel-data-updater.onrender.com";
+
         try {
-            const response = await fetch("https://zyntel-data-updater.onrender.com/api/add_user", {
+            const response = await fetch(`${baseUrl}/api/add_user`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

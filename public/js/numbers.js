@@ -21,7 +21,12 @@ logoutButton.addEventListener('click', (e) => {
 });
 
 // API URL
-const API_URL = "https://zyntel-data-updater.onrender.com/api/performance";
+// Automatically determine the API base URL
+const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+const baseUrl = isLocal
+    ? "http://127.0.0.1:5000"
+    : "https://zyntel-data-updater.onrender.com";
+const API_URL = `${baseUrl}/api/performance`;
 
 import {
   initCommonDashboard,
