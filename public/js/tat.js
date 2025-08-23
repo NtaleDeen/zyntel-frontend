@@ -24,6 +24,12 @@ logoutButton.addEventListener('click', (e) => {
     window.location.replace("/index.html");
 });
 
+// Automatically determine the API base URL
+const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+const baseUrl = isLocal
+    ? "http://127.0.0.1:5000/public"
+    : "https://zyntel-data-updater.onrender.com";
+
 // API URL
 const API_URL = `${baseUrl}/api/performance`;
 
@@ -118,12 +124,6 @@ async function loadDatabaseData() {
     }
 
     showLoadingSpinner();
-
-        // Automatically determine the API base URL
-    const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
-    const baseUrl = isLocal
-        ? "http://127.0.0.1:5000"
-        : "https://zyntel-data-updater.onrender.com";
 
     try {
         // Corrected: Removed date and other filters from the API call.

@@ -127,7 +127,7 @@ async function loadDatabaseData() {
     // Automatically determine the API base URL
     const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
     const baseUrl = isLocal
-        ? "http://127.0.0.1:5000"
+        ? "http://127.0.0.1:5000/public"
         : "https://zyntel-data-updater.onrender.com";
 
   try {
