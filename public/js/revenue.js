@@ -305,14 +305,17 @@ function populateChartUnitSelect(data) {
     // Clear existing options
     unitSelect.innerHTML = `<option value="all">All Units</option>`;
 
-    // Flatten all units arrays and remove undefined/null
+    // Validate data
+    if (!Array.isArray(data) || data.length === 0) return;
+
+    // Flatten all units arrays safely
     const allUnits = [
         ...new Set(
             data
-                .map(row => row.units || [])  // use row.units (array)
+                .map(row => Array.isArray(row.units) ? row.units : [])  // ensure it's an array
                 .flat()
                 .filter(u => u)               // remove null/undefined
-                .map(u => u.toUpperCase())    // convert to uppercase
+                .map(u => u.toUpperCase())
         )
     ];
 
