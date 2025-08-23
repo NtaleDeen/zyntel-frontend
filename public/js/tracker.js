@@ -177,12 +177,12 @@ function setupPagination(data) {
 
     const prevButton = document.createElement('button');
     prevButton.textContent = 'Previous';
-    prevButton.className = 'px-4 py-2 border rounded-md mx-1';
+    prevButton.className = 'pagination-btn';
     prevButton.disabled = currentPage === 1;
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            rendertracker(alltrackerData); // Pass the original data
+            renderreception(alltrackerData); // Pass the original data
         }
     });
     paginationContainer.appendChild(prevButton);
@@ -198,7 +198,7 @@ function setupPagination(data) {
     for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        btn.className = `px-4 py-2 border rounded-md mx-1 ${i === currentPage ? 'bg-blue-500 text-white' : ''}`;
+        btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
             rendertracker(alltrackerData); // Pass the original data
@@ -208,7 +208,7 @@ function setupPagination(data) {
 
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Next';
-    nextButton.className = 'px-4 py-2 border rounded-md mx-1';
+    nextButton.className = 'pagination-btn';
     nextButton.disabled = currentPage === pageCount;
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
@@ -220,7 +220,7 @@ function setupPagination(data) {
 
     const endButton = document.createElement('button');
     endButton.textContent = 'End';
-    endButton.className = 'px-4 py-2 border rounded-md mx-1';
+    endButton.className = 'pagination-btn';
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;

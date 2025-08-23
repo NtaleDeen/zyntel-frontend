@@ -262,3 +262,16 @@ export function updateDatesForPeriod(period) {
     startDateFilterInput.value = startDate.format("YYYY-MM-DD");
     endDateFilterInput.value = endDate.format("YYYY-MM-DD");
 }
+
+/**
+ * Initializes common dashboard elements and attaches filter listeners.
+ * @param {Function} filterFunction The main filter function to call on change.
+ * @param {Function} processDataCallback The function to process data after filtering.
+ */
+export function initCommonDashboard(filterFunction, processDataCallback) {
+    // Add logic here to apply initial filters or attach listeners
+    // For example, attaching listeners to the date and period filters.
+    // The existing code in revenue.js already does this, so you might
+    // consolidate that logic here.
+    attachRevenueFilterListeners(processDataCallback);
+}

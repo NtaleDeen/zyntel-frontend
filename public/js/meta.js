@@ -159,7 +159,7 @@ function setupPagination(data) {
 
     const prevButton = document.createElement('button');
     prevButton.textContent = 'Previous';
-    prevButton.className = 'pagination-button'; // Use a generic class for styling
+    prevButton.className = 'pagination-btn';
     prevButton.disabled = currentPage === 1;
     prevButton.addEventListener('click', () => {
         if (currentPage > 1) {
@@ -180,7 +180,7 @@ function setupPagination(data) {
     for (let i = startPage; i <= endPage; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        btn.className = `pagination-button ${i === currentPage ? 'active-page' : ''}`; // Use generic classes
+        btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
         btn.addEventListener('click', () => {
             currentPage = i;
             rendermeta(allmetaData); // Pass the original data
@@ -190,7 +190,7 @@ function setupPagination(data) {
 
     const nextButton = document.createElement('button');
     nextButton.textContent = 'Next';
-    nextButton.className = 'pagination-button'; // Use a generic class for styling
+    nextButton.className = 'pagination-btn';
     nextButton.disabled = currentPage === pageCount;
     nextButton.addEventListener('click', () => {
         if (currentPage < pageCount) {
@@ -202,7 +202,7 @@ function setupPagination(data) {
 
     const endButton = document.createElement('button');
     endButton.textContent = 'End';
-    endButton.className = 'pagination-button'; // Use a generic class for styling
+    endButton.className = 'pagination-btn';
     endButton.disabled = currentPage === pageCount;
     endButton.addEventListener('click', () => {
         currentPage = pageCount;
