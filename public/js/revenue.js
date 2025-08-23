@@ -231,15 +231,15 @@ async function loadDatabaseData() {
  * Initializes the dashboard by loading data and attaching event listeners.
  */
 function initializeDashboard() {
-    // Attach event listeners for the filters FIRST
     attachRevenueFilterListeners(loadDatabaseData);
 
-    // Set default period and trigger initial data load
     const periodSelect = document.getElementById("periodSelect");
     if (periodSelect) {
-      periodSelect.value = "thisMonth";
-      updateDatesForPeriod(periodSelect.value);
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod(periodSelect.value);
     }
+
+    // Fetch only once
     loadDatabaseData();
 }
 

@@ -187,7 +187,7 @@ export function populateHospitalUnitFilter(allData) {
 }
 
 // Function to attach all event listeners for the filters
-export function attachRevenueFilterListeners(processData) {
+export function attachRevenueFilterListeners(loadDatabaseData) {
     const filters = [
         document.getElementById("startDateFilter"),
         document.getElementById("endDateFilter"),
@@ -202,10 +202,9 @@ export function attachRevenueFilterListeners(processData) {
         if (filter) {
             filter.addEventListener("change", () => {
                 if (filter.id === "periodSelect") {
-                    updateDatesForPeriod(periodSelect.value);
+                    updateDatesForPeriod(filter.value);
                 }
-                // Call the processData function passed as an argument
-                processData(); 
+                loadDatabaseData(); // ✅ always re-fetch fresh data
             });
         }
     });
