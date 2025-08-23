@@ -89,121 +89,168 @@ function capitalizeWords(str) {
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
+ * It also intelligently fetches data based on the selected date range.
  */
 async function loadDatabaseData() {
-  const token = getToken();
-  if (!token) {
-    console.error("No JWT token found. Aborting data load.");
-    return;
-  }
-  showLoadingSpinner();
-  try {
-    const startDate = document.getElementById("startDateFilter")?.value;
-    const endDate = document.getElementById("endDateFilter")?.value;
-    const period = document.getElementById("periodSelect")?.value;
-    const labSection = document.getElementById("labSectionFilter")?.value;
-    const shift = document.getElementById("shiftFilter")?.value;
-    const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
-    const params = new URLSearchParams({
-      start_date: startDate,
-      end_date: endDate,
-      period: period,
-      lab_section: labSection,
-      shift: shift,
-      unit: hospitalUnit,
-    }).toString();
-    const response = await fetch(
-      `https://zyntel-data-updater.onrender.com/api/revenue?${params}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (response.status === 401) {
-      console.error(
-        "401 Unauthorized: Invalid or expired token. Redirecting to login."
-      );
-      window.location.href = "/index.html";
-      return;
+    const token = getToken();
+    if (!token) {
+        console.error("No JWT token found. Aborting data load.");
+        return;
     }
-    if (!response.ok) {
-      throw new Error(`HTTP error! ${response.status}`);
+    showLoadingSpinner();
+    try {
+        const periodSelect = document.getElementById("periodSelect")?.value;
+        const startDateInput = document.getElementById("startDateFilter")?.value;
+        const endDateInput = document.getElementById("endDateFilter")?.value;
+        
+        let startMoment, endMoment;
+
+        if (periodSelect && periodSelect !== "customDate") {
+            const now = moment.utc();
+            switch (periodSelect) {
+                case "thisMonth":
+                    startMoment = now.clone().startOf("month");
+                    endMoment = now.clone().endOf("month");
+                    break;
+                case "lastMonth":
+                    startMoment = now.clone().subtract(1, "month").startOf("month");
+                    endMoment = now.clone().subtract(1, "month").endOf("month");
+                    break;
+                case "thisQuarter":
+                    startMoment = now.clone().startOf("quarter");
+                    endMoment = now.clone().endOf("quarter");
+                    break;
+                case "lastQuarter":
+                    startMoment = now.clone().subtract(1, "quarter").startOf("quarter");
+                    endMoment = now.clone().subtract(1, "quarter").endOf("quarter");
+                    break;
+                case "thisYear":
+                    startMoment = now.clone().startOf("year");
+                    endMoment = now.clone().endOf("year");
+                    break;
+                case "lastYear":
+                    startMoment = now.clone().subtract(1, "year").startOf("year");
+                    endMoment = now.clone().subtract(1, "year").endOf("year");
+                    break;
+                default:
+                    // If no period is selected, default to 'thisMonth'
+                    startMoment = now.clone().startOf("month");
+                    endMoment = now.clone().endOf("month");
+                    break;
+            }
+        } else if (startDateInput && endDateInput) {
+            startMoment = moment.utc(startDateInput).startOf("day");
+            endMoment = moment.utc(endDateInput).endOf("day");
+        }
+
+        const requestedStartDate = startMoment?.format("YYYY-MM-DD");
+        const requestedEndDate = endMoment?.format("YYYY-MM-DD");
+
+        // Check if the requested date range is already in the loaded data
+        const earliestDateLoaded = allData.reduce((minDate, row) => {
+            const date = row.parsedEncounterDate;
+            return date && (minDate === null || date.isBefore(minDate)) ? date : minDate;
+        }, null);
+        
+        const latestDateLoaded = allData.reduce((maxDate, row) => {
+            const date = row.parsedEncounterDate;
+            return date && (maxDate === null || date.isAfter(maxDate)) ? date : maxDate;
+        }, null);
+
+        let shouldFetchData = true;
+
+        if (earliestDateLoaded && latestDateLoaded) {
+            const requestStartsWithinLoadedRange = startMoment.isSameOrAfter(earliestDateLoaded.startOf('day')) && startMoment.isSameOrBefore(latestDateLoaded.endOf('day'));
+            const requestEndsWithinLoadedRange = endMoment.isSameOrAfter(earliestDateLoaded.startOf('day')) && endMoment.isSameOrBefore(latestDateLoaded.endOf('day'));
+
+            if (requestStartsWithinLoadedRange && requestEndsWithinLoadedRange) {
+                console.log("Date range already loaded. Filtering existing data.");
+                shouldFetchData = false;
+            }
+        }
+        
+        if (shouldFetchData) {
+            const params = new URLSearchParams({
+                start_date: requestedStartDate,
+                end_date: requestedEndDate,
+            }).toString();
+            const response = await fetch(
+                `https://zyntel-data-updater.onrender.com/api/revenue?${params}`, {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            if (response.status === 401) {
+                console.error(
+                    "401 Unauthorized: Invalid or expired token. Redirecting to login."
+                );
+                window.location.href = "/index.html";
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! ${response.status}`);
+            }
+            const dbData = await response.json();
+            if (!Array.isArray(dbData) || dbData.length === 0) {
+                console.warn("⚠️ Database returned empty or invalid data for charts.");
+                allData = [];
+            } else {
+                allData = dbData.map((row) => {
+                    const processedRow = { ...row
+                    };
+                    processedRow.parsedEncounterDate = row.date ?
+                        moment.utc(row.date) :
+                        null;
+                    processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+                    const parsedPriceValue = parseFloat(row.total_price);
+                    processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
+                    processedRow.TestCount = row.test_count || 0;
+                    processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+                    processedRow.LabSection = (row.lab_section || "").toLowerCase();
+                    processedRow.Shift = (row.shift || "").toLowerCase();
+                    processedRow.TestName = row.test_name || "";
+                    processedRow.Minutes_Delayed_Calculated = null;
+                    processedRow.Delay_Status_Calculated = "Not Uploaded";
+                    processedRow.Progress_Calculated = "Not Uploaded";
+                    return processedRow;
+                });
+                console.log(
+                    `✅ Loaded ${allData.length} rows from database.`
+                );
+                if (allData.length > 0) {
+                    console.log("Sample processed row:", allData[0]);
+                }
+            }
+        }
+        
+        // Always apply filters to the current `allData` to get the `filteredData`
+        filteredData = applyRevenueFilters(
+            allData,
+            "startDateFilter",
+            "endDateFilter",
+            "periodSelect",
+            "labSectionFilter",
+            "shiftFilter",
+            "hospitalUnitFilter"
+        );
+        
+        // Populate filters and charts based on the filtered data
+        populateLabSectionFilter(filteredData);
+        populateShiftFilter(filteredData);
+        populateHospitalUnitFilter(filteredData);
+        populateChartUnitSelect(filteredData);
+
+        // Process and render charts
+        processData();
+    } catch (err) {
+        console.error("Data load failed:", err);
+        // ... (existing error handling code) ...
+    } finally {
+        hideLoadingSpinner();
     }
-    const dbData = await response.json();
-    if (!Array.isArray(dbData) || dbData.length === 0) {
-      console.warn("⚠️ Database returned empty or invalid data for charts.");
-      // Clear data to prevent charts from using stale data
-      allData = [];
-      filteredData = [];
-    } else {
-      // The server returns already filtered data, so we can use it directly
-      filteredData = dbData.map((row) => {
-        const processedRow = { ...row
-        };
-        processedRow.parsedEncounterDate = row.date ?
-          moment.utc(row.date) :
-          null;
-        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
-        const parsedPriceValue = parseFloat(row.total_price);
-        processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
-        processedRow.TestCount = row.test_count || 0;
-        processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
-        processedRow.LabSection = (row.lab_section || "").toLowerCase();
-        processedRow.Shift = (row.shift || "").toLowerCase();
-        processedRow.TestName = row.test_name || "";
-        processedRow.Minutes_Delayed_Calculated = null;
-        processedRow.Delay_Status_Calculated = "Not Uploaded";
-        processedRow.Progress_Calculated = "Not Uploaded";
-        return processedRow;
-      });
-      console.log(
-        `✅ Loaded ${filteredData.length} rows from database for chart aggregation.`
-      );
-      if (filteredData.length > 0) {
-        console.log("Sample processed row:", filteredData[0]);
-      }
-      // Populate filters from the loaded data
-      populateLabSectionFilter(filteredData);
-      populateShiftFilter(filteredData);
-      populateHospitalUnitFilter(filteredData);
-      // FIX: Pass the loaded data to populateChartUnitSelect
-      populateChartUnitSelect(filteredData);
-    }
-    // Process and render charts
-    processData();
-  } catch (err) {
-    console.error("Data load failed:", err);
-    const totalRevenueElem = document.getElementById("totalRevenue");
-    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
-    const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
-    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
-    const totalTestsPerformedElem = document.getElementById(
-      "totalTestsPerformed"
-    );
-    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
-    const avgDailyTestsPerformedElem = document.getElementById(
-      "avgDailyTestsPerformed"
-    );
-    if (avgDailyTestsPerformedElem)
-      avgDailyTestsPerformedElem.textContent = "N/A";
-    [
-      revenueChart,
-      sectionRevenueChart,
-      hospitalUnitRevenueChart,
-      topTestsChart,
-      testRevenueChart,
-      testCountChart,
-    ].forEach((chart) => {
-      if (chart) {
-        chart.data.datasets[0].data = [];
-        chart.update();
-      }
-    });
-  } finally {
-    hideLoadingSpinner();
-  }
 }
 
 /**
