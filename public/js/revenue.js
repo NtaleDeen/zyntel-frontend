@@ -4,15 +4,8 @@
 // Import the centralized authentication functions.
 import { checkAuthAndRedirect, getToken } from "./auth.js";
 
-// Select the logout button and add an event listener
-const logoutButton = document.getElementById('logout-button');
-logoutButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Clear the user's session data
-    clearSession();
-    // Redirect to the login page, replacing the current history entry
-    window.location.replace("/index.html");
-});
+// Immediately check authentication on page load.
+checkAuthAndRedirect();
 
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
@@ -23,9 +16,7 @@ import {
   populateHospitalUnitFilter,
   applyRevenueFilters,
   attachRevenueFilterListeners,
-  updateDatesForPeriod,
-  mainLaboratoryUnits,
-  annexUnits
+  updateDatesForPeriod
 } from "./filters-revenue.js";
 
 console.log("NHL Dashboard Revenue Logic script loaded and starting...");
@@ -66,18 +57,27 @@ const monthlyTargets = {
   "2025-12": 1_500_000_000,
 };
 
-// ----------------------------------------------------
-// LOADING SPINNER FUNCTIONS
-// ----------------------------------------------------
-function showLoadingSpinner() {
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  if (loadingOverlay) loadingOverlay.style.display = "flex";
-}
-
-function hideLoadingSpinner() {
-  const loadingOverlay = document.getElementById("loadingOverlay");
-  if (loadingOverlay) loadingOverlay.style.display = "none";
-}
+// Define the units for the "Select Hospital Unit" chart dropdown
+const chartHospitalUnits = [
+  "APU",
+  "GWA",
+  "GWB",
+  "HDU",
+  "ICU",
+  "MAT",
+  "NICU",
+  "THEATRE",
+  "2ND FLOOR",
+  "A&E",
+  "DIALYSIS",
+  "DOCTORS PLAZA",
+  "ENT",
+  "RADIOLOGY",
+  "SELF REQUEST",
+  "WELLNESS",
+  "WELLNESS CENTER",
+  "ANNEX"
+];
 
 /**
  * Helper function to capitalize the first letter of each word in a string.
@@ -89,185 +89,123 @@ function capitalizeWords(str) {
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
- * It also intelligently fetches data based on the selected date range.
  */
 async function loadDatabaseData() {
+    // Get the JWT token using the centralized function
     const token = getToken();
     if (!token) {
         console.error("No JWT token found. Aborting data load.");
         return;
     }
-    showLoadingSpinner();
+
     try {
-        const periodSelect = document.getElementById("periodSelect")?.value;
-        const startDateInput = document.getElementById("startDateFilter")?.value;
-        const endDateInput = document.getElementById("endDateFilter")?.value;
-        
-        let startMoment, endMoment;
+        const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+        });
 
-        if (periodSelect && periodSelect !== "customDate") {
-            const now = moment.utc();
-            switch (periodSelect) {
-                case "thisMonth":
-                    startMoment = now.clone().startOf("month");
-                    endMoment = now.clone().endOf("month");
-                    break;
-                case "lastMonth":
-                    startMoment = now.clone().subtract(1, "month").startOf("month");
-                    endMoment = now.clone().subtract(1, "month").endOf("month");
-                    break;
-                case "thisQuarter":
-                    startMoment = now.clone().startOf("quarter");
-                    endMoment = now.clone().endOf("quarter");
-                    break;
-                case "lastQuarter":
-                    startMoment = now.clone().subtract(1, "quarter").startOf("quarter");
-                    endMoment = now.clone().subtract(1, "quarter").endOf("quarter");
-                    break;
-                case "thisYear":
-                    startMoment = now.clone().startOf("year");
-                    endMoment = now.clone().endOf("year");
-                    break;
-                case "lastYear":
-                    startMoment = now.clone().subtract(1, "year").startOf("year");
-                    endMoment = now.clone().subtract(1, "year").endOf("year");
-                    break;
-                default:
-                    // If no period is selected, default to 'thisMonth'
-                    startMoment = now.clone().startOf("month");
-                    endMoment = now.clone().endOf("month");
-                    break;
-            }
-        } else if (startDateInput && endDateInput) {
-            startMoment = moment.utc(startDateInput).startOf("day");
-            endMoment = moment.utc(endDateInput).endOf("day");
-        }
+        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 
-        const requestedStartDate = startMoment?.format("YYYY-MM-DD");
-        const requestedEndDate = endMoment?.format("YYYY-MM-DD");
+        const dbData = await response.json();
 
-        // Check if the requested date range is already in the loaded data
-        const earliestDateLoaded = allData.reduce((minDate, row) => {
-            const date = row.parsedEncounterDate;
-            return date && (minDate === null || date.isBefore(minDate)) ? date : minDate;
-        }, null);
-        
-        const latestDateLoaded = allData.reduce((maxDate, row) => {
-            const date = row.parsedEncounterDate;
-            return date && (maxDate === null || date.isAfter(maxDate)) ? date : maxDate;
-        }, null);
+        if (!Array.isArray(dbData) || dbData.length === 0) {
+            console.warn("⚠️ Database returned empty or invalid data for charts.");
+            allData = [];
+            filteredData = [];
+        } else {
+            allData = dbData.map((row) => {
+                const processedRow = { ...row };
 
-        let shouldFetchData = true;
+                processedRow.parsedEncounterDate = row.date
+                    ? moment.utc(row.date)
+                    : null;
+                processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
 
-        if (earliestDateLoaded && latestDateLoaded) {
-            const requestStartsWithinLoadedRange = startMoment.isSameOrAfter(earliestDateLoaded.startOf('day')) && startMoment.isSameOrBefore(latestDateLoaded.endOf('day'));
-            const requestEndsWithinLoadedRange = endMoment.isSameOrAfter(earliestDateLoaded.startOf('day')) && endMoment.isSameOrBefore(latestDateLoaded.endOf('day'));
+                const parsedPriceValue = parseFloat(row.price);
+                processedRow.parsedPrice = isNaN(parsedPriceValue)
+                    ? 0
+                    : parsedPriceValue;
 
-            if (requestStartsWithinLoadedRange && requestEndsWithinLoadedRange) {
-                console.log("Date range already loaded. Filtering existing data.");
-                shouldFetchData = false;
-            }
-        }
-        
-        if (shouldFetchData) {
-            const params = new URLSearchParams({
-                start_date: requestedStartDate,
-                end_date: requestedEndDate,
-            }).toString();
-            const response = await fetch(
-                `https://zyntel-data-updater.onrender.com/api/revenue?${params}`, {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
+                processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+                processedRow.LabSection = (row.lab_section || "").toLowerCase();
+                processedRow.Shift = (row.shift || "").toLowerCase();
+                processedRow.TestName = row.test_name || "";
+
+                processedRow.Minutes_Delayed_Calculated = null;
+                processedRow.Delay_Status_Calculated = "Not Uploaded";
+                processedRow.Progress_Calculated = "Not Uploaded";
+
+                return processedRow;
+            });
+
+            console.log(
+                `✅ Loaded ${allData.length} rows from database for chart aggregation.`
             );
-            if (response.status === 401) {
-                console.error(
-                    "401 Unauthorized: Invalid or expired token. Redirecting to login."
-                );
-                window.location.href = "/index.html";
-                return;
-            }
-            if (!response.ok) {
-                throw new Error(`HTTP error! ${response.status}`);
-            }
-            const dbData = await response.json();
-            if (!Array.isArray(dbData) || dbData.length === 0) {
-                console.warn("⚠️ Database returned empty or invalid data for charts.");
-                allData = [];
-            } else {
-                allData = dbData.map((row) => {
-                    const processedRow = { ...row
-                    };
-                    processedRow.parsedEncounterDate = row.date ?
-                        moment.utc(row.date) :
-                        null;
-                    processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
-                    const parsedPriceValue = parseFloat(row.total_price);
-                    processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
-                    processedRow.TestCount = row.test_count || 0;
-                    processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
-                    processedRow.LabSection = (row.lab_section || "").toLowerCase();
-                    processedRow.Shift = (row.shift || "").toLowerCase();
-                    processedRow.TestName = row.test_name || "";
-                    processedRow.Minutes_Delayed_Calculated = null;
-                    processedRow.Delay_Status_Calculated = "Not Uploaded";
-                    processedRow.Progress_Calculated = "Not Uploaded";
-                    return processedRow;
-                });
-                console.log(
-                    `✅ Loaded ${allData.length} rows from database.`
-                );
-                if (allData.length > 0) {
-                    console.log("Sample processed row:", allData[0]);
-                }
-            }
-        }
-        
-        // Always apply filters to the current `allData` to get the `filteredData`
-        filteredData = applyRevenueFilters(
-            allData,
-            "startDateFilter",
-            "endDateFilter",
-            "periodSelect",
-            "labSectionFilter",
-            "shiftFilter",
-            "hospitalUnitFilter"
-        );
-        
-        // Populate filters and charts based on the filtered data
-        populateLabSectionFilter(filteredData);
-        populateShiftFilter(filteredData);
-        populateHospitalUnitFilter(filteredData);
-        populateChartUnitSelect(filteredData);
 
-        // Process and render charts
-        processData();
+            if (allData.length > 0) {
+                console.log("Sample processed row:", allData[0]);
+            }
+
+            // Call filter initialization functions from the imported module
+            populateLabSectionFilter(allData);
+            populateShiftFilter(allData);
+            populateHospitalUnitFilter(allData); // For the main filter dropdown
+            populateChartUnitSelect(); // Custom function for the chart's unit select
+
+            // Set default dates
+            const periodSelect = document.getElementById("periodSelect");
+            if (periodSelect) {
+                periodSelect.value = "thisMonth";
+                updateDatesForPeriod(periodSelect.value);
+            }
+
+            // Initial filtering and data processing
+            filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+            processData();
+        }
     } catch (err) {
         console.error("Data load failed:", err);
-        // ... (existing error handling code) ...
-    } finally {
-        hideLoadingSpinner();
+        const totalRevenueElem = document.getElementById("totalRevenue");
+        if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
+
+        const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
+        if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
+
+        const totalTestsPerformedElem = document.getElementById(
+            "totalTestsPerformed"
+        );
+        if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
+
+        const avgDailyTestsPerformedElem = document.getElementById(
+            "avgDailyTestsPerformed"
+        );
+        if (avgDailyTestsPerformedElem)
+            avgDailyTestsPerformedElem.textContent = "N/A";
+
+        [
+            revenueChart,
+            sectionRevenueChart,
+            hospitalUnitRevenueChart,
+            topTestsChart,
+            testRevenueChart,
+            testCountChart,
+        ].forEach((chart) => {
+            if (chart) {
+                chart.data.datasets[0].data = [];
+                chart.update();
+            }
+        });
     }
 }
 
-/**
- * Main function to initialize all dashboard components.
- * This is the single entry point for setting up the dashboard.
- */
-async function initializeDashboard() {
-  console.log("Initializing dashboard...");
-  await loadDatabaseData();
-  console.log("Dashboard initialization complete.");
-}
-
-/**
- * Corrected and Refactored function to process data after filtering.
- * This function now uses the 'filteredData' global variable for aggregation.
- */
+// Function to process data after filtering (replaces the old inline logic)
 function processData() {
+    filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+
+    // Clear previous aggregations
     aggregatedRevenueByDate = {};
     aggregatedRevenueBySection = {};
     aggregatedRevenueByUnit = {};
@@ -275,90 +213,70 @@ function processData() {
     aggregatedRevenueByTest = {};
     aggregatedCountByTest = {};
 
+    // If filteredData is empty, update KPIs and render empty charts
     if (!filteredData || filteredData.length === 0) {
+        console.warn("No data after filtering. Updating KPIs and rendering empty charts.");
         updateTotalRevenue();
         updateKPIs();
-        renderAllCharts();
+        renderAllCharts(); // Call renderAllCharts to destroy existing and ensure empty display
         return;
     }
 
+    // Perform all your data aggregations here using filteredData
     filteredData.forEach(row => {
-        const dateKey = moment.utc(row.date).format("YYYY-MM-DD");
-        const sectionKey = (row.lab_section || "").toLowerCase();
-        const unitKey = (row.unit || "").toUpperCase();
-        const testKey = `${row.test_name}-${unitKey}`;
+        // Aggregate by Date
+        const dateKey = row.parsedEncounterDate.format("YYYY-MM-DD");
+        aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
 
-        const revenue = parseFloat(row.total_price) || 0;
-        const count = parseInt(row.test_count) || 0;
+        // Aggregate by Lab Section
+        const sectionKey = row.LabSection;
+        aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
 
-        // by date
-        aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + revenue;
+        // Aggregate by Hospital Unit
+        const unitKey = row.Hospital_Unit;
+        aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
 
-        // by section
-        aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + revenue;
-
-        // by unit
-        aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + revenue;
-
-        // by test (per unit)
+        // Aggregate by Hospital Unit for Top Tests (stores counts per unit)
         if (!aggregatedTestCountByUnit[unitKey]) {
             aggregatedTestCountByUnit[unitKey] = {};
         }
-        aggregatedTestCountByUnit[unitKey][testKey] =
-            (aggregatedTestCountByUnit[unitKey][testKey] || 0) + count;
+        const testNameKey = row.TestName;
+        aggregatedTestCountByUnit[unitKey][testNameKey] = (aggregatedTestCountByUnit[unitKey][testNameKey] || 0) + 1;
 
-        // global test-level aggregation
-        aggregatedRevenueByTest[testKey] = (aggregatedRevenueByTest[testKey] || 0) + revenue;
-        aggregatedCountByTest[testKey] = (aggregatedCountByTest[testKey] || 0) + count;
+        // Aggregate by Test Name (Globally)
+        aggregatedRevenueByTest[testNameKey] = (aggregatedRevenueByTest[testNameKey] || 0) + row.parsedPrice;
+        aggregatedCountByTest[testNameKey] = (aggregatedCountByTest[testNameKey] || 0) + 1;
     });
 
     updateTotalRevenue();
     updateKPIs();
-    renderAllCharts();
+    renderAllCharts(); // Now this will be called only if there's data to render
 }
 
-
 // Function to populate the 'unitSelect' dropdown for the charts
-function populateChartUnitSelect(data) {
-  const unitSelect = document.getElementById("unitSelect");
-  if (!unitSelect) return;
+function populateChartUnitSelect() {
+    const unitSelect = document.getElementById("unitSelect");
+    if (!unitSelect) return;
 
-  // Clear existing options
-  unitSelect.innerHTML = `<option value="all">All Units</option>`;
+    // Clear existing options
+    unitSelect.innerHTML = `<option value="all">All Units</option>`; // "All Units" option
 
-  // Defensive check: ensure data is an array
-  if (!Array.isArray(data) || data.length === 0) {
-    console.warn("No data provided to populateChartUnitSelect.");
-    return;
-  }
+    // Add specified units
+    chartHospitalUnits.forEach(unit => {
+        const option = document.createElement("option");
+        option.value = unit;
+        option.textContent = unit;
+        unitSelect.appendChild(option);
+    });
 
-  // Safely flatten the array of units from the data
-  const allUnits = [
-    ...new Set(
-      data
-        .map(row => Array.isArray(row.units) ? row.units : []) // ensure row.units is an array before mapping
-        .flat()
-        .filter(u => u)
-        .map(u => u.toUpperCase())
-    )
-  ];
+    // Set "ICU" as default
+    unitSelect.value = "ICU";
 
-  // Add options to dropdown
-  allUnits.forEach(unit => {
-    const option = document.createElement("option");
-    option.value = unit;
-    option.textContent = unit;
-    unitSelect.appendChild(option);
-  });
-
-  // Default selection
-  unitSelect.value = "ICU";
-
-  // On change, re-render top tests chart
-  unitSelect.onchange = () => {
-    const selectedUnit = unitSelect.value;
-    renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit);
-  };
+    // Add event listener to re-render top tests chart when unit changes
+    unitSelect.onchange = () => {
+        const selectedUnit = unitSelect.value;
+        renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit); // If "All Units" selected, default to ICU for Top Tests
+    };
 }
 
 
@@ -747,10 +665,13 @@ function renderSectionRevenueChart() {
                     "#21336a",
                     " #4CAF50",
                     " #795548",
+                    " #9C27B0",
                     "rgb(250, 39, 11)",
+                    " #00BCD4",
                     " #607D8B",
                     " #deab5f",
                     " #E91E63",
+                    " #FFC107",
                 ],
                 hoverOffset: 4,
             },
@@ -1222,5 +1143,7 @@ function renderTestCountChart() {
 document.addEventListener('DOMContentLoaded', () => {
     // Initial setup
     checkAuthAndRedirect();
-    initializeDashboard();
+    loadDatabaseData();
+    // Attach event listeners for the filters
+    attachRevenueFilterListeners(processData);
 });

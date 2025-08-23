@@ -187,24 +187,33 @@ export function populateHospitalUnitFilter(allData) {
 }
 
 // Function to attach all event listeners for the filters
-export function attachRevenueFilterListeners(loadDatabaseData) {
+export function attachRevenueFilterListeners(processData) {
+    const startDateFilterInput = document.getElementById("startDateFilter");
+    const endDateFilterInput = document.getElementById("endDateFilter");
+    const periodSelect = document.getElementById("periodSelect");
+    const labSectionFilter = document.getElementById("labSectionFilter");
+    const shiftFilter = document.getElementById("shiftFilter");
+    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
+    const unitSelect = document.getElementById("unitSelect"); // The existing unitSelect for charts
+
+
     const filters = [
-        document.getElementById("startDateFilter"),
-        document.getElementById("endDateFilter"),
-        document.getElementById("periodSelect"),
-        document.getElementById("labSectionFilter"),
-        document.getElementById("shiftFilter"),
-        document.getElementById("hospitalUnitFilter"),
-        document.getElementById("unitSelect")
+        startDateFilterInput,
+        endDateFilterInput,
+        periodSelect,
+        labSectionFilter,
+        shiftFilter,
+        hospitalUnitFilter,
+        unitSelect
     ];
 
     filters.forEach(filter => {
         if (filter) {
             filter.addEventListener("change", () => {
                 if (filter.id === "periodSelect") {
-                    updateDatesForPeriod(filter.value);
+                    updateDatesForPeriod(periodSelect.value);
                 }
-                loadDatabaseData(); // ✅ always re-fetch fresh data
+                processData(); // Trigger data processing on any filter change
             });
         }
     });
