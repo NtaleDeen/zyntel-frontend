@@ -181,18 +181,22 @@ async function loadDatabaseData() {
 
 // DOM Content Loaded - Initialize everything
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("Numbers Dashboard initializing...");
-  // Set default period to 'thisMonth' and update date inputs
-  const periodSelect = document.getElementById("periodSelect");
-  if (periodSelect) {
-    periodSelect.value = "thisMonth";
-    updateDatesForPeriod("thisMonth");
-  }
+    console.log("Numbers Dashboard initializing...");
+    // Set default period to 'thisMonth' and update date inputs
+    const periodSelect = document.getElementById("periodSelect");
+    if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod("thisMonth");
+    }
 
-  // Initialize common dashboard elements, including rendering filters.
-  initCommonDashboard(processNumbersData);
-  // Initial data load after filters are set
-  loadDatabaseData();
+    // Initialize common dashboard elements, including rendering filters.
+    initCommonDashboard(processData); // Changed from processNumbersData to processData
+    
+    // Initial data load after filters are set.
+    loadDatabaseData();
+
+    // Attach event listeners for the filters
+    attachRevenueFilterListeners(processData);
 });
 
 // Function to process data after filtering (replaces the old inline logic)
