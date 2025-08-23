@@ -268,17 +268,22 @@ function processData() {
     // Use a single loop to perform all aggregations efficiently
     filteredData.forEach(row => {
         const dateKey = row.parsedEncounterDate.format("YYYY-MM-DD");
-        aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
+        aggregatedRevenueByDate[dateKey] =
+            (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
 
         const sectionKey = row.LabSection;
-        aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
+        aggregatedRevenueBySection[sectionKey] =
+            (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
 
         const unitKey = row.Hospital_Unit;
-        aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
+        aggregatedRevenueByUnit[unitKey] =
+            (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
 
         const uniqueTestKey = `${row.TestName}-${unitKey}`;
-        aggregatedRevenueByTest[uniqueTestKey] = (aggregatedRevenueByTest[uniqueTestKey] || 0) + row.parsedPrice;
-        aggregatedCountByTest[uniqueTestKey] = (aggregatedCountByTest[uniqueTestKey] || 0) + row.TestCount;
+        aggregatedRevenueByTest[uniqueTestKey] =
+            (aggregatedRevenueByTest[uniqueTestKey] || 0) + row.parsedPrice;
+        aggregatedCountByTest[uniqueTestKey] =
+            (aggregatedCountByTest[uniqueTestKey] || 0) + row.TestCount;
     });
 
     // Update all dashboard components with the newly aggregated data
