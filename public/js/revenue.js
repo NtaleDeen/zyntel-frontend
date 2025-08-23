@@ -112,52 +112,71 @@ function capitalizeWords(str) {
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
+ * It now fetches data based on the current filter settings.
  */
 async function loadDatabaseData() {
-  const token = getToken();
-  if (!token) {
-    console.error("No JWT token found. Aborting data load.");
-    return;
-  }
-
-  showLoadingSpinner(); // <— start animation
-
-  try {
-    const response = await fetch(API_URL, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (response.status === 401) {
-      console.error("401 Unauthorized");
-      window.location.href = "/index.html";
-      return;
+    const token = getToken();
+    if (!token) {
+        console.error("No JWT token found. Aborting data load.");
+        return;
     }
 
-    if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+    showLoadingSpinner(); // <— start animation
 
-    const dbData = await response.json();
+    // Get the current filter values from the DOM
+    const startDate = document.getElementById("startDateFilter")?.value;
+    const endDate = document.getElementById("endDateFilter")?.value;
+    const labSection = document.getElementById("labSectionFilter")?.value;
+    const shift = document.getElementById("shiftFilter")?.value;
+    const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
 
-    allData = dbData.map(row => {
-      // Fix: Correctly parse time_in for 'T' separated format.
-      const timeInHour = row.time_in
-        ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
-        : null;
+    // Construct the query parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+    if (labSection && labSection !== 'all') queryParams.append('labSection', labSection);
+    if (shift && shift !== 'all') queryParams.append('shift', shift);
+    if (hospitalUnit && hospitalUnit !== 'all') queryParams.append('hospitalUnit', hospitalUnit);
 
-      return {
-        ...row,
-        parsedDate: parseTATDate(row.date),
-        timeInHour: timeInHour
-      };
-    });
+    const apiRoute = `${API_URL}/api/revenue?${queryParams.toString()}`;
+    console.log("Fetching data from API:", apiRoute);
 
-    filteredData = applyTATFilters(allData);
-    processNumbersData();
+    try {
+        const response = await fetch(apiRoute, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-  } catch (err) {
-    console.error("Data load failed:", err);
-  } finally {
-    hideLoadingSpinner(); // <— end animation
-  }
+        if (response.status === 401) {
+            console.error("401 Unauthorized");
+            window.location.href = "/index.html";
+            return;
+        }
+
+        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+        const dbData = await response.json();
+
+        allData = dbData.map(row => {
+            // Fix: Correctly parse time_in for 'T' separated format.
+            const timeInHour = row.time_in
+                ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
+                : null;
+
+            return {
+                ...row,
+                parsedDate: parseTATDate(row.date),
+                timeInHour: timeInHour
+            };
+        });
+
+        filteredData = allData; // Since the data is already filtered by the API, allData is the filtered data
+        processData(); // Use the existing processData function
+
+    } catch (err) {
+        console.error("Data load failed:", err);
+    } finally {
+        hideLoadingSpinner(); // <— end animation
+    }
 }
 
 // DOM Content Loaded - Initialize everything
