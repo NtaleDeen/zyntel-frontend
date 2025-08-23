@@ -2,7 +2,7 @@
 // This file is the main logic for the revenue dashboard.
 
 // Import the centralized authentication functions.
-import { checkAuthAndRedirect, getToken, clearSession } from "./auth.js";
+import { checkAuthAndRedirect, getToken } from "./auth.js";
 
 // Immediately check authentication on page load.
 checkAuthAndRedirect();
@@ -112,104 +112,150 @@ function capitalizeWords(str) {
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
- * It now fetches data based on the current filter settings directly from the DOM,
- * and passes the filtering logic to the API, reducing client-side processing.
  */
 async function loadDatabaseData() {
-    const token = getToken();
-    if (!token) {
-        console.error("No JWT token found. Aborting data load.");
-        window.location.replace("/index.html");
-        return;
+  // Get the JWT token using the centralized function
+  const token = getToken();
+  if (!token) {
+    console.error("No JWT token found. Aborting data load.");
+    // Stop execution if no token is found
+    return;
+  }
+
+  showLoadingSpinner(); // <— Start the animation here
+
+  try {
+    const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+
+    if (response.status === 401) {
+      console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+      // Handle unauthorized access, e.g., by redirecting the user
+      window.location.href = "/index.html";
+      return;
     }
 
-    showLoadingSpinner();
-
-    // Get the current filter values directly from the DOM after any period updates have occurred.
-    const startDate = document.getElementById("startDateFilter")?.value;
-    const endDate = document.getElementById("endDateFilter")?.value;
-    const labSection = document.getElementById("labSectionFilter")?.value;
-    const shift = document.getElementById("shiftFilter")?.value;
-    const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
-
-    // Construct the query parameters
-    const queryParams = new URLSearchParams();
-    if (startDate) queryParams.append('startDate', startDate);
-    if (endDate) queryParams.append('endDate', endDate);
-    if (labSection && labSection !== 'all') queryParams.append('labSection', labSection);
-    if (shift && shift !== 'all') queryParams.append('shift', shift);
-    if (hospitalUnit && hospitalUnit !== 'all') queryParams.append('hospitalUnit', hospitalUnit);
-
-    const apiRoute = `${API_URL}/api/revenue?${queryParams.toString()}`;
-    console.log("Fetching data from API:", apiRoute);
-
-    try {
-        const response = await fetch(apiRoute, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (response.status === 401) {
-            console.error("401 Unauthorized. Redirecting to login.");
-            window.location.replace("/index.html");
-            return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const dbData = await response.json();
-
-        // No need to filter on the client side anymore. The API returns the filtered data set.
-        allData = dbData.map(row => {
-            // Your existing data parsing logic
-            const timeInHour = row.time_in ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null : null;
-            return {
-                ...row,
-                parsedDate: moment.utc(row.date), // Use moment.utc for consistent date handling
-                parsedEncounterDate: moment.utc(row.encounter_date), // Ensure this field is present for filtering if needed later
-                parsedPrice: parseFloat(row.price),
-                timeInHour: timeInHour
-            };
-        });
-
-        // 'filteredData' is now a direct reference to 'allData' because the API did the heavy lifting.
-        filteredData = allData;
-
-        // Populate filters with the data that was fetched from the API.
-        populateLabSectionFilter(allData);
-        populateShiftFilter(allData);
-        populateHospitalUnitFilter(allData);
-        populateChartUnitSelect(); // This is a good place to populate the chart unit filter
-
-        processData(); // Now process the data that's already filtered.
-
-    } catch (err) {
-        console.error("Data load failed:", err);
-        // You might want to display an error message to the user here.
-    } finally {
-        hideLoadingSpinner();
+    if (!response.ok) {
+      throw new Error(`HTTP error! ${response.status}`);
     }
+
+    const dbData = await response.json();
+
+    if (!Array.isArray(dbData) || dbData.length === 0) {
+      console.warn("⚠️ Database returned empty or invalid data for charts.");
+      allData = [];
+      filteredData = [];
+    } else {
+      allData = dbData.map((row) => {
+        const processedRow = { ...row };
+
+        processedRow.parsedEncounterDate = row.date
+          ? moment.utc(row.date)
+          : null;
+        processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
+
+        const parsedPriceValue = parseFloat(row.price);
+        processedRow.parsedPrice = isNaN(parsedPriceValue)
+          ? 0
+          : parsedPriceValue;
+
+        processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
+        processedRow.LabSection = (row.lab_section || "").toLowerCase();
+        processedRow.Shift = (row.shift || "").toLowerCase();
+        processedRow.TestName = row.test_name || "";
+
+        processedRow.Minutes_Delayed_Calculated = null;
+        processedRow.Delay_Status_Calculated = "Not Uploaded";
+        processedRow.Progress_Calculated = "Not Uploaded";
+
+        return processedRow;
+      });
+
+      console.log(
+        `✅ Loaded ${allData.length} rows from database for chart aggregation.`
+      );
+
+      if (allData.length > 0) {
+        console.log("Sample processed row:", allData[0]);
+      }
+
+      // Call filter initialization functions from the imported module
+      populateLabSectionFilter(allData);
+      populateShiftFilter(allData);
+      populateHospitalUnitFilter(allData); // For the main filter dropdown
+      populateChartUnitSelect(); // Custom function for the chart's unit select
+
+      // Set default dates
+      const periodSelect = document.getElementById("periodSelect");
+      if (periodSelect) {
+        periodSelect.value = "thisMonth";
+        updateDatesForPeriod(periodSelect.value);
+      }
+
+      // Initial filtering and data processing
+      filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+      processData();
+    }
+  } catch (err) {
+    console.error("Data load failed:", err);
+    const totalRevenueElem = document.getElementById("totalRevenue");
+    if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
+
+    const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
+    if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
+
+    const totalTestsPerformedElem = document.getElementById(
+      "totalTestsPerformed"
+    );
+    if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
+
+    const avgDailyTestsPerformedElem = document.getElementById(
+      "avgDailyTestsPerformed"
+    );
+    if (avgDailyTestsPerformedElem)
+      avgDailyTestsPerformedElem.textContent = "N/A";
+
+    [
+      revenueChart,
+      sectionRevenueChart,
+      hospitalUnitRevenueChart,
+      topTestsChart,
+      testRevenueChart,
+      testCountChart,
+    ].forEach((chart) => {
+      if (chart) {
+        chart.data.datasets[0].data = [];
+        chart.update();
+      }
+    });
+  } finally {
+    hideLoadingSpinner(); // <— Stop the animation here
+  }
 }
 
-// DOM Content Loaded - Initialize everything
+/**
+ * Initializes the dashboard by loading data and attaching event listeners.
+ */
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("Numbers Dashboard initializing...");
-    // Set default period to 'thisMonth' and update date inputs
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod("thisMonth");
-    }
-
-    // Initialize common dashboard elements, including rendering filters.
-    initCommonDashboard(processData); // Changed from processNumbersData to processData
-    
-    // Initial data load after filters are set.
-    loadDatabaseData();
-
-    // Attach event listeners for the filters
-    attachRevenueFilterListeners(processData);
+  loadDatabaseData().then(() => {
+    attachRevenueFilterListeners(
+      allData,
+      processData,
+      "startDateFilter",
+      "endDateFilter",
+      "periodSelect",
+      "labSectionFilter",
+      "shiftFilter",
+      "hospitalUnitFilter",
+      "labSectionFilter_chart",
+      "hospitalUnitFilter_chart"
+    );
+  });
 });
 
 // Function to process data after filtering (replaces the old inline logic)
