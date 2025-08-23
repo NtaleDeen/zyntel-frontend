@@ -188,23 +188,14 @@ export function populateHospitalUnitFilter(allData) {
 
 // Function to attach all event listeners for the filters
 export function attachRevenueFilterListeners(processData) {
-    const startDateFilterInput = document.getElementById("startDateFilter");
-    const endDateFilterInput = document.getElementById("endDateFilter");
-    const periodSelect = document.getElementById("periodSelect");
-    const labSectionFilter = document.getElementById("labSectionFilter");
-    const shiftFilter = document.getElementById("shiftFilter");
-    const hospitalUnitFilter = document.getElementById("hospitalUnitFilter");
-    const unitSelect = document.getElementById("unitSelect"); // The existing unitSelect for charts
-
-
     const filters = [
-        startDateFilterInput,
-        endDateFilterInput,
-        periodSelect,
-        labSectionFilter,
-        shiftFilter,
-        hospitalUnitFilter,
-        unitSelect
+        document.getElementById("startDateFilter"),
+        document.getElementById("endDateFilter"),
+        document.getElementById("periodSelect"),
+        document.getElementById("labSectionFilter"),
+        document.getElementById("shiftFilter"),
+        document.getElementById("hospitalUnitFilter"),
+        document.getElementById("unitSelect")
     ];
 
     filters.forEach(filter => {
@@ -213,7 +204,8 @@ export function attachRevenueFilterListeners(processData) {
                 if (filter.id === "periodSelect") {
                     updateDatesForPeriod(periodSelect.value);
                 }
-                processData(); // Trigger data processing on any filter change
+                // Call the processData function passed as an argument
+                processData(); 
             });
         }
     });

@@ -118,23 +118,42 @@ async function loadDatabaseData() {
   const token = getToken();
   if (!token) {
     console.error("No JWT token found. Aborting data load.");
-    // Stop execution if no token is found
     return;
   }
 
-  showLoadingSpinner(); // <— Start the animation here
+  showLoadingSpinner();
+  const startDate = document.getElementById("startDateFilter")?.value;
+  const endDate = document.getElementById("endDateFilter")?.value;
+  const period = document.getElementById("periodSelect")?.value;
+  const labSection = document.getElementById("labSectionFilter")?.value;
+  const shift = document.getElementById("shiftFilter")?.value;
+  const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
+
+  // Construct the query string from filter values
+  const params = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate,
+    period: period,
+    lab_section: labSection,
+    shift: shift,
+    unit: hospitalUnit,
+  }).toString();
 
   try {
-    const response = await fetch("https://zyntel-data-updater.onrender.com/api/revenue", {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-    });
+    const response = await fetch(
+      `https://zyntel-data-updater.onrender.com/api/revenue?${params}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (response.status === 401) {
-      console.error("401 Unauthorized: Invalid or expired token. Redirecting to login.");
+      console.error(
+        "401 Unauthorized: Invalid or expired token. Redirecting to login."
+      );
       // Handle unauthorized access, e.g., by redirecting the user
       window.location.href = "/index.html";
       return;
@@ -152,17 +171,18 @@ async function loadDatabaseData() {
       filteredData = [];
     } else {
       allData = dbData.map((row) => {
-        const processedRow = { ...row };
+        const processedRow = { ...row
+        };
 
-        processedRow.parsedEncounterDate = row.date
-          ? moment.utc(row.date)
-          : null;
+        processedRow.parsedEncounterDate = row.date ?
+          moment.utc(row.date) :
+          null;
         processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
 
         const parsedPriceValue = parseFloat(row.price);
-        processedRow.parsedPrice = isNaN(parsedPriceValue)
-          ? 0
-          : parsedPriceValue;
+        processedRow.parsedPrice = isNaN(parsedPriceValue) ?
+          0 :
+          parsedPriceValue;
 
         processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
         processedRow.LabSection = (row.lab_section || "").toLowerCase();
@@ -184,21 +204,21 @@ async function loadDatabaseData() {
         console.log("Sample processed row:", allData[0]);
       }
 
-      // Call filter initialization functions from the imported module
+      // Populate filters and set default values
       populateLabSectionFilter(allData);
       populateShiftFilter(allData);
       populateHospitalUnitFilter(allData); // For the main filter dropdown
       populateChartUnitSelect(); // Custom function for the chart's unit select
 
-      // Set default dates
       const periodSelect = document.getElementById("periodSelect");
       if (periodSelect) {
         periodSelect.value = "thisMonth";
         updateDatesForPeriod(periodSelect.value);
       }
 
-      // Initial filtering and data processing
-      filteredData = applyRevenueFilters(allData, "startDateFilter", "endDateFilter", "periodSelect", "labSectionFilter", "shiftFilter", "hospitalUnitFilter");
+      // The server is now responsible for filtering.
+      // We assign allData to filteredData directly since it's already filtered.
+      filteredData = allData;
       processData();
     }
   } catch (err) {
@@ -242,20 +262,14 @@ async function loadDatabaseData() {
  * Initializes the dashboard by loading data and attaching event listeners.
  */
 document.addEventListener("DOMContentLoaded", () => {
-  loadDatabaseData().then(() => {
-    attachRevenueFilterListeners(
-      allData,
-      processData,
-      "startDateFilter",
-      "endDateFilter",
-      "periodSelect",
-      "labSectionFilter",
-      "shiftFilter",
-      "hospitalUnitFilter",
-      "labSectionFilter_chart",
-      "hospitalUnitFilter_chart"
-    );
-  });
+  // Initial setup
+  checkAuthAndRedirect();
+
+  // Pass processData directly to attachRevenueFilterListeners
+  attachRevenueFilterListeners(processData);
+
+  // Initial data load and processing
+  loadDatabaseData();
 });
 
 // Function to process data after filtering (replaces the old inline logic)
