@@ -157,10 +157,9 @@ async function loadDatabaseData() {
           null;
         processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
 
-        const parsedPriceValue = parseFloat(row.price);
-        processedRow.parsedPrice = isNaN(parsedPriceValue) ?
-          0 :
-          parsedPriceValue;
+        const parsedPriceValue = parseFloat(row.total_price);
+        processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
+        processedRow.TestCount = row.test_count || 0;
 
         processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
         processedRow.LabSection = (row.lab_section || "").toLowerCase();
@@ -268,30 +267,18 @@ function processData() {
 
     // Use a single loop to perform all aggregations efficiently
     filteredData.forEach(row => {
-        // Create a unique identifier by combining test name and lab number
-        const uniqueTestKey = `${row.TestName}-${row.labNo}`;
-
-        // Aggregate by Date
         const dateKey = row.parsedEncounterDate.format("YYYY-MM-DD");
         aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
 
-        // Aggregate by Lab Section
         const sectionKey = row.LabSection;
         aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
 
-        // Aggregate by Hospital Unit
         const unitKey = row.Hospital_Unit;
         aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
 
-        // Aggregate by Test for specific hospital units (using the unique key)
-        if (!aggregatedTestCountByUnit[unitKey]) {
-            aggregatedTestCountByUnit[unitKey] = {};
-        }
-        aggregatedTestCountByUnit[unitKey][uniqueTestKey] = (aggregatedTestCountByUnit[unitKey][uniqueTestKey] || 0) + 1;
-
-        // Aggregate globally by Test (using the unique key)
+        const uniqueTestKey = `${row.TestName}-${unitKey}`;
         aggregatedRevenueByTest[uniqueTestKey] = (aggregatedRevenueByTest[uniqueTestKey] || 0) + row.parsedPrice;
-        aggregatedCountByTest[uniqueTestKey] = (aggregatedCountByTest[uniqueTestKey] || 0) + 1;
+        aggregatedCountByTest[uniqueTestKey] = (aggregatedCountByTest[uniqueTestKey] || 0) + row.TestCount;
     });
 
     // Update all dashboard components with the newly aggregated data
