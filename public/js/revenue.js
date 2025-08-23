@@ -20,6 +20,7 @@ logoutButton.addEventListener('click', (e) => {
 // Register the datalabels plugin globally
 Chart.register(ChartDataLabels);
 
+import { initCommonDashboard } from "./common.js"; 
 import {
   populateLabSectionFilter,
   populateShiftFilter,
