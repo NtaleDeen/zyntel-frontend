@@ -247,7 +247,6 @@ function initializeDashboard() {
  * This function now uses the 'filteredData' global variable for aggregation.
  */
 function processData() {
-    // Clear previous aggregations for all charts
     aggregatedRevenueByDate = {};
     aggregatedRevenueBySection = {};
     aggregatedRevenueByUnit = {};
@@ -255,42 +254,48 @@ function processData() {
     aggregatedRevenueByTest = {};
     aggregatedCountByTest = {};
 
-    // Check if there's data to process before proceeding
     if (!filteredData || filteredData.length === 0) {
-        console.warn("No data to process. KPIs and charts will be empty.");
-        // Update all displays to show "N/A" or empty state
         updateTotalRevenue();
         updateKPIs();
         renderAllCharts();
         return;
     }
 
-    // Use a single loop to perform all aggregations efficiently
     filteredData.forEach(row => {
-        const dateKey = row.parsedEncounterDate.format("YYYY-MM-DD");
-        aggregatedRevenueByDate[dateKey] =
-            (aggregatedRevenueByDate[dateKey] || 0) + row.parsedPrice;
+        const dateKey = moment.utc(row.date).format("YYYY-MM-DD");
+        const sectionKey = (row.lab_section || "").toLowerCase();
+        const unitKey = (row.unit || "").toUpperCase();
+        const testKey = `${row.test_name}-${unitKey}`;
 
-        const sectionKey = row.LabSection;
-        aggregatedRevenueBySection[sectionKey] =
-            (aggregatedRevenueBySection[sectionKey] || 0) + row.parsedPrice;
+        const revenue = parseFloat(row.total_price) || 0;
+        const count = parseInt(row.test_count) || 0;
 
-        const unitKey = row.Hospital_Unit;
-        aggregatedRevenueByUnit[unitKey] =
-            (aggregatedRevenueByUnit[unitKey] || 0) + row.parsedPrice;
+        // by date
+        aggregatedRevenueByDate[dateKey] = (aggregatedRevenueByDate[dateKey] || 0) + revenue;
 
-        const uniqueTestKey = `${row.TestName}-${unitKey}`;
-        aggregatedRevenueByTest[uniqueTestKey] =
-            (aggregatedRevenueByTest[uniqueTestKey] || 0) + row.parsedPrice;
-        aggregatedCountByTest[uniqueTestKey] =
-            (aggregatedCountByTest[uniqueTestKey] || 0) + row.TestCount;
+        // by section
+        aggregatedRevenueBySection[sectionKey] = (aggregatedRevenueBySection[sectionKey] || 0) + revenue;
+
+        // by unit
+        aggregatedRevenueByUnit[unitKey] = (aggregatedRevenueByUnit[unitKey] || 0) + revenue;
+
+        // by test (per unit)
+        if (!aggregatedTestCountByUnit[unitKey]) {
+            aggregatedTestCountByUnit[unitKey] = {};
+        }
+        aggregatedTestCountByUnit[unitKey][testKey] =
+            (aggregatedTestCountByUnit[unitKey][testKey] || 0) + count;
+
+        // global test-level aggregation
+        aggregatedRevenueByTest[testKey] = (aggregatedRevenueByTest[testKey] || 0) + revenue;
+        aggregatedCountByTest[testKey] = (aggregatedCountByTest[testKey] || 0) + count;
     });
 
-    // Update all dashboard components with the newly aggregated data
     updateTotalRevenue();
     updateKPIs();
     renderAllCharts();
 }
+
 
 // Function to populate the 'unitSelect' dropdown for the charts
 function populateChartUnitSelect() {
@@ -300,8 +305,8 @@ function populateChartUnitSelect() {
     // Clear existing options
     unitSelect.innerHTML = `<option value="all">All Units</option>`;
 
-    // Combine the two imported arrays to get the full list
-    const allHospitalUnits = [...mainLaboratoryUnits, ...annexUnits];
+    // Use database
+    const allHospitalUnits = [...new Set(filteredData.map(r => r.unit.toUpperCase()))];
 
     // Add specified units
     allHospitalUnits.forEach(unit => {
