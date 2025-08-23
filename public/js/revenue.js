@@ -112,18 +112,20 @@ function capitalizeWords(str) {
 /**
  * Main function to load data from the database.
  * This version includes a security check and sends the JWT token.
- * It now fetches data based on the current filter settings.
+ * It now fetches data based on the current filter settings directly from the DOM,
+ * and passes the filtering logic to the API, reducing client-side processing.
  */
 async function loadDatabaseData() {
     const token = getToken();
     if (!token) {
         console.error("No JWT token found. Aborting data load.");
+        window.location.replace("/index.html");
         return;
     }
 
-    showLoadingSpinner(); // <— start animation
+    showLoadingSpinner();
 
-    // Get the current filter values from the DOM
+    // Get the current filter values directly from the DOM after any period updates have occurred.
     const startDate = document.getElementById("startDateFilter")?.value;
     const endDate = document.getElementById("endDateFilter")?.value;
     const labSection = document.getElementById("labSectionFilter")?.value;
@@ -147,35 +149,46 @@ async function loadDatabaseData() {
         });
 
         if (response.status === 401) {
-            console.error("401 Unauthorized");
-            window.location.href = "/index.html";
+            console.error("401 Unauthorized. Redirecting to login.");
+            window.location.replace("/index.html");
             return;
         }
 
-        if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
         const dbData = await response.json();
 
+        // No need to filter on the client side anymore. The API returns the filtered data set.
         allData = dbData.map(row => {
-            // Fix: Correctly parse time_in for 'T' separated format.
-            const timeInHour = row.time_in
-                ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null
-                : null;
-
+            // Your existing data parsing logic
+            const timeInHour = row.time_in ? parseInt(row.time_in.split("T")[1]?.split(":")[0]) || null : null;
             return {
                 ...row,
-                parsedDate: parseTATDate(row.date),
+                parsedDate: moment.utc(row.date), // Use moment.utc for consistent date handling
+                parsedEncounterDate: moment.utc(row.encounter_date), // Ensure this field is present for filtering if needed later
+                parsedPrice: parseFloat(row.price),
                 timeInHour: timeInHour
             };
         });
 
-        filteredData = allData; // Since the data is already filtered by the API, allData is the filtered data
-        processData(); // Use the existing processData function
+        // 'filteredData' is now a direct reference to 'allData' because the API did the heavy lifting.
+        filteredData = allData;
+
+        // Populate filters with the data that was fetched from the API.
+        populateLabSectionFilter(allData);
+        populateShiftFilter(allData);
+        populateHospitalUnitFilter(allData);
+        populateChartUnitSelect(); // This is a good place to populate the chart unit filter
+
+        processData(); // Now process the data that's already filtered.
 
     } catch (err) {
         console.error("Data load failed:", err);
+        // You might want to display an error message to the user here.
     } finally {
-        hideLoadingSpinner(); // <— end animation
+        hideLoadingSpinner();
     }
 }
 
