@@ -298,31 +298,39 @@ function processData() {
 
 
 // Function to populate the 'unitSelect' dropdown for the charts
-function populateChartUnitSelect() {
+function populateChartUnitSelect(data) {
     const unitSelect = document.getElementById("unitSelect");
     if (!unitSelect) return;
 
     // Clear existing options
     unitSelect.innerHTML = `<option value="all">All Units</option>`;
 
-    // Use database
-    const allHospitalUnits = [...new Set(filteredData.map(r => r.unit.toUpperCase()))];
+    // Flatten all units arrays and remove undefined/null
+    const allUnits = [
+        ...new Set(
+            data
+                .map(row => row.units || [])  // use row.units (array)
+                .flat()
+                .filter(u => u)               // remove null/undefined
+                .map(u => u.toUpperCase())    // convert to uppercase
+        )
+    ];
 
-    // Add specified units
-    allHospitalUnits.forEach(unit => {
+    // Add options to dropdown
+    allUnits.forEach(unit => {
         const option = document.createElement("option");
         option.value = unit;
         option.textContent = unit;
         unitSelect.appendChild(option);
     });
 
-    // Set "ICU" as default
+    // Default selection
     unitSelect.value = "ICU";
 
-    // Add event listener to re-render top tests chart when unit changes
+    // On change, re-render top tests chart
     unitSelect.onchange = () => {
         const selectedUnit = unitSelect.value;
-        renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit); // If "All Units" selected, default to ICU for Top Tests
+        renderTopTestsChart(selectedUnit === "all" ? "ICU" : selectedUnit);
     };
 }
 
