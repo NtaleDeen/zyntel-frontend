@@ -91,32 +91,27 @@ function capitalizeWords(str) {
  * This version includes a security check and sends the JWT token.
  */
 async function loadDatabaseData() {
-  // Get the JWT token using the centralized function
   const token = getToken();
   if (!token) {
     console.error("No JWT token found. Aborting data load.");
     return;
   }
-
   showLoadingSpinner();
-  const startDate = document.getElementById("startDateFilter")?.value;
-  const endDate = document.getElementById("endDateFilter")?.value;
-  const period = document.getElementById("periodSelect")?.value;
-  const labSection = document.getElementById("labSectionFilter")?.value;
-  const shift = document.getElementById("shiftFilter")?.value;
-  const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
-
-  // Construct the query string from filter values
-  const params = new URLSearchParams({
-    start_date: startDate,
-    end_date: endDate,
-    period: period,
-    lab_section: labSection,
-    shift: shift,
-    unit: hospitalUnit,
-  }).toString();
-
   try {
+    const startDate = document.getElementById("startDateFilter")?.value;
+    const endDate = document.getElementById("endDateFilter")?.value;
+    const period = document.getElementById("periodSelect")?.value;
+    const labSection = document.getElementById("labSectionFilter")?.value;
+    const shift = document.getElementById("shiftFilter")?.value;
+    const hospitalUnit = document.getElementById("hospitalUnitFilter")?.value;
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
+      period: period,
+      lab_section: labSection,
+      shift: shift,
+      unit: hospitalUnit,
+    }).toString();
     const response = await fetch(
       `https://zyntel-data-updater.onrender.com/api/revenue?${params}`, {
         method: "GET",
@@ -126,24 +121,20 @@ async function loadDatabaseData() {
         },
       }
     );
-
     if (response.status === 401) {
       console.error(
         "401 Unauthorized: Invalid or expired token. Redirecting to login."
       );
-      // Handle unauthorized access, e.g., by redirecting the user
       window.location.href = "/index.html";
       return;
     }
-
     if (!response.ok) {
       throw new Error(`HTTP error! ${response.status}`);
     }
-
     const dbData = await response.json();
-
     if (!Array.isArray(dbData) || dbData.length === 0) {
       console.warn("⚠️ Database returned empty or invalid data for charts.");
+      // Clear data to prevent charts from using stale data
       allData = [];
       filteredData = [];
     } else {
@@ -151,63 +142,52 @@ async function loadDatabaseData() {
       filteredData = dbData.map((row) => {
         const processedRow = { ...row
         };
-
         processedRow.parsedEncounterDate = row.date ?
           moment.utc(row.date) :
           null;
         processedRow.parsedTestResultDate = processedRow.parsedEncounterDate;
-
         const parsedPriceValue = parseFloat(row.total_price);
         processedRow.parsedPrice = isNaN(parsedPriceValue) ? 0 : parsedPriceValue;
         processedRow.TestCount = row.test_count || 0;
-
         processedRow.Hospital_Unit = (row.unit || "").toUpperCase();
         processedRow.LabSection = (row.lab_section || "").toLowerCase();
         processedRow.Shift = (row.shift || "").toLowerCase();
         processedRow.TestName = row.test_name || "";
-
         processedRow.Minutes_Delayed_Calculated = null;
         processedRow.Delay_Status_Calculated = "Not Uploaded";
         processedRow.Progress_Calculated = "Not Uploaded";
-
         return processedRow;
       });
-
       console.log(
         `✅ Loaded ${filteredData.length} rows from database for chart aggregation.`
       );
-
       if (filteredData.length > 0) {
         console.log("Sample processed row:", filteredData[0]);
       }
-
       // Populate filters from the loaded data
       populateLabSectionFilter(filteredData);
       populateShiftFilter(filteredData);
-      populateHospitalUnitFilter(filteredData); // For the main filter dropdown
-      populateChartUnitSelect(); // Custom function for the chart's unit select
-
+      populateHospitalUnitFilter(filteredData);
+      // FIX: Pass the loaded data to populateChartUnitSelect
+      populateChartUnitSelect(filteredData);
     }
+    // Process and render charts
     processData();
   } catch (err) {
     console.error("Data load failed:", err);
     const totalRevenueElem = document.getElementById("totalRevenue");
     if (totalRevenueElem) totalRevenueElem.textContent = "UGX N/A";
-
     const avgDailyRevenueElem = document.getElementById("avgDailyRevenue");
     if (avgDailyRevenueElem) avgDailyRevenueElem.textContent = "UGX N/A";
-
     const totalTestsPerformedElem = document.getElementById(
       "totalTestsPerformed"
     );
     if (totalTestsPerformedElem) totalTestsPerformedElem.textContent = "N/A";
-
     const avgDailyTestsPerformedElem = document.getElementById(
       "avgDailyTestsPerformed"
     );
     if (avgDailyTestsPerformedElem)
       avgDailyTestsPerformedElem.textContent = "N/A";
-
     [
       revenueChart,
       sectionRevenueChart,
@@ -222,24 +202,18 @@ async function loadDatabaseData() {
       }
     });
   } finally {
-    hideLoadingSpinner(); // <— Stop the animation here
+    hideLoadingSpinner();
   }
 }
 
 /**
- * Initializes the dashboard by loading data and attaching event listeners.
+ * Main function to initialize all dashboard components.
+ * This is the single entry point for setting up the dashboard.
  */
-function initializeDashboard() {
-    attachRevenueFilterListeners(loadDatabaseData);
-
-    const periodSelect = document.getElementById("periodSelect");
-    if (periodSelect) {
-        periodSelect.value = "thisMonth";
-        updateDatesForPeriod(periodSelect.value);
-    }
-
-    // Fetch only once
-    loadDatabaseData();
+async function initializeDashboard() {
+  console.log("Initializing dashboard...");
+  await loadDatabaseData();
+  console.log("Dashboard initialization complete.");
 }
 
 /**
