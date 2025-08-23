@@ -21,8 +21,11 @@ import {
   populateLabSectionFilter,
   populateShiftFilter,
   populateHospitalUnitFilter,
+  applyRevenueFilters,
   attachRevenueFilterListeners,
-  updateDatesForPeriod
+  updateDatesForPeriod,
+  mainLaboratoryUnits,
+  annexUnits
 } from "./filters-revenue.js";
 
 console.log("NHL Dashboard Revenue Logic script loaded and starting...");
@@ -62,28 +65,6 @@ const monthlyTargets = {
   "2025-11": 1_500_000_000,
   "2025-12": 1_500_000_000,
 };
-
-// Define the units for the "Select Hospital Unit" chart dropdown
-const chartHospitalUnits = [
-  "APU",
-  "GWA",
-  "GWB",
-  "HDU",
-  "ICU",
-  "MAT",
-  "NICU",
-  "THEATRE",
-  "2ND FLOOR",
-  "A&E",
-  "DIALYSIS",
-  "DOCTORS PLAZA",
-  "ENT",
-  "RADIOLOGY",
-  "SELF REQUEST",
-  "WELLNESS",
-  "WELLNESS CENTER",
-  "ANNEX"
-];
 
 // ----------------------------------------------------
 // LOADING SPINNER FUNCTIONS
@@ -323,10 +304,13 @@ function populateChartUnitSelect() {
     if (!unitSelect) return;
 
     // Clear existing options
-    unitSelect.innerHTML = `<option value="all">All Units</option>`; // "All Units" option
+    unitSelect.innerHTML = `<option value="all">All Units</option>`;
+
+    // Combine the two imported arrays to get the full list
+    const allHospitalUnits = [...mainLaboratoryUnits, ...annexUnits];
 
     // Add specified units
-    chartHospitalUnits.forEach(unit => {
+    allHospitalUnits.forEach(unit => {
         const option = document.createElement("option");
         option.value = unit;
         option.textContent = unit;
@@ -729,13 +713,10 @@ function renderSectionRevenueChart() {
                     "#21336a",
                     " #4CAF50",
                     " #795548",
-                    " #9C27B0",
                     "rgb(250, 39, 11)",
-                    " #00BCD4",
                     " #607D8B",
                     " #deab5f",
                     " #E91E63",
-                    " #FFC107",
                 ],
                 hoverOffset: 4,
             },
