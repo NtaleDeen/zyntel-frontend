@@ -79,7 +79,7 @@ async function fetchtrackerData() {
         // Automatically determine the API base URL
     const isLocal = location.hostname === "127.0.0.1" || location.hostname === "localhost";
     const baseUrl = isLocal
-        ? "http://127.0.0.1:5000/public"
+        ? "http://127.0.0.1:5000"
         : "https://zyntel-data-updater.onrender.com";
 
     try {
